@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "image_invalid",
+    "message": "この写真は読めなかったよ。もう一度撮ってね",
+    "retryable": false
+  }
+}

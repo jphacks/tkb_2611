@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "upstream_unavailable",
+    "message": "いまは写真を見分けられないみたい。少し待ってね",
+    "retryable": true
+  }
+}

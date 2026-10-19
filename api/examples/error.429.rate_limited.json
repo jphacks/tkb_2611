@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "rate_limited",
+    "message": "混みあってるみたい。少し待ってからもう一度ためしてね",
+    "retryable": true
+  }
+}

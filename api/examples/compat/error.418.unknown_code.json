@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "teapot",
+    "message": "ふしぎなことが起きたよ",
+    "retryable": false
+  }
+}

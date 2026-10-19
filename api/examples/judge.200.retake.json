@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "subject": "unknown",
+  "comment": "うーん、よく見えなかったよ",
+  "confidence": 0.31,
+  "decision": "retake",
+  "checks": [
+    {
+      "id": "confidence",
+      "label": "見分けの確かさ",
+      "passed": false,
+      "detail": "低い"
+    }
+  ],
+  "retake_hint": "明るいところで、ものの全体が入るように撮ってね"
+}

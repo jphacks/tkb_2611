@@ -1,0 +1,536 @@
+openapi: 3.1.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+
+info:
+  title: Project Penguin API
+  # 契約の版。項目を足したら上げる。正本は jphacks/tkb_2611 の api/openapi.yaml で、
+  # project-penguin の api/ はその写し (scripts/check_api_contract.py --against で一致を確かめる)。
+  version: 1.0.0
+  summary: Unity クライアント (Sh1n1230/project-penguin) と backend (jphacks/tkb_2611) の契約
+  description: |
+    ## 前方互換の規則
+
+    Web ビルドは 10/23 に固め、Hack Day には backend だけを変える。クライアントを作り直さずに済むよう、次を守る。
+
+    1. **クライアントは知らない項目を無視する。** サーバーは項目を足してよい。
+    2. **知らない enum の値は安全側に倒す。** `subject` は「判定できない写真」、`decision` は `accept`、
+       `quests[].kind`・`proof` はそのお題を出さない、`error.code` は `internal` として扱う。
+    3. **後から足す項目はすべて省略可にする。必須の項目は増やさない・消さない・意味を変えない。**
+    4. 壊す変更が要るときはパスの版を上げる (`/v2/`)。`/v1/` は審査が終わるまで残す。
+
+    ## 共通
+
+    - 実際の URL は `https://<配信元>/api/v1/...`。Web ビルドと同じ配信元 (Vercel) に置くので、本番は CORS が要らない。
+      別の配信元から呼ぶとき (手元の確認) だけ、サーバーは `PENGUIN_CORS_ORIGINS` の配信元を許可する。
+      そのときも **エラーの応答に CORS のヘッダーを付け**、`Access-Control-Expose-Headers: Date` で `Date` を公開する。
+    - すべての応答 (4xx・5xx を含む) に `Date` を付ける。クライアントは端末の時計の補正に使う (`ServerTrustedClock`)。
+    - すべての応答に `Cache-Control: no-store` を付ける。
+    - 本文はすべて JSON (UTF-8)。成功の応答には `schema_version` (この文書の `info.version`) を入れる。
+    - 画面に出す文字列 (`comment`・`message`・`label` など) は日本語で、そのまま表示できるものにする。
+
+    ## 上限
+
+    | 項目 | 値 |
+    |---|---|
+    | 画像 | JPEG、長い辺 1280px まで (クライアントが縮めて送る) |
+    | 本文の大きさ | 4 MB まで (Vercel Functions の 4.5 MB の手前) |
+    | クライアントのタイムアウト | 25 秒 (`UnityWebRequest.timeout`) |
+    | クライアントの再試行 | `retryable: true` のエラーと接続の失敗だけ、1 回 |
+
+    ## プライバシー
+
+    - 画像はメモリ上で判定に使い、ディスク・ログ・応答に残さない。画像の説明文 (AI の生の出力) も応答に入れない。
+    - クライアントは端末やユーザーを特定できる値を送らない (`X-Client-Id` などは使わない)。
+      みんなの氷山の上限などで数が要るときは、サーバーのメモリの中だけで数え、保存しない。
+
+servers:
+  - url: /api
+    description: Web ビルドと同じ配信元 (本番は https://project-penguin-nu.vercel.app)
+
+tags:
+  - name: health
+  - name: eco-photo
+  - name: community
+  - name: quests
+
+paths:
+  /v1/health:
+    get:
+      tags: [health]
+      operationId: health
+      summary: 起動の確認。寝起きの温めと時計の取得にも使う
+      responses:
+        "200":
+          description: 動いている
+          headers:
+            Date: { $ref: "#/components/headers/Date" }
+            Cache-Control: { $ref: "#/components/headers/CacheControl" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+              examples:
+                ok: { externalValue: examples/health.200.ok.json }
+    head:
+      tags: [health]
+      operationId: healthHead
+      summary: 外形監視の HEAD
+      responses:
+        "200":
+          description: 動いている (本文なし)
+
+  /v1/eco-photo/judge:
+    post:
+      tags: [eco-photo]
+      operationId: judgeEcoPhoto
+      summary: エコ活動の写真 1 枚を判定する
+      description: |
+        資源の量はサーバーでは決めない。クライアントが写真の表 (`EcoSubjects`) と `decision` から決める。
+        `decision` が無い応答は `accept` として扱う (2026-10-19 以前の形)。
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  contentMediaType: image/jpeg
+                  description: JPEG。長い辺 1280px まで、4 MB まで
+            encoding:
+              image:
+                contentType: image/jpeg
+      responses:
+        "200":
+          description: "判定できた (エコ活動が写っていなかったときも 200 で `subject: unknown`)"
+          headers:
+            Date: { $ref: "#/components/headers/Date" }
+            Cache-Control: { $ref: "#/components/headers/CacheControl" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JudgeResult" }
+              examples:
+                accept: { externalValue: examples/judge.200.accept.json }
+                reduce: { externalValue: examples/judge.200.reduce.json }
+                retake: { externalValue: examples/judge.200.retake.json }
+                reject: { externalValue: examples/judge.200.reject.json }
+                unknown: { externalValue: examples/judge.200.unknown.json }
+                minimal: { externalValue: examples/judge.200.minimal.json }
+                future: { externalValue: examples/judge.200.future.json }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "413": { $ref: "#/components/responses/TooLarge" }
+        "415": { $ref: "#/components/responses/BadRequest" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/Internal" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+
+  /v1/community/goal:
+    get:
+      tags: [community]
+      operationId: getCommunityGoal
+      summary: みんなの氷山 (会場のみんなで溜める目標) の今の状態
+      description: "機能を切っているときも 404 ではなく 200 で `enabled: false` を返す。"
+      responses:
+        "200":
+          description: 今の状態
+          headers:
+            Date: { $ref: "#/components/headers/Date" }
+            Cache-Control: { $ref: "#/components/headers/CacheControl" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommunityGoal" }
+              examples:
+                active: { externalValue: examples/community-goal.200.active.json }
+                disabled: { externalValue: examples/community-goal.200.disabled.json }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/Internal" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+
+  /v1/quests:
+    get:
+      tags: [quests]
+      operationId: listQuests
+      summary: いま配っている期間限定のお題 (ちょこっと・おでかけ)
+      description: |
+        当日にサーバーだけでお題を足せるようにする口。クライアントは `enabled` で、期間内 (`starts_at` ≦ 今 < `ends_at`、
+        時刻は端末の補正済みの時計で比べる) のものだけを出す。知らない `kind`・`proof` のお題は出さない。
+      responses:
+        "200":
+          description: お題の一覧 (無ければ空の配列)
+          headers:
+            Date: { $ref: "#/components/headers/Date" }
+            Cache-Control: { $ref: "#/components/headers/CacheControl" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuestList" }
+              examples:
+                some: { externalValue: examples/quests.200.some.json }
+                empty: { externalValue: examples/quests.200.empty.json }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/Internal" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+
+  /v1/quests/{quest_id}/redeem:
+    post:
+      tags: [quests]
+      operationId: redeemQuest
+      summary: QR・合言葉を照合して、お題のご褒美を受け取れるかを返す
+      description: |
+        サーバーは照合だけを行い、誰が受け取ったかは残さない。同じお題を 2 回受け取らないようにするのはクライアント
+        (端末の保存) の役目。`already_redeemed` はサーバーが数えられる場合 (メモリの中の上限など) にだけ返す。
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/Id" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RedeemRequest" }
+      responses:
+        "200":
+          description: 照合できた
+          headers:
+            Date: { $ref: "#/components/headers/Date" }
+            Cache-Control: { $ref: "#/components/headers/CacheControl" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RedeemResult" }
+              examples:
+                accepted: { externalValue: examples/redeem.200.accepted.json }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/Internal" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+
+components:
+  headers:
+    Date:
+      description: サーバーの時刻 (RFC 9110 の IMF-fixdate)。4xx・5xx にも付ける
+      schema: { type: string }
+    CacheControl:
+      description: 常に `no-store`
+      schema: { type: string, const: no-store }
+    RetryAfter:
+      description: 次に試してよいまでの秒数
+      schema: { type: integer, minimum: 1 }
+
+  responses:
+    BadRequest:
+      description: 送ったものが受け付けられない (`image_missing`・`image_invalid`・`code_invalid` など)
+      headers:
+        Date: { $ref: "#/components/headers/Date" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            imageMissing: { externalValue: examples/error.400.image_missing.json }
+            imageInvalid: { externalValue: examples/error.400.image_invalid.json }
+            codeInvalid: { externalValue: examples/error.400.code_invalid.json }
+    TooLarge:
+      description: 画像が大きすぎる
+      headers:
+        Date: { $ref: "#/components/headers/Date" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            imageTooLarge: { externalValue: examples/error.413.image_too_large.json }
+    NotFound:
+      description: お題が無い・期間外 (`quest_closed`)
+      headers:
+        Date: { $ref: "#/components/headers/Date" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            questClosed: { externalValue: examples/error.404.quest_closed.json }
+    Conflict:
+      description: もう受け取っている (`already_redeemed`)
+      headers:
+        Date: { $ref: "#/components/headers/Date" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            alreadyRedeemed: { externalValue: examples/error.409.already_redeemed.json }
+    RateLimited:
+      description: 呼びすぎ。`Retry-After` の秒数だけ待つ
+      headers:
+        Date: { $ref: "#/components/headers/Date" }
+        Retry-After: { $ref: "#/components/headers/RetryAfter" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            rateLimited: { externalValue: examples/error.429.rate_limited.json }
+    Internal:
+      description: サーバーの不具合。中身 (画像・例外の文) は返さない
+      headers:
+        Date: { $ref: "#/components/headers/Date" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            internal: { externalValue: examples/error.500.internal.json }
+    Unavailable:
+      description: 判定に使う AI が使えない (枠の上限・障害)
+      headers:
+        Date: { $ref: "#/components/headers/Date" }
+        Retry-After: { $ref: "#/components/headers/RetryAfter" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            upstreamUnavailable: { externalValue: examples/error.503.upstream_unavailable.json }
+
+  schemas:
+    SchemaVersion:
+      type: string
+      description: この契約の `info.version`
+      pattern: "^\\d+\\.\\d+\\.\\d+$"
+
+    Id:
+      type: string
+      pattern: "^[a-z0-9][a-z0-9_-]{0,63}$"
+
+    ScreenText:
+      type: string
+      description: 画面にそのまま出す日本語
+      maxLength: 200
+
+    Health:
+      type: object
+      required: [status, version, schema_version]
+      properties:
+        status: { type: string, const: ok }
+        version: { type: string, description: backend の版 }
+        schema_version: { $ref: "#/components/schemas/SchemaVersion" }
+
+    EcoSubjectId:
+      type: string
+      description: |
+        写真の表の ID (`Assets/Scripts/Domain/Island/EcoActions.cs` の `EcoSubjects`、`docs/production-island/resources.md`)。
+        表のどれでもなければ `unknown`。scripts/check_api_contract.py が表との一致を確かめる。
+      enum:
+        - lights_off
+        - air_conditioner
+        - short_shower
+        - save_water
+        - my_bottle
+        - eco_bag
+        - lid_cooking
+        - warm_clothes
+        - walk
+        - bicycle
+        - train
+        - clean_plate
+        - local_food
+        - recycle
+        - unknown
+
+    Decision:
+      type: string
+      description: |
+        検証層 (#112) の結論。
+        - `accept`: 表の量をそのまま渡す
+        - `reduce`: 量を減らして渡す (確信度が中くらい)。割合はクライアントが決める
+        - `retake`: 資源も記録も出さず、`retake_hint` を出して撮り直してもらう
+        - `reject`: 資源も記録も出さない (画面を撮った写真・使い回しなど)。理由は `checks` と `comment` で伝える
+      enum: [accept, reduce, retake, reject]
+
+    Check:
+      type: object
+      description: 結果の画面の「確かめたこと」に 1 行で出す。クライアントは中身を解釈せず並べるだけ
+      required: [id, label, passed]
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        label: { type: string, maxLength: 30, description: 「写っていたもの」「画面を撮った写真ではない」など }
+        passed: { type: boolean }
+        detail: { type: string, maxLength: 40, description: 省略可。「マイボトル」「82%」など }
+
+    Co2e:
+      type: object
+      description: CO₂e の目安 (#90 の換算表)。画面では「目安」と書く
+      required: [value, unit]
+      properties:
+        value: { type: number, minimum: 0 }
+        unit: { type: string, enum: [g, kg] }
+        basis: { type: string, maxLength: 80, description: 換算の根拠の短い説明 }
+
+    CommunityContribution:
+      type: object
+      description: この 1 枚でみんなの氷山がどれだけ進んだか
+      required: [goal_id, added, current, target]
+      properties:
+        goal_id: { $ref: "#/components/schemas/Id" }
+        added: { type: integer, minimum: 0 }
+        current: { type: integer, minimum: 0 }
+        target: { type: integer, minimum: 1 }
+
+    JudgeResult:
+      type: object
+      required: [schema_version, subject, comment, confidence]
+      properties:
+        schema_version: { $ref: "#/components/schemas/SchemaVersion" }
+        subject: { $ref: "#/components/schemas/EcoSubjectId" }
+        comment:
+          type: string
+          maxLength: 40
+          description: ペンギンのひとこと。数字を言わない
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        decision: { $ref: "#/components/schemas/Decision" }
+        checks:
+          type: array
+          maxItems: 8
+          items: { $ref: "#/components/schemas/Check" }
+        retake_hint:
+          type: string
+          maxLength: 60
+          description: "`retake` のときの案内 (「ボトル全体が入るように撮ってね」など)"
+        co2e: { $ref: "#/components/schemas/Co2e" }
+        community: { $ref: "#/components/schemas/CommunityContribution" }
+
+    Milestone:
+      type: object
+      required: [at, reward_id, reached]
+      properties:
+        at: { type: integer, minimum: 1, description: 節目の件数 }
+        reward_id: { $ref: "#/components/schemas/Id" }
+        reached: { type: boolean }
+        label: { $ref: "#/components/schemas/ScreenText" }
+
+    CommunityGoal:
+      type: object
+      required: [schema_version, enabled]
+      properties:
+        schema_version: { $ref: "#/components/schemas/SchemaVersion" }
+        enabled: { type: boolean, description: "`false` なら残りの項目は無く、クライアントはゲージを隠す" }
+        goal_id: { $ref: "#/components/schemas/Id" }
+        title: { $ref: "#/components/schemas/ScreenText" }
+        starts_at: { type: string, format: date-time }
+        ends_at: { type: string, format: date-time }
+        target: { type: integer, minimum: 1 }
+        current: { type: integer, minimum: 0 }
+        milestones:
+          type: array
+          items: { $ref: "#/components/schemas/Milestone" }
+        updated_at: { type: string, format: date-time }
+        poll_seconds:
+          type: integer
+          minimum: 5
+          maximum: 600
+          description: 次に問い合わせるまでの秒数の目安 (会場表示とゲージ)
+      if:
+        properties: { enabled: { const: true } }
+      then:
+        required: [goal_id, title, target, current, milestones, updated_at, poll_seconds]
+
+    Reward:
+      type: object
+      description: |
+        ご褒美。中身の解釈 (お魚の袋・時短・限定の飾り) はクライアントの表で決める。知らない `kind` は受け取らない。
+      required: [kind, id]
+      properties:
+        kind: { type: string, enum: [fish_pack, time_skip, decoration, resource] }
+        id: { $ref: "#/components/schemas/Id" }
+        amount: { type: number, minimum: 0 }
+
+    Quest:
+      type: object
+      required: [id, kind, title, description, starts_at, ends_at, proof, reward, enabled]
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        kind:
+          type: string
+          description: "`chokotto` (その場ですぐできる) / `odekake` (会場・場所に行く)"
+          enum: [chokotto, odekake]
+        title: { type: string, maxLength: 30 }
+        description: { type: string, maxLength: 120 }
+        starts_at: { type: string, format: date-time }
+        ends_at: { type: string, format: date-time }
+        proof:
+          type: string
+          description: |
+            達成の確かめ方。`photo` (写真判定を通す、`subjects` のどれか)、`qr` (QR を読む)、
+            `passphrase` (合言葉を入れる)、`none` (自己申告)
+          enum: [photo, qr, passphrase, none]
+        subjects:
+          type: array
+          description: "`proof: photo` のとき、達成になる写真の表の ID"
+          items: { $ref: "#/components/schemas/EcoSubjectId" }
+        reward: { $ref: "#/components/schemas/Reward" }
+        enabled: { type: boolean }
+
+    QuestList:
+      type: object
+      required: [schema_version, quests]
+      properties:
+        schema_version: { $ref: "#/components/schemas/SchemaVersion" }
+        quests:
+          type: array
+          maxItems: 20
+          items: { $ref: "#/components/schemas/Quest" }
+        poll_seconds: { type: integer, minimum: 30, maximum: 3600 }
+
+    RedeemRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: QR の中身、または入力された合言葉
+
+    RedeemResult:
+      type: object
+      required: [schema_version, accepted, message]
+      properties:
+        schema_version: { $ref: "#/components/schemas/SchemaVersion" }
+        accepted: { type: boolean, const: true }
+        reward: { $ref: "#/components/schemas/Reward" }
+        message: { $ref: "#/components/schemas/ScreenText" }
+
+    ErrorCode:
+      type: string
+      description: |
+        | code | HTTP | retryable | 意味 |
+        |---|---|---|---|
+        | `image_missing` | 400 | false | `image` が無い |
+        | `image_invalid` | 400 / 415 | false | JPEG として読めない |
+        | `image_too_large` | 413 | false | 大きすぎる |
+        | `code_invalid` | 400 | false | QR・合言葉が違う |
+        | `quest_closed` | 404 | false | お題が無い・期間外 |
+        | `already_redeemed` | 409 | false | もう受け取っている |
+        | `rate_limited` | 429 | true | 呼びすぎ (`Retry-After`) |
+        | `upstream_unavailable` | 503 | true | 判定に使う AI が使えない |
+        | `internal` | 500 | true | サーバーの不具合 |
+
+        クライアントは知らない code を `internal` として扱う。
+      enum:
+        - image_missing
+        - image_invalid
+        - image_too_large
+        - code_invalid
+        - quest_closed
+        - already_redeemed
+        - rate_limited
+        - upstream_unavailable
+        - internal
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, retryable]
+          properties:
+            code: { $ref: "#/components/schemas/ErrorCode" }
+            message: { $ref: "#/components/schemas/ScreenText" }
+            retryable: { type: boolean }

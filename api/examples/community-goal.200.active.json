@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "enabled": true,
+  "goal_id": "jphacks-2026",
+  "title": "会場のみんなで氷山を 300 枚ぶん育てよう",
+  "starts_at": "2026-10-24T01:20:00Z",
+  "ends_at": "2026-10-25T06:00:00Z",
+  "target": 300,
+  "current": 128,
+  "milestones": [
+    {
+      "at": 100,
+      "reward_id": "aurora",
+      "reached": true,
+      "label": "オーロラが見えた"
+    },
+    {
+      "at": 200,
+      "reward_id": "whale",
+      "reached": false,
+      "label": "クジラがやってくる"
+    },
+    {
+      "at": 300,
+      "reward_id": "festival",
+      "reached": false,
+      "label": "島じゅうでお祭り"
+    }
+  ],
+  "updated_at": "2026-10-24T05:12:30Z",
+  "poll_seconds": 15
+}

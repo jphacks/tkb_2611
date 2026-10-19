@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.4.0",
+  "subject": "solar_panel",
+  "comment": "ソーラーパネルだ！",
+  "confidence": 0.9,
+  "decision": "bonus",
+  "checks": [
+    {
+      "id": "subject",
+      "label": "写っていたもの",
+      "passed": true
+    }
+  ]
+}

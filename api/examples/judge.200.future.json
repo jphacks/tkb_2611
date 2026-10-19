@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "subject": "train",
+  "comment": "みんなで乗るとエコだね",
+  "confidence": 0.84,
+  "decision": "accept",
+  "checks": [
+    {
+      "id": "subject",
+      "label": "写っていたもの",
+      "passed": true,
+      "detail": "電車・バス",
+      "severity": "info"
+    }
+  ],
+  "streak_bonus": {
+    "days": 3
+  },
+  "model": "x"
+}

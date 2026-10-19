@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "image_missing",
+    "message": "写真が届かなかったよ。もう一度撮ってね",
+    "retryable": false
+  }
+}

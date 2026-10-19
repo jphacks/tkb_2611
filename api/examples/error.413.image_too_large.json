@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "image_too_large",
+    "message": "写真が大きすぎたよ。もう一度撮ってね",
+    "retryable": false
+  }
+}

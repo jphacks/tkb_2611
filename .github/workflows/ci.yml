@@ -1,0 +1,80 @@
+# ---------------------------------------------------------------
+# tkb_2611 (ueco / Project Penguin の backend) - CI
+#   Unity クライアントは Sh1n1230/project-penguin にあり、ここでは回さない。
+# ---------------------------------------------------------------
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    name: 秘密情報の検査
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: 追跡対象ファイルの検査
+        run: python scripts/check_secrets.py
+
+      - name: gitleaks (履歴全体)
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: ${{ github.workspace }}/.gitleaks.toml
+
+  contract:
+    name: Unity との契約 (api/)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: '3.12'
+
+      # Web ビルドは作り直さないので、契約を壊す変更 (必須の項目を足す・例がスキーマに合わない) をここで止める。
+      - name: 契約の検査
+        run: >-
+          uv run --no-project --with openapi-spec-validator==0.9.0
+          --with jsonschema==4.26.0 --with pyyaml==6.0.3 python scripts/check_api_contract.py
+
+  backend:
+    name: backend (lint / format / type / test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - run: uv sync --all-extras --dev
+      - name: format (ruff format --check)
+        run: uv run ruff format --check .
+      - name: lint (ruff check)
+        run: uv run ruff check .
+      - name: type-check (mypy)
+        run: uv run mypy .
+      - name: unit test (pytest)
+        run: uv run pytest -q

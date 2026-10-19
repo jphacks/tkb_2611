@@ -1,0 +1,17 @@
+# 秘密 (API キーは Vercel の環境変数にだけ置く)
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# 写真・SQLite をリポジトリに入れない
+*.db
+*.sqlite*
+
+.DS_Store

@@ -1,0 +1,24 @@
+# ---------------------------------------------------------------
+# Project Penguin - gitleaks 設定
+#   既定のルールセットに乗せたうえで、誤検知だけを個別に外す。
+#   ルールを緩めるのではなく対象パスを絞ることで、自分たちが書く
+#   コードに対する検出力はそのまま維持する。
+# ---------------------------------------------------------------
+title = "Project Penguin"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = """
+外部から取り込んだエージェント用スキルのドキュメント。
+実キーではなくサンプル値 (例: yourcompany.atlassian.net の JSON 例に含まれる
+24 桁の ID が atlassian-api-token として検出される) のため除外する。
+これらのディレクトリの中身は自分たちが書くものではない。
+なお scripts/check_secrets.py は除外なしで全追跡ファイルを走査するため、
+Gemini / OpenRouter / OpenAI / Anthropic のキー形式はここでも引き続き拾える。
+"""
+paths = [
+    '''^\.agents/skills/''',
+    '''^\.claude/skills/''',
+]
