@@ -4,6 +4,16 @@
 
 ## 製品概要
 ### 背景(製品開発のきっかけ、課題等）
+> It's the Climate, Stupid!
+
+参考文献：
+
+Baum, Rudy M. “Editor’s Page: It’s The Climate, Stupid.”
+*Chemical & Engineering News* 80, no. 10 (March 11, 2002): 5.
+https://doi.org/10.1021/cen-v080n010.p005
+
+気候変動は社会全体で取り組むべき課題である一方、個人の日常的な消費行動と環境負荷のつながりは見えにくい。そこで、環境問題を身近な行動と結び付け、環境配慮行動を促す仕組みを考える。
+
 ### 製品説明（具体的な製品の説明）
 ### 特長
 #### 1. 特長1
