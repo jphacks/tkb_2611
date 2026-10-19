@@ -7,6 +7,7 @@
 | [`architecture.md`](architecture.md) | 全体の構成 (Unity の Web ビルド ⇄ Vercel ⇄ FastAPI ⇄ AI)、公開の流れ、設定ファイルの切り替え |
 | [`hackday.md`](hackday.md) | 事前と当日の境界、3 人の分担、当日の流れ、完了の定義 |
 | [`decisions.md`](decisions.md) | このリポジトリに関わる決定と理由 |
+| [`personal-info.md`](personal-info.md) | 個人に関わる内容を入れないための仕組み (フック・CI・拒否リスト) |
 | [`../api/README.md`](../api/README.md) | 契約の読み方と変え方 |
 
 ## 仕様の置き場所 (project-penguin)

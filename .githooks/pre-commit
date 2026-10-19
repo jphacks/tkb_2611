@@ -1,0 +1,4 @@
+#!/bin/sh
+# ステージした追加行に、個人に関わる内容 (名前・連絡先) が無いかを見る (CLAUDE.md の絶対規則 0)。
+root="$(git rev-parse --show-toplevel)" || exit 1
+exec "$root/.githooks/_python" "$root/scripts/check_personal_info.py" --staged

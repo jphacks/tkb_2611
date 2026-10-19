@@ -39,14 +39,16 @@ JPHACKS 2026 (東京B) の提出用リポジトリ。毎日のエコ写真で資
 | 整形 / lint / 型 / テスト | `cd backend && uv run ruff format . && uv run ruff check . && uv run mypy . && uv run pytest` |
 | 契約の検査 | `uv run --no-project --with openapi-spec-validator==0.9.0 --with jsonschema==4.26.0 --with pyyaml==6.0.3 python scripts/check_api_contract.py` |
 | 秘密情報の検査 | `python3 scripts/check_secrets.py` |
+| 個人に関わる内容の検査 | `python3 scripts/check_personal_info.py --all` (ステージした分は `--staged`) |
+| git のフックを有効にする (clone したら最初に 1 回) | `sh scripts/setup_hooks.sh` |
 | コミット / PR の前の一括検査 | `/verify` |
 | 公開 (preview / 本番) | project-penguin の clone で `uv run --no-project python scripts/deploy_web.py --backend ../tkb_2611/backend` / `--prod` (公開役だけ。`docs/architecture.md`) |
 
-CI (`.github/workflows/ci.yml`) は秘密情報・契約・backend の検査を PR ごとに回す。
+CI (`.github/workflows/ci.yml`) は個人に関わる内容・秘密情報・契約・backend の検査を PR ごとに回す。
 
 ## 絶対規則
 
-0. **個人に関わる内容をこのリポジトリに入れない。** 人の名前 (本名・ニックネーム)、連絡先、学校・住まい・予定などの個人の事情、チームの会話や議事録の中身は、コード・docs・コメント・コミットメッセージ・PR の本文のどこにも書かない。役割 (「公開役」「担当 A」) で書く。このリポジトリは jphacks の org に public で残り続け、消せない前提で扱う。チームの内部の資料は Unity 側の非公開のリポジトリに置く。
+0. **個人に関わる内容をこのリポジトリに入れない。** 人の名前 (本名・ニックネーム)、連絡先、学校・住まい・予定などの個人の事情、チームの会話や議事録の中身は、コード・docs・コメント・コミットメッセージ・PR の本文のどこにも書かない。役割 (「公開役」「担当 A」) で書く。このリポジトリは jphacks の org に public で残り続け、消せない前提で扱う。チームの内部の資料は Unity 側の非公開のリポジトリに置く。Claude Code のフック・git のフック・CI で機械的にも止める → `docs/personal-info.md`。clone したら最初に `sh scripts/setup_hooks.sh`。
 1. **写真と AI の生の出力をディスク・ログ・応答に残さない。** → `.claude/rules/privacy.md`
 2. **API キーをコードにも設定ファイルにも書かない。** Vercel の環境変数 (`PENGUIN_` で始まる名前) から `Settings` で読む。キーをチャットやリポジトリに貼らない。
 3. **接続 (エンドポイント・項目・エラーの code) を足す・変えるときは、先に `api/openapi.yaml` と `api/examples/` に書く。** 必須の項目は増やさない。→ `.claude/rules/api-contract.md`

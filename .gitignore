@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 
+# 個人に関わる語の拒否リスト (名前など)。絶対にコミットしない (docs/personal-info.md)
+.personal-denylist
+
 # Python
 __pycache__/
 .venv/

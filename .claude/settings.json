@@ -35,6 +35,7 @@
       "Read(**/.env.production)",
       "Read(**/*.pem)",
       "Read(**/*.key)",
+      "Read(**/.personal-denylist)",
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
       "Bash(git push --force-with-lease:*)",
@@ -58,7 +59,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "Edit|Write|MultiEdit",
         "hooks": [
           {
             "type": "command",
@@ -71,6 +72,35 @@
             ],
             "timeout": 15,
             "statusMessage": "書き込み先と秘密情報を検査中"
+          },
+          {
+            "type": "command",
+            "command": "uv",
+            "args": [
+              "run",
+              "--no-project",
+              "python",
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/guard_personal.py"
+            ],
+            "timeout": 15,
+            "statusMessage": "個人に関わる内容を検査中"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv",
+            "args": [
+              "run",
+              "--no-project",
+              "python",
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/guard_personal.py"
+            ],
+            "timeout": 15,
+            "statusMessage": "コミット・PR の本文を検査中"
           }
         ]
       }
@@ -88,6 +118,24 @@
               "${CLAUDE_PROJECT_DIR}/.claude/hooks/japanese-guard.py"
             ],
             "timeout": 15
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git",
+            "args": [
+              "-C",
+              "${CLAUDE_PROJECT_DIR}",
+              "config",
+              "core.hooksPath",
+              ".githooks"
+            ],
+            "timeout": 10
           }
         ]
       }

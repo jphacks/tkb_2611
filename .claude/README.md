@@ -9,8 +9,9 @@ Claude Code (と互換のエージェント) 向けの設定。**個人の設定
 | `rules/backend.md` | FastAPI の構成と規約 | `backend/` を読んだとき |
 | `rules/api-contract.md` | 接続は先に契約に書く・前方互換 | `api/`・`backend/` を読んだとき |
 | `skills/verify/SKILL.md` | CI と同じ検査 | `/verify`、コミット・PR の前 |
-| `settings.json` | permissions と hooks | 毎セッション |
+| `settings.json` | permissions と hooks。起動時に git のフック (`.githooks/`) を有効にする | 毎セッション |
 | `hooks/guard_write.py` | 秘密情報らしき文字列と生成物への書き込みを止める | Edit / Write の直前 |
+| `hooks/guard_personal.py` | 個人に関わる内容 (名前・連絡先) を、書く前・コミットや PR の前に止める (`docs/personal-info.md`) | Edit / Write、`git commit`・`gh pr create` などの直前 |
 | `hooks/japanese-guard.py` | 最終回答が英語主体なら日本語で書き直させる | 応答の終了時 |
 
 `CLAUDE.md` は短く保ち、領域ごとの細かい決まりは `rules/` に分けている。`CLAUDE.md` の記述には強制力が無いので、**確実に止めたいものは permissions か hooks に書く**。

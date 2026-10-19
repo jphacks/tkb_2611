@@ -18,11 +18,11 @@ public リポジトリなので最優先。落ちたら直す前に、それが�
 ## 1.5 個人に関わる内容
 
 ```bash
-git diff main --stat
-git diff main | grep -nE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' | grep -v 'noreply'
+python3 scripts/check_personal_info.py --all
+python3 scripts/check_personal_info.py --range origin/main..HEAD
 ```
 
-差分に、人の名前・連絡先・個人の事情・チームの会話の中身が入っていないかを目で確かめる (`CLAUDE.md` の絶対規則 0)。メールアドレスが出たら消す。入っていたら、push の前に直す (push した後は PR の履歴から消せない)。
+拒否リスト (名前など) が無いという注意が出たら、`docs/personal-info.md` の手順で作ってから回し直す。機械で拾えない個人の事情・チームの会話の中身が差分に入っていないかも目で確かめる (`CLAUDE.md` の絶対規則 0)。入っていたら push の前に直す (push した後は PR の履歴から消せない)。
 
 ## 2. 契約
 
