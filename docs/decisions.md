@@ -10,9 +10,10 @@
 - **個人に関わる内容 (名前・連絡先・個人の事情・チームの会話の中身) をこのリポジトリに入れない。** org がある限りリポジトリは残り、push したものは消せないため。決まりだけでなく、Claude Code のフック・git のフック・CI で機械的に止める (`docs/personal-info.md`)。名前の拒否リストはリポジトリに入れず、手元のファイルと CI の Secret で渡す。 (2026-10-19)
 - **LICENSE は運営の MIT のまま。** (2026-10-15、project-penguin の決定)
 - **JPHACKS の後、製品の開発は project-penguin に戻し、`git subtree add` でこのリポジトリの backend を履歴ごと取り込む。** Web 版と Vercel のプロジェクトは審査が終わったら閉じる。 (2026-10-19)
+- **写真判定の AI は Amazon Bedrock の Nova 2 Lite を、国内の推論プロファイル `jp.amazon.nova-2-lite-v1:0` で呼ぶ。** 申請なしで呼べ、試した 10 枚の分類がすべて正しく、1 枚 約 $0.0008 で、写真を国内のリージョンでだけ処理するため。`global.` のプロファイルは使わない。 (2026-10-22、project-penguin の ADR 0001、#125)
+- **みんなの氷山の件数は DynamoDB に置き、提出の記録の条件付き Put が通ったときだけ、10 分割のカウンタに ADD する。** 再送を数えず、書き込みが集中してもぶつからないことを実測で確かめたため。トランザクションは同じカウンタでぶつかって数え落とすので使わない。 (2026-10-22、project-penguin の ADR 0002)
+- **AWS の資源は CloudFormation (`infra/backend.yaml`) で作り、デプロイはオーナーだけが変更セットを確かめてから行う。** Vercel の関数は OIDC で IAM ロールを借り、長く使えるアクセスキーを作らない。 (2026-10-22、project-penguin の ADR 0003)
 
 ## 未決
 
-- 判定に使う AI (Gemini 有料枠か Workers AI か、#125)。
-- みんなの氷山の件数の保存先 (Upstash の無料枠を想定)。
 - 著作権表示に `ueco` を併記するか。
