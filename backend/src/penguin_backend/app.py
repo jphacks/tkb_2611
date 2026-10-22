@@ -59,7 +59,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             CORSMiddleware,
             allow_origins=settings.cors_origins,
             allow_methods=["GET", "POST"],
-            allow_headers=["Content-Type"],
+            # Idempotency-Key は判定の送り直しを見分ける写真ごとの乱数 (契約 1.1.0)。
+            # 独自のヘッダーなので、ブラウザの事前確認で許す。
+            allow_headers=["Content-Type", "Idempotency-Key"],
             expose_headers=["Date"],
         )
 

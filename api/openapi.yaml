@@ -23,6 +23,7 @@ info:
 
     - 実際の URL は `https://<配信元>/api/v1/...`。Web ビルドと同じ配信元 (Vercel) に置くので、本番は CORS が要らない。
       別の配信元から呼ぶとき (手元の確認) だけ、サーバーは `PENGUIN_CORS_ORIGINS` の配信元を許可する。
+      許すヘッダーは `Content-Type` と `Idempotency-Key` (独自のヘッダーなので、ブラウザが先に OPTIONS で確かめる)。
       そのときも **エラーの応答に CORS のヘッダーを付け**、`Access-Control-Expose-Headers: Date` で `Date` を公開する。
     - すべての応答 (4xx・5xx を含む) に `Date` を付ける。クライアントは端末の時計の補正に使う (`ServerTrustedClock`)。
     - 応答には `Cache-Control: no-store` を付ける。例外は `GET /v1/community/goal` だけで、`public, s-maxage=10` にする

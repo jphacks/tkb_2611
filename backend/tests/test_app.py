@@ -63,6 +63,22 @@ def test_allowed_origin_can_read_the_date_header() -> None:
     assert response.headers["access-control-expose-headers"] == "Date"
 
 
+def test_allowed_origin_may_send_the_idempotency_key() -> None:
+    # 判定の Idempotency-Key は独自のヘッダーなので、
+    # 別の配信元からはブラウザが先に OPTIONS で確かめる
+    response = client([LOCAL_ORIGIN]).options(
+        "/api/v1/eco-photo/judge",
+        headers={
+            "Origin": LOCAL_ORIGIN,
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "idempotency-key",
+        },
+    )
+
+    assert response.status_code == 200
+    assert "idempotency-key" in response.headers["access-control-allow-headers"].lower()
+
+
 def test_other_origins_are_not_allowed() -> None:
     response = client([LOCAL_ORIGIN]).get("/api/healthz", headers={"Origin": "https://example.com"})
 
