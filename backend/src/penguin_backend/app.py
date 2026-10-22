@@ -17,7 +17,7 @@ from penguin_backend.settings import Settings
 logger = logging.getLogger(__name__)
 
 # 守っている契約の版 (api/openapi.yaml の info.version)。
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.1.0"
 # 処理されなかった例外のときに画面に出す文 (契約の例 error.500.internal.json と同じ)。
 INTERNAL_MESSAGE = "うまくいかなかったよ。少し待ってからもう一度ためしてね"
 

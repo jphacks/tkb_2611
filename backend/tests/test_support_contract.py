@@ -61,19 +61,40 @@ def test_operations_list_every_path_of_the_contract() -> None:
 
 def test_matching_response_passes() -> None:
     client = _answering(
+        "/api/v1/health", 200, example("health.200.ok"), {"Cache-Control": "no-store"}
+    )
+
+    assert_matches_contract(client.get("/api/v1/health"))
+
+
+def test_missing_no_store_is_reported() -> None:
+    client = _answering("/api/v1/health", 200, example("health.200.ok"))
+
+    with pytest.raises(AssertionError, match="no-store"):
+        assert_matches_contract(client.get("/api/v1/health"))
+
+
+def test_community_goal_is_shared_through_the_cdn() -> None:
+    """ゲージの口だけは全員に同じ値なので、契約で CDN に 10 秒置く (CacheControlShared)。"""
+    client = _answering(
+        "/api/v1/community/goal",
+        200,
+        example("community-goal.200.active"),
+        {"Cache-Control": "public, s-maxage=10"},
+    )
+
+    assert_matches_contract(client.get("/api/v1/community/goal"))
+
+
+def test_community_goal_with_no_store_is_reported() -> None:
+    client = _answering(
         "/api/v1/community/goal",
         200,
         example("community-goal.200.active"),
         {"Cache-Control": "no-store"},
     )
 
-    assert_matches_contract(client.get("/api/v1/community/goal"))
-
-
-def test_missing_no_store_is_reported() -> None:
-    client = _answering("/api/v1/community/goal", 200, example("community-goal.200.active"))
-
-    with pytest.raises(AssertionError, match="no-store"):
+    with pytest.raises(AssertionError, match="s-maxage=10"):
         assert_matches_contract(client.get("/api/v1/community/goal"))
 
 

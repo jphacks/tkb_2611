@@ -13,8 +13,8 @@ from __future__ import annotations
 import base64
 import struct
 
-# 長い辺 1280px・4 MB までの JPEG (api/openapi.yaml の judgeEcoPhoto)。
-MAX_BYTES = 4 * 1024 * 1024
+# 長い辺 1280px・1 MB までの JPEG (api/openapi.yaml の judgeEcoPhoto)。
+MAX_BYTES = 1024 * 1024
 
 _PENGUIN_JPEG = base64.b64decode(
     "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+"
@@ -50,7 +50,7 @@ def jpeg(marker: str | None = None) -> bytes:
 
 
 def too_large() -> bytes:
-    """契約の上限 (4 MB) を 1 バイト超える JPEG の形のバイト列 (413 image_too_large の確認用)。"""
+    """契約の上限 (1 MB) を 1 バイト超える JPEG の形のバイト列 (413 image_too_large の確認用)。"""
     body = jpeg()
     padding = b"\x00" * (MAX_BYTES + 1 - len(body))
     return body[: -len(_EOI)] + padding + _EOI

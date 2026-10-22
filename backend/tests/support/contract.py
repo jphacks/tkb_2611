@@ -91,6 +91,15 @@ def _schema_name(media: dict[str, Any]) -> str | None:
     return None
 
 
+def _cache_control(definition: dict[str, Any]) -> str:
+    """契約がその応答に決めた Cache-Control の値。決めていなければ既定の no-store。"""
+    header = definition.get("headers", {}).get("Cache-Control")
+    if header is None:
+        return "no-store"
+    value: str = _resolve(header)["schema"]["const"]
+    return value
+
+
 def _operation(method: str, path: str) -> dict[str, Any]:
     template = path.removeprefix(PREFIX)
     for contract_path, item in spec()["paths"].items():
@@ -104,8 +113,9 @@ def _operation(method: str, path: str) -> dict[str, Any]:
 def assert_matches_contract(response: httpx.Response, method: str | None = None) -> None:
     """応答が契約のその道の、その状態の定義どおりかを確かめる。
 
-    見るもの: 状態が契約に載っているか・本文のスキーマ・Content-Type・Cache-Control: no-store
-    (成功の応答)・契約が求めるヘッダー (Retry-After など)。
+    見るもの: 状態が契約に載っているか・本文のスキーマ・Content-Type・Cache-Control
+    (成功の応答。契約がその道に決めた値で、ふつうは no-store)・契約が求めるヘッダー
+    (Retry-After など)。
     """
     request = response.request
     method = method or request.method
@@ -118,8 +128,9 @@ def assert_matches_contract(response: httpx.Response, method: str | None = None)
     definition = _resolve(declared[status])
 
     if response.status_code < 400:
-        assert response.headers.get("cache-control") == "no-store", (
-            "成功の応答には Cache-Control: no-store を付ける (.claude/rules/backend.md)"
+        expected = _cache_control(definition)
+        assert response.headers.get("cache-control") == expected, (
+            f"この道の成功の応答には Cache-Control: {expected} を付ける (.claude/rules/backend.md)"
         )
     for header in definition.get("headers", {}):
         if header.lower() in ("date", "cache-control"):
