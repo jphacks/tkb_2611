@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 # 守っている契約の版 (api/openapi.yaml の info.version)。
 SCHEMA_VERSION = "1.0.0"
+# 処理されなかった例外のときに画面に出す文 (契約の例 error.500.internal.json と同じ)。
+INTERNAL_MESSAGE = "うまくいかなかったよ。少し待ってからもう一度ためしてね"
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -43,7 +45,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return await call_next(request)
         except Exception as error:
             logger.error("unhandled %s on %s", type(error).__name__, request.url.path)
-            return JSONResponse({"error": "internal"}, status_code=500)
+            # 契約の ErrorResponse の形 (api/examples/error.500.internal.json と同じ文)。
+            return JSONResponse(
+                {"error": {"code": "internal", "message": INTERNAL_MESSAGE, "retryable": True}},
+                status_code=500,
+                headers={"Cache-Control": "no-store"},
+            )
 
     if settings.cors_origins:
         # 後から足したミドルウェアほど外側になる。CORS を最も外に置く。

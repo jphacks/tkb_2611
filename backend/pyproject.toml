@@ -4,8 +4,12 @@ version = "0.1.0"
 description = "エコ写真の判定とみんなの氷山を受け持つ Project Penguin のバックエンド"
 requires-python = ">=3.11"
 dependencies = [
+    # 写真判定 (Bedrock の Nova 2 Lite) とみんなの氷山 (DynamoDB) を呼ぶ (project-penguin の docs/adr/0001・0002)
+    "boto3>=1.43",
     "fastapi>=0.146.0",
     "pydantic-settings>=2.16.0",
+    # 写真判定の本文 (multipart/form-data、api/openapi.yaml の judgeEcoPhoto) を FastAPI が読むのに要る
+    "python-multipart>=0.0.20",
 ]
 
 [dependency-groups]
@@ -18,6 +22,19 @@ dev = [
     # Pydantic が保守する (https://github.com/pydantic/httpx2)。Starlette 1.9 は httpx を非推奨とし、
     # httpx2 を入れるよう案内している。名前は似ているが typosquat ではない (2026-10-19 に来歴を確認)。
     "httpx2>=2.14.0",
+    # DynamoDB の条件付き Put・ADD と STS (Vercel の OIDC) を、本物と同じ規則で手元で動かす偽物 (tests/support/)。
+    # Bedrock は moto に無いので botocore の Stubber を使う
+    "moto[dynamodb,sts]==5.2.4",
+    # mypy --strict が boto3 のクライアントの型を見られるようにする
+    "boto3-stubs[bedrock-runtime,dynamodb,sts]>=1.43",
+    # 応答を契約 (api/openapi.yaml) のスキーマで検証し、infra/backend.yaml を読む。エラーの code の表は
+    # scripts/check_api_contract.py から読み込んで二重に持たない (そのため同じ版を揃える)
+    "jsonschema==4.26.0",
+    "openapi-spec-validator==0.9.0",
+    "pyyaml==6.0.3",
+    "types-pyyaml>=6.0.12",
+    # 本物の AWS に当てるテスト (印 aws) が、aws login の認証情報を読むのに要る
+    "botocore[crt]>=1.43.116",
 ]
 
 [build-system]
@@ -66,6 +83,14 @@ ignore = [
 known-first-party = ["penguin_backend"]
 
 # ---------------------------------------------------------------
+# pyright (pyright-lsp プラグインのコードの解析。型の検査の正は mypy)
+# ---------------------------------------------------------------
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+extraPaths = ["."]
+
+# ---------------------------------------------------------------
 # mypy
 # ---------------------------------------------------------------
 [tool.mypy]
@@ -81,3 +106,7 @@ show_error_codes = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --strict-markers"
+markers = [
+    # 本物の AWS (Nova 2 Lite と開発用テーブル) に当てる。PENGUIN_TEST_AWS=1 を付けたときだけ動き、CI では動かない
+    "aws: 本物の AWS に当てるテスト",
+]

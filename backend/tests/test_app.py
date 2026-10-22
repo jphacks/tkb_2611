@@ -1,15 +1,12 @@
-import json
-from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
 
 from penguin_backend import __version__
 from penguin_backend.app import SCHEMA_VERSION, create_app
 from penguin_backend.settings import Settings
+from tests.support.contract import assert_matches_contract, example, validate
 
 LOCAL_ORIGIN = "http://localhost:8090"
-CONTRACT = Path(__file__).resolve().parents[2] / "api"
 
 
 def client(origins: list[str] | None = None) -> TestClient:
@@ -30,12 +27,15 @@ def test_health_answers_ok_without_caching(path: str) -> None:
     assert response.headers["cache-control"] == "no-store"
 
 
-def test_health_matches_the_contract_example() -> None:
-    example = json.loads((CONTRACT / "examples" / "health.200.ok.json").read_text(encoding="utf-8"))
-    body = client().get("/api/v1/health").json()
+def test_health_matches_the_contract() -> None:
+    response = client().get("/api/v1/health")
 
-    assert body.keys() == example.keys()
-    assert body["schema_version"] == example["schema_version"]
+    assert_matches_contract(response)
+    assert response.json()["schema_version"] == example("health.200.ok")["schema_version"]
+
+
+def test_health_head_matches_the_contract() -> None:
+    assert_matches_contract(client().head("/api/v1/health"))
 
 
 def test_healthz_answers_head_for_uptime_monitors() -> None:
@@ -81,9 +81,24 @@ def test_unhandled_error_keeps_cors_headers_and_hides_details() -> None:
     )
 
     assert response.status_code == 500
-    assert response.json() == {"error": "internal"}
+    assert response.json()["error"]["code"] == "internal"
     assert response.headers["access-control-allow-origin"] == LOCAL_ORIGIN
     assert "写真" not in response.text
+
+
+def test_unhandled_error_answers_in_the_contract_error_shape() -> None:
+    app = create_app(Settings())
+
+    @app.get("/api/boom")
+    def boom() -> None:
+        raise RuntimeError("boom")
+
+    response = TestClient(app, raise_server_exceptions=False).get("/api/boom")
+
+    # /api/boom は契約に無い道なので、本文の形と code の表だけを見る
+    assert validate("ErrorResponse", response.json()) == []
+    assert response.json() == example("error.500.internal")
+    assert response.headers["cache-control"] == "no-store"
 
 
 def test_origins_are_read_from_a_comma_separated_variable(

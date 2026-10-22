@@ -45,9 +45,13 @@ backend/src/penguin_backend/
 
 ## テスト
 
-- AI はモックにする (実際の API を CI から呼ばない)。
-- **契約テスト**: `api/examples/` の各例について、同じ入力で同じ形の応答を返すこと。FastAPI の応答を契約のスキーマで検証する。
-- 失敗の場合 (AI のタイムアウト・壊れた JSON・表に無い答え・大きすぎる画像) を必ず書く。
+- AI と DynamoDB は偽物にする (実際の AWS を CI から呼ばない)。道具は `backend/tests/support/`、回し方は `backend/README.md` の「テストの回し方 (SDD → TDD)」。
+  - Bedrock は `bedrock` フィクスチャ (botocore の Stubber)、DynamoDB は `community_tables` フィクスチャ (moto、形は `infra/backend.yaml` から読む)。
+  - 本番のコードは boto3 のクライアントを外から受け取る。関数の中で `boto3.client(...)` を直に作らない (偽物に差し替えられなくなる)。
+- **契約テスト**: 応答は `assert_matches_contract`、エラーは `assert_error` で、契約のスキーマと code の表に照らして確かめる。
+- 失敗の場合 (AI のタイムアウト・スロットリング・壊れた JSON・表に無い答え・大きすぎる画像・JPEG でない画像) を必ず書く。
+- 写真を受け取る道のテストには、`no_disk_writes` フィクスチャと `assert_no_leak` を付ける (`privacy.md` を機械的に確かめる)。
+- 本物の AWS に当てるテストは `tests/aws/` に置いて印 `aws` を付ける。`PENGUIN_TEST_AWS=1` のときだけ動く。
 
 ## 依存
 
