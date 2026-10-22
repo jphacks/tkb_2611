@@ -1,0 +1,240 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Project Penguin backend foundation. DynamoDB tables for the community goal (prod and dev),
+  least-privilege managed policies for Nova 2 Lite photo judging and table access, and an IAM role
+  that the Vercel Functions assume through Vercel OIDC (no long-lived access keys).
+  Decisions: project-penguin docs/adr/0001, 0002, 0003. Deployed only by the account owner.
+
+Metadata:
+  AWSToolsMetrics:
+    AWSAgentToolkit: aws-cloudformation@3
+  com.aws.cloudformation.Context:
+    why: >-
+      Hack Day の backend (Vercel の FastAPI) が写真判定とみんなの氷山に使う AWS 側の土台。
+      開発者グループ (project-penguin の infra/account.yaml) はここが出す管理ポリシーを import して付ける。
+    must:
+      - アカウント ID・Vercel のチーム名を文字で書かない (このリポジトリは public)。チーム名はパラメータで渡す
+      - Bedrock は Nova 2 Lite の jp. 推論プロファイルだけを許す (写真を国内で処理し、高いモデルを呼ばせない)
+      - 長く使えるアクセスキーを作らない。Vercel からは OIDC でロールを借りる
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label: { default: Vercel }
+        Parameters: [VercelTeamSlug, VercelProject]
+
+Parameters:
+  VercelTeamSlug:
+    Type: String
+    Description: Vercel のチーム (Hobby なら個人のアカウント) の slug。OIDC の発行者 URL に入る
+    AllowedPattern: "^[a-z0-9][a-z0-9-]{0,99}$"
+  VercelProject:
+    Type: String
+    Description: Vercel のプロジェクト名 (OIDC の sub に入る)
+    Default: project-penguin
+    AllowedPattern: "^[a-z0-9][a-z0-9._-]{0,99}$"
+
+Resources:
+  CommunityTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: >-
+          本番のみんなの氷山。提出の記録 sub#<goal>#<提出 ID> を条件付き Put で 1 回だけ通し、
+          通ったときだけ goal#<goal>#s<0-9> に ADD する (docs/adr/0002)。
+        must:
+          - 写真・個人を識別できる値を入れない。残すのは件数と種類だけ
+          - キーを変えると置き換えになり、件数が消える
+        mutability:
+          KeySchema: immutable
+    Properties:
+      TableName: !Sub "${AWS::StackName}-community"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: pk, AttributeType: S }
+      KeySchema:
+        - { AttributeName: pk, KeyType: HASH }
+      TimeToLiveSpecification: { AttributeName: ttl, Enabled: true }
+      PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
+      SSESpecification: { SSEEnabled: true }
+      Tags:
+        - { Key: project, Value: penguin }
+        - { Key: managed-by, Value: cloudformation }
+        - { Key: environment, Value: production }
+
+  CommunityDevTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: >-
+          手元の開発と Vercel の preview が使う。本番と同じ形で、中身は捨ててよい。
+          PITR は中身が小さく費用がほぼかからないので、cfn-guard の DYNAMODB_PITR_ENABLED (抑止に対応していない) に合わせて付ける
+    Properties:
+      TableName: !Sub "${AWS::StackName}-community-dev"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: pk, AttributeType: S }
+      KeySchema:
+        - { AttributeName: pk, KeyType: HASH }
+      TimeToLiveSpecification: { AttributeName: ttl, Enabled: true }
+      PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
+      SSESpecification: { SSEEnabled: true }
+      Tags:
+        - { Key: project, Value: penguin }
+        - { Key: managed-by, Value: cloudformation }
+        - { Key: environment, Value: development }
+
+  NovaInvokePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: >-
+          写真判定 (docs/adr/0001) に要る呼び出しだけ。Vercel のロールと開発者グループの両方に付ける。
+          jp. のプロファイルは東京と大阪に振り分けるので、モデル側はプロファイル経由に限ってリージョンを絞らない
+        must:
+          - ほかのモデル・global. のプロファイルを足さない (足すなら ADR を更新する)
+    Properties:
+      Description: Invoke Amazon Nova 2 Lite only through the jp. inference profile
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: InvokeJpInferenceProfile
+            Effect: Allow
+            Action: [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream]
+            Resource: !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/jp.amazon.nova-2-lite-v1:0"
+          - Sid: InvokeModelThroughJpProfileOnly
+            Effect: Allow
+            Action: [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream]
+            Resource: !Sub "arn:${AWS::Partition}:bedrock:*::foundation-model/amazon.nova-2-lite-v1:0"
+            Condition:
+              StringEquals:
+                bedrock:InferenceProfileArn: !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/jp.amazon.nova-2-lite-v1:0"
+
+  CommunityDevTablePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: 開発者グループが開発用テーブルだけを読み書きする。本番のテーブルは Vercel のロールだけが触る
+    Properties:
+      Description: Read and write the development community table only
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DevTableReadWrite
+            Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteItem
+              - dynamodb:BatchGetItem
+              - dynamodb:Query
+              - dynamodb:Scan
+              - dynamodb:DescribeTable
+            Resource: !GetAtt CommunityDevTable.Arn
+          - Sid: ListTablesForConsole
+            Effect: Allow
+            Action: dynamodb:ListTables
+            Resource: "*"
+
+  CommunityCountPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: >-
+          Vercel のロールが、提出の記録の条件付き Put と分割カウンタの ADD・読み出しをする (docs/adr/0002)。
+          インラインにせず管理ポリシーにする (cfn-guard の IAM_NO_INLINE_POLICY_CHECK)
+        must:
+          - 消す・Scan する権限を足さない
+    Properties:
+      Description: Count community goal submissions in the prod and dev tables
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: CountSubmissions
+            Effect: Allow
+            Action: [dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:BatchGetItem, dynamodb:GetItem]
+            Resource:
+              - !GetAtt CommunityTable.Arn
+              - !GetAtt CommunityDevTable.Arn
+
+  VercelOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Vercel Functions の OIDC トークンを STS で受け付ける (https://vercel.com/docs/oidc/aws、チームの発行者モード)
+        must:
+          - 発行者 URL を変えると置き換えになり、ロールの信頼ポリシーも合わせて変わる
+    Properties:
+      Url: !Sub "https://oidc.vercel.com/${VercelTeamSlug}"
+      ClientIdList:
+        - !Sub "https://vercel.com/${VercelTeamSlug}"
+      Tags:
+        - { Key: project, Value: penguin }
+        - { Key: managed-by, Value: cloudformation }
+
+  VercelBackendRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: >-
+          backend が x-vercel-oidc-token の値で AssumeRoleWithWebIdentity して使う。
+          production は本番のテーブル、preview は開発用のテーブルを、Vercel の環境変数で選ぶ
+        must:
+          - sub は完全一致で、このプロジェクトの production と preview だけに限る
+          - 付ける権限は Nova の呼び出しとテーブルの読み書きだけ
+    Properties:
+      Description: Assumed by the Vercel Functions of the Project Penguin backend via OIDC
+      MaxSessionDuration: 3600
+      # Condition のキーにチーム名が入り、YAML のキーには !Sub を使えないので、JSON の文字列で組む
+      AssumeRolePolicyDocument: !Sub
+        - |
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Principal": { "Federated": "${ProviderArn}" },
+                "Action": "sts:AssumeRoleWithWebIdentity",
+                "Condition": {
+                  "StringEquals": {
+                    "oidc.vercel.com/${VercelTeamSlug}:aud": "https://vercel.com/${VercelTeamSlug}",
+                    "oidc.vercel.com/${VercelTeamSlug}:sub": [
+                      "owner:${VercelTeamSlug}:project:${VercelProject}:environment:production",
+                      "owner:${VercelTeamSlug}:project:${VercelProject}:environment:preview"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        - ProviderArn: !GetAtt VercelOidcProvider.Arn
+      ManagedPolicyArns:
+        - !Ref NovaInvokePolicy
+        - !Ref CommunityCountPolicy
+      Tags:
+        - { Key: project, Value: penguin }
+        - { Key: managed-by, Value: cloudformation }
+
+Outputs:
+  CommunityTableName:
+    Description: 本番のみんなの氷山のテーブル (Vercel の production の PENGUIN_COMMUNITY_TABLE)
+    Value: !Ref CommunityTable
+  CommunityDevTableName:
+    Description: 開発用のテーブル (手元と Vercel の preview の PENGUIN_COMMUNITY_TABLE)
+    Value: !Ref CommunityDevTable
+  VercelBackendRoleArn:
+    Description: Vercel の PENGUIN_AWS_ROLE_ARN に入れるロール
+    Value: !GetAtt VercelBackendRole.Arn
+  NovaInvokePolicyArn:
+    Description: Nova 2 Lite の呼び出しだけを許す管理ポリシー (infra/account.yaml の開発者グループが使う)
+    Value: !Ref NovaInvokePolicy
+    Export:
+      Name: !Sub "${AWS::StackName}-NovaInvokePolicyArn"
+  CommunityDevTablePolicyArn:
+    Description: 開発用のテーブルだけを読み書きする管理ポリシー (infra/account.yaml の開発者グループが使う)
+    Value: !Ref CommunityDevTablePolicy
+    Export:
+      Name: !Sub "${AWS::StackName}-CommunityDevTablePolicyArn"

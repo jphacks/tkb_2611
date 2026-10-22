@@ -11,8 +11,8 @@ Vercel (1 つのプロジェクト、東京 hnd1)
  │   └─ /StreamingAssets/penguin-config.json   接続先と使う機能 (no-store)
  └─ /api/*                         FastAPI (Python Functions)           ← このリポジトリの backend/
         ├─ /api/v1/health
-        ├─ /api/v1/eco-photo/judge ──▶ 判定に使う AI (#125)
-        ├─ /api/v1/community/goal  ──▶ 件数の保存先 (Upstash などを Hack Day に決める)
+        ├─ /api/v1/eco-photo/judge ──▶ Amazon Bedrock の Nova 2 Lite (jp. 推論プロファイル、東京・大阪)
+        ├─ /api/v1/community/goal  ──▶ Amazon DynamoDB (東京、infra/backend.yaml)
         └─ /api/v1/quests …
 ```
 
@@ -48,7 +48,7 @@ Vercel のプロジェクトは公開役 (project-penguin のオーナー) の�
 
 3. `deploy_web.py` は `backend/src/penguin_backend` と `uv.lock` から書き出した依存を写し、写したコミットを `penguin_backend/DEPLOYED_FROM` に残す。未コミットの変更があれば止まる。
 
-AI のキーは公開役が Vercel の環境変数に入れる (`PENGUIN_<AI>_API_KEY`)。チャットやリポジトリに貼らない。
+AI のキーは置かない。backend は Vercel の OIDC トークン (`x-vercel-oidc-token`) で AWS の IAM ロール (`PENGUIN_AWS_ROLE_ARN`) を借り、1 時間で切れる認証情報で Bedrock と DynamoDB を呼ぶ。ロールに許すのは Nova 2 Lite の呼び出しとテーブルの読み書きだけ。資源とデプロイの手順は `infra/README.md`。
 
 ## 制約 (Vercel Hobby)
 

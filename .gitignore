@@ -18,3 +18,6 @@ __pycache__/
 *.sqlite*
 
 .DS_Store
+
+# IaC のデプロイ時のパラメータ (通知先のメールアドレスや Vercel のチーム名を含むので入れない)
+infra/*.local.json
