@@ -20,9 +20,11 @@ backend/src/penguin_backend/
 ```
 
 - **ルートはすべて `/api/` の下。** Vercel では同じ URL に Unity の Web ビルドが載っていて、それ以外の道は静的ファイルと重なる。契約のパス `/v1/...` は実際には `/api/v1/...`。
-- **AI の提供元は差し替えられるようにする** (Gemini 有料枠 / Workers AI など、#125)。判定の中身 (`judge/`) は提供元を知らない形で書き、提供元のクラスだけを設定で切り替える。
+- **AI の提供元は差し替えられるようにする** (今は Amazon Bedrock の Nova 2 Lite、project-penguin の ADR 0001)。判定の中身 (`judge/`) は提供元を知らない形で書き、提供元のクラスだけを設定で切り替える。
 - エラーは `errors.py` の 1 か所で作る。code は契約の `ErrorCode` だけを使い、HTTP の状態と `retryable` は契約の表に合わせる。429・503 には `Retry-After` を付ける。
-- すべての応答に `Cache-Control: no-store` を付ける。`Date` は付いたまま返す (クライアントの時計合わせに使う)。
+- 応答には `Cache-Control: no-store` を付ける。例外は `GET /v1/community/goal` だけで、`public, s-maxage=10` (契約の `CacheControlShared`)。`Date` は付いたまま返す (クライアントの時計合わせに使う)。
+- **`decision` はサーバーが決める。** AI には写っているもの・`subject`・確信度・画面の撮影らしさだけを返させる。`subject: unknown` は `accept`、画面を撮った写真・文字だけの写真は `reject`。
+- **みんなの氷山に数えるのは、`Idempotency-Key` が付いた判定だけ。** そのキーで提出の記録を条件付き Put し、通ったときだけカウンタに ADD する (ADR 0002)。
 
 ## 外部の AI
 

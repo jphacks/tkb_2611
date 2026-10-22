@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "subject": "my_bottle",
   "comment": "マイボトル、かっこいいね",
   "confidence": 0.91,
@@ -21,18 +21,8 @@
       "id": "not_screen",
       "label": "画面を撮った写真ではない",
       "passed": true
-    },
-    {
-      "id": "not_reused",
-      "label": "前と同じ写真ではない",
-      "passed": true
     }
   ],
-  "co2e": {
-    "value": 24,
-    "unit": "g",
-    "basis": "例の値。数値と根拠は #90 の換算表で決める"
-  },
   "community": {
     "goal_id": "jphacks-2026",
     "added": 1,

@@ -5,7 +5,7 @@ info:
   title: Project Penguin API
   # 契約の版。項目を足したら上げる。正本は jphacks/tkb_2611 の api/openapi.yaml で、
   # project-penguin の api/ はその写し (scripts/check_api_contract.py --against で一致を確かめる)。
-  version: 1.0.0
+  version: 1.1.0
   summary: Unity クライアント (Sh1n1230/project-penguin) と backend (jphacks/tkb_2611) の契約
   description: |
     ## 前方互換の規則
@@ -16,6 +16,7 @@ info:
     2. **知らない enum の値は安全側に倒す。** `subject` は「判定できない写真」、`decision` は `accept`、
        `quests[].kind`・`proof` はそのお題を出さない、`error.code` は `internal` として扱う。
     3. **後から足す項目はすべて省略可にする。必須の項目は増やさない・消さない・意味を変えない。**
+       (1.1.0 で、どのサーバーも返していなかった省略可の `co2e` を外した。CO₂ ではなくインフラの素材で見せると決めたため)
     4. 壊す変更が要るときはパスの版を上げる (`/v2/`)。`/v1/` は審査が終わるまで残す。
 
     ## 共通
@@ -24,7 +25,9 @@ info:
       別の配信元から呼ぶとき (手元の確認) だけ、サーバーは `PENGUIN_CORS_ORIGINS` の配信元を許可する。
       そのときも **エラーの応答に CORS のヘッダーを付け**、`Access-Control-Expose-Headers: Date` で `Date` を公開する。
     - すべての応答 (4xx・5xx を含む) に `Date` を付ける。クライアントは端末の時計の補正に使う (`ServerTrustedClock`)。
-    - すべての応答に `Cache-Control: no-store` を付ける。
+    - 応答には `Cache-Control: no-store` を付ける。例外は `GET /v1/community/goal` だけで、`public, s-maxage=10` にする
+      (全員が同じ値を見るので、CDN に 10 秒置いてサーバーの呼び出しを人数に比例させない)。
+      CDN が返した応答には `Age` が付く。クライアントは `Age` のある応答の `Date` を時計の補正に使わない (RFC 9111 §5.1)。
     - 本文はすべて JSON (UTF-8)。成功の応答には `schema_version` (この文書の `info.version`) を入れる。
     - 画面に出す文字列 (`comment`・`message`・`label` など) は日本語で、そのまま表示できるものにする。
 
@@ -33,7 +36,7 @@ info:
     | 項目 | 値 |
     |---|---|
     | 画像 | JPEG、長い辺 1280px まで (クライアントが縮めて送る) |
-    | 本文の大きさ | 4 MB まで (Vercel Functions の 4.5 MB の手前) |
+    | 本文の大きさ | 1 MB まで。クライアントは縮め直してでも収めてから送り、利用者に「大きすぎる」を見せない。サーバーは 1 MB を超える本文をディスクに退避させない (Starlette は既定で 1 MB を超えた multipart を一時ファイルに書く) |
     | クライアントのタイムアウト | 25 秒 (`UnityWebRequest.timeout`) |
     | クライアントの再試行 | `retryable: true` のエラーと接続の失敗だけ、1 回 |
 
@@ -41,7 +44,9 @@ info:
 
     - 画像はメモリ上で判定に使い、ディスク・ログ・応答に残さない。画像の説明文 (AI の生の出力) も応答に入れない。
     - クライアントは端末やユーザーを特定できる値を送らない (`X-Client-Id` などは使わない)。
-      みんなの氷山の上限などで数が要るときは、サーバーのメモリの中だけで数え、保存しない。
+    - 判定の `Idempotency-Key` は写真 1 枚ごとの乱数で、送り直しを見分けるためだけに使う。端末や人とは結び付かない。
+    - みんなの氷山に残すのは、件数と、提出の記録 (`Idempotency-Key` と期限だけ。期限が来たら消える) だけ (DynamoDB、project-penguin の ADR 0002)。
+    - 判定の `activity` は、その日の移動の種類ごとの分数の要約だけ。時刻ごとの記録と位置は送らない。
 
 servers:
   - url: /api
@@ -86,6 +91,14 @@ paths:
       description: |
         資源の量はサーバーでは決めない。クライアントが写真の表 (`EcoSubjects`) と `decision` から決める。
         `decision` が無い応答は `accept` として扱う (2026-10-19 以前の形)。
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: |
+            写真 1 枚ごとにクライアントが作る乱数。送り直しでも同じ値を送る。サーバーはこれを提出の記録のキーにして、
+            みんなの氷山で同じ写真を 2 回数えない。無いときは判定だけを返し、氷山には数えない。
+          schema: { type: string, pattern: "^[A-Za-z0-9-]{16,64}$" }
       requestBody:
         required: true
         content:
@@ -97,10 +110,13 @@ paths:
                 image:
                   type: string
                   contentMediaType: image/jpeg
-                  description: JPEG。長い辺 1280px まで、4 MB まで
+                  description: JPEG。長い辺 1280px まで、1 MB まで
+                activity: { $ref: "#/components/schemas/ActivitySummary" }
             encoding:
               image:
                 contentType: image/jpeg
+              activity:
+                contentType: application/json
       responses:
         "200":
           description: "判定できた (エコ活動が写っていなかったときも 200 で `subject: unknown`)"
@@ -136,7 +152,7 @@ paths:
           description: 今の状態
           headers:
             Date: { $ref: "#/components/headers/Date" }
-            Cache-Control: { $ref: "#/components/headers/CacheControl" }
+            Cache-Control: { $ref: "#/components/headers/CacheControlShared" }
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CommunityGoal" }
@@ -213,8 +229,11 @@ components:
       description: サーバーの時刻 (RFC 9110 の IMF-fixdate)。4xx・5xx にも付ける
       schema: { type: string }
     CacheControl:
-      description: 常に `no-store`
+      description: CDN にもブラウザにも置かせない
       schema: { type: string, const: no-store }
+    CacheControlShared:
+      description: 全員に同じ値を返す口だけ。Vercel の CDN に 10 秒置く (ブラウザには置かせない)
+      schema: { type: string, const: "public, s-maxage=10" }
     RetryAfter:
       description: 次に試してよいまでの秒数
       schema: { type: integer, minimum: 1 }
@@ -340,7 +359,10 @@ components:
         - `accept`: 表の量をそのまま渡す
         - `reduce`: 量を減らして渡す (確信度が中くらい)。割合はクライアントが決める
         - `retake`: 資源も記録も出さず、`retake_hint` を出して撮り直してもらう
-        - `reject`: 資源も記録も出さない (画面を撮った写真・使い回しなど)。理由は `checks` と `comment` で伝える
+        - `reject`: 資源も記録も出さない (画面を撮った写真・文字だけの写真など)。理由は `checks` と `comment` で伝える
+
+        決めるのはサーバーで、AI の出力をそのまま使わない。`subject` が `unknown` (エコと判定できない写真) は `accept` にする
+        (クライアントが「判定できない写真」の少しの資源を渡す)。
       enum: [accept, reduce, retake, reject]
 
     Check:
@@ -353,14 +375,28 @@ components:
         passed: { type: boolean }
         detail: { type: string, maxLength: 40, description: 省略可。「マイボトル」「82%」など }
 
-    Co2e:
+    ActivitySummary:
       type: object
-      description: CO₂e の目安 (#90 の換算表)。画面では「目安」と書く
-      required: [value, unit]
+      description: |
+        その日 (端末の日付) に端末が数えた移動の、種類ごとの分数 (iOS の Core Motion、project-penguin #128)。
+        判定の裏付けにだけ使う (例: 自転車の写真で、今日自転車に乗った記録がある)。数えられない端末は送らない。
+      required: [date, minutes]
       properties:
-        value: { type: number, minimum: 0 }
-        unit: { type: string, enum: [g, kg] }
-        basis: { type: string, maxLength: 80, description: 換算の根拠の短い説明 }
+        date: { type: string, format: date }
+        minutes:
+          type: object
+          description: 送るのは数えられた種類だけ。`automotive` は電車・バスと車を見分けられない
+          properties:
+            walking: { $ref: "#/components/schemas/MinutesOfDay" }
+            running: { $ref: "#/components/schemas/MinutesOfDay" }
+            cycling: { $ref: "#/components/schemas/MinutesOfDay" }
+            automotive: { $ref: "#/components/schemas/MinutesOfDay" }
+          additionalProperties: false
+
+    MinutesOfDay:
+      type: integer
+      minimum: 0
+      maximum: 1440
 
     CommunityContribution:
       type: object
@@ -392,7 +428,6 @@ components:
           type: string
           maxLength: 60
           description: "`retake` のときの案内 (「ボトル全体が入るように撮ってね」など)"
-        co2e: { $ref: "#/components/schemas/Co2e" }
         community: { $ref: "#/components/schemas/CommunityContribution" }
 
     Milestone:
