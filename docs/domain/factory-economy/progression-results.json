@@ -1,0 +1,769 @@
+{
+  "assumptions": {
+    "one_building_per_recipe": true,
+    "empty_start_inventory": true,
+    "fixed_level_without_unlock_cost": true,
+    "instant_logistics": true,
+    "no_storage_limit": true,
+    "no_offline_mechanic": true
+  },
+  "stage_probabilities": {
+    "1": {
+      "total_weight": 6000,
+      "probabilities": {
+        "adelie": 0.23333333333333334,
+        "chinstrap": 0.16666666666666666,
+        "galapagos": 0.13333333333333333,
+        "western_rockhopper": 0.16666666666666666,
+        "king": 0.13333333333333333,
+        "magellanic": 0.16666666666666666
+      }
+    },
+    "2": {
+      "total_weight": 8600,
+      "probabilities": {
+        "adelie": 0.16279069767441862,
+        "chinstrap": 0.11627906976744186,
+        "galapagos": 0.09302325581395349,
+        "western_rockhopper": 0.11627906976744186,
+        "king": 0.09302325581395349,
+        "magellanic": 0.11627906976744186,
+        "little": 0.09302325581395349,
+        "humboldt": 0.06976744186046512,
+        "gentoo": 0.046511627906976744,
+        "african": 0.03488372093023256,
+        "northern_rockhopper": 0.03488372093023256,
+        "emperor": 0.023255813953488372
+      }
+    },
+    "3": {
+      "total_weight": 9900,
+      "probabilities": {
+        "adelie": 0.1414141414141414,
+        "chinstrap": 0.10101010101010101,
+        "galapagos": 0.08080808080808081,
+        "western_rockhopper": 0.10101010101010101,
+        "king": 0.08080808080808081,
+        "magellanic": 0.10101010101010101,
+        "little": 0.08080808080808081,
+        "humboldt": 0.06060606060606061,
+        "gentoo": 0.04040404040404041,
+        "african": 0.030303030303030304,
+        "northern_rockhopper": 0.030303030303030304,
+        "emperor": 0.020202020202020204,
+        "macaroni": 0.04040404040404041,
+        "royal": 0.030303030303030304,
+        "yellow_eyed": 0.030303030303030304,
+        "fiordland": 0.020202020202020204,
+        "snares": 0.010101010101010102
+      }
+    },
+    "4": {
+      "total_weight": 10000,
+      "probabilities": {
+        "adelie": 0.14,
+        "chinstrap": 0.1,
+        "galapagos": 0.08,
+        "western_rockhopper": 0.1,
+        "king": 0.08,
+        "magellanic": 0.1,
+        "little": 0.08,
+        "humboldt": 0.06,
+        "gentoo": 0.04,
+        "african": 0.03,
+        "northern_rockhopper": 0.03,
+        "emperor": 0.02,
+        "macaroni": 0.04,
+        "royal": 0.03,
+        "yellow_eyed": 0.03,
+        "fiordland": 0.02,
+        "snares": 0.01,
+        "eastern_rockhopper": 0.008,
+        "erect_crested": 0.002
+      }
+    }
+  },
+  "normal_draw_waits": {
+    "adelie": {
+      "probability": 0.14,
+      "mean_without_pity": 7.142857142857143,
+      "p95_without_pity": 20
+    },
+    "chinstrap": {
+      "probability": 0.1,
+      "mean_without_pity": 10.0,
+      "p95_without_pity": 29
+    },
+    "galapagos": {
+      "probability": 0.08,
+      "mean_without_pity": 12.5,
+      "p95_without_pity": 36
+    },
+    "western_rockhopper": {
+      "probability": 0.1,
+      "mean_without_pity": 10.0,
+      "p95_without_pity": 29
+    },
+    "king": {
+      "probability": 0.08,
+      "mean_without_pity": 12.5,
+      "p95_without_pity": 36
+    },
+    "magellanic": {
+      "probability": 0.1,
+      "mean_without_pity": 10.0,
+      "p95_without_pity": 29
+    },
+    "little": {
+      "probability": 0.08,
+      "mean_without_pity": 12.5,
+      "p95_without_pity": 36
+    },
+    "humboldt": {
+      "probability": 0.06,
+      "mean_without_pity": 16.666666666666668,
+      "p95_without_pity": 49
+    },
+    "gentoo": {
+      "probability": 0.04,
+      "mean_without_pity": 25.0,
+      "p95_without_pity": 74
+    },
+    "african": {
+      "probability": 0.03,
+      "mean_without_pity": 33.333333333333336,
+      "p95_without_pity": 99
+    },
+    "northern_rockhopper": {
+      "probability": 0.03,
+      "mean_without_pity": 33.333333333333336,
+      "p95_without_pity": 99
+    },
+    "emperor": {
+      "probability": 0.02,
+      "mean_without_pity": 50.0,
+      "p95_without_pity": 149
+    },
+    "macaroni": {
+      "probability": 0.04,
+      "mean_without_pity": 25.0,
+      "p95_without_pity": 74
+    },
+    "royal": {
+      "probability": 0.03,
+      "mean_without_pity": 33.333333333333336,
+      "p95_without_pity": 99
+    },
+    "yellow_eyed": {
+      "probability": 0.03,
+      "mean_without_pity": 33.333333333333336,
+      "p95_without_pity": 99
+    },
+    "fiordland": {
+      "probability": 0.02,
+      "mean_without_pity": 50.0,
+      "p95_without_pity": 149
+    },
+    "snares": {
+      "probability": 0.01,
+      "mean_without_pity": 100.0,
+      "p95_without_pity": 299
+    },
+    "eastern_rockhopper": {
+      "probability": 0.008,
+      "mean_without_pity": 125.0,
+      "p95_without_pity": 373
+    },
+    "erect_crested": {
+      "probability": 0.002,
+      "mean_without_pity": 500.0,
+      "p95_without_pity": 1497
+    }
+  },
+  "cold_batches": {
+    "F4_level1_no_birds_unlimited_supply": {
+      "completed": true,
+      "seconds": 40100,
+      "output": 100.0,
+      "energy_used": [
+        2205.0,
+        2200.0,
+        205.0
+      ],
+      "jobs": {
+        "oden": 1,
+        "kamaboko": 100,
+        "chikuwa": 100,
+        "preparation": 2000,
+        "fishery": 2000,
+        "kelp_farm": 100
+      },
+      "leftovers": {}
+    },
+    "F4_level1_no_birds_100_pack": {
+      "completed": false,
+      "reason": "supply_exhausted",
+      "energy_used": [
+        100.0,
+        100.0,
+        100.0
+      ]
+    },
+    "F3_gift_level3_no_birds": {
+      "completed": true,
+      "seconds": 60,
+      "output": 1000.0,
+      "energy_used": [
+        3.0,
+        2.0,
+        2.0
+      ],
+      "jobs": {
+        "gift": 1,
+        "drying": 1,
+        "fishery": 1,
+        "kelp_farm": 1,
+        "saltworks": 1
+      },
+      "leftovers": {
+        "fish": 900.0,
+        "salt": 900.0
+      }
+    },
+    "F3_research_level3_no_birds": {
+      "completed": true,
+      "seconds": 60,
+      "output": 1000.0,
+      "energy_used": [
+        1.0,
+        4.0,
+        1.0
+      ],
+      "jobs": {
+        "research": 1,
+        "preparation": 1,
+        "fishery": 1,
+        "kelp_farm": 1
+      },
+      "leftovers": {
+        "fish": 900.0
+      }
+    },
+    "F4_level4_no_birds": {
+      "completed": true,
+      "seconds": 210,
+      "output": 3000.0,
+      "energy_used": [
+        14.0,
+        11.0,
+        13.0
+      ],
+      "jobs": {
+        "oden": 1,
+        "kamaboko": 4,
+        "chikuwa": 4,
+        "preparation": 3,
+        "fishery": 1,
+        "kelp_farm": 4
+      },
+      "leftovers": {
+        "fish": 2700.0,
+        "surimi": 1000.0,
+        "kamaboko": 2000.0,
+        "kelp": 2000.0,
+        "chikuwa": 2000.0
+      }
+    },
+    "F4_level4_one_of_each": {
+      "completed": true,
+      "seconds": 180,
+      "output": 7200.0,
+      "energy_used": [
+        12.0,
+        8.0,
+        11.0
+      ],
+      "jobs": {
+        "oden": 1,
+        "kamaboko": 3,
+        "chikuwa": 3,
+        "preparation": 2,
+        "fishery": 1,
+        "kelp_farm": 3
+      },
+      "leftovers": {
+        "fish": 3760.0,
+        "surimi": 1800.0,
+        "kamaboko": 3500.0,
+        "kelp": 800.0,
+        "chikuwa": 3500.0
+      }
+    },
+    "F4_level4_ten_of_each": {
+      "completed": true,
+      "seconds": 120,
+      "output": 99000.0,
+      "energy_used": [
+        8.0,
+        3.0,
+        8.0
+      ],
+      "jobs": {
+        "oden": 1,
+        "kamaboko": 1,
+        "chikuwa": 1,
+        "preparation": 1,
+        "fishery": 1,
+        "kelp_farm": 2
+      },
+      "leftovers": {
+        "fish": 17900.0,
+        "surimi": 10000.0,
+        "kamaboko": 8000.0,
+        "kelp": 8000.0,
+        "chikuwa": 8000.0
+      }
+    }
+  },
+  "unit_costs_level4_no_birds": {
+    "fish": {
+      "energy": [
+        0.0003333333333333333,
+        0.0,
+        0.0
+      ],
+      "points_per_total_energy": 3000.0
+    },
+    "kelp": {
+      "energy": [
+        0.0,
+        0.0,
+        0.0003333333333333333
+      ],
+      "points_per_total_energy": 6000.0
+    },
+    "salt": {
+      "energy": [
+        0.0003333333333333333,
+        0.0,
+        0.0003333333333333333
+      ],
+      "points_per_total_energy": 3000.0
+    },
+    "surimi": {
+      "energy": [
+        1.1111111111111112e-05,
+        0.0003333333333333333,
+        0.0
+      ],
+      "points_per_total_energy": 11612.90322580645
+    },
+    "dried": {
+      "energy": [
+        0.00035555555555555557,
+        0.0,
+        1.1111111111111112e-05
+      ],
+      "points_per_total_energy": 16363.636363636364
+    },
+    "kamaboko": {
+      "energy": [
+        3.7037037037037037e-06,
+        0.0007777777777777777,
+        0.0003333333333333333
+      ],
+      "points_per_total_energy": 10764.119601328905
+    },
+    "chikuwa": {
+      "energy": [
+        0.0006703703703703703,
+        0.00011111111111111112,
+        0.0
+      ],
+      "points_per_total_energy": 10236.966824644549
+    },
+    "gift": {
+      "energy": [
+        0.00011851851851851852,
+        0.0006666666666666666,
+        0.00011481481481481481
+      ],
+      "points_per_total_energy": 31111.11111111111
+    },
+    "research": {
+      "energy": [
+        3.7037037037037037e-06,
+        0.0011111111111111111,
+        0.00011111111111111112
+      ],
+      "points_per_total_energy": 26102.719033232628
+    },
+    "oden": {
+      "energy": [
+        0.0039135802469135806,
+        0.002962962962962963,
+        0.0038888888888888888
+      ],
+      "points_per_total_energy": 27866.97247706422
+    }
+  },
+  "unit_costs_level4_one_each": {
+    "fish": {
+      "energy": [
+        0.0002525252525252525,
+        0.0,
+        0.0
+      ],
+      "points_per_total_energy": 3960.0
+    },
+    "kelp": {
+      "energy": [
+        0.0,
+        0.0,
+        0.0002777777777777778
+      ],
+      "points_per_total_energy": 7200.0
+    },
+    "salt": {
+      "energy": [
+        0.0002777777777777778,
+        0.0,
+        0.0002777777777777778
+      ],
+      "points_per_total_energy": 3600.0
+    },
+    "surimi": {
+      "energy": [
+        6.475006475006475e-06,
+        0.0002564102564102564,
+        0.0
+      ],
+      "points_per_total_energy": 15215.763546798029
+    },
+    "dried": {
+      "energy": [
+        0.00027000777000777,
+        0.0,
+        7.122507122507122e-06
+      ],
+      "points_per_total_energy": 21650.467289719625
+    },
+    "kamaboko": {
+      "energy": [
+        1.4388903277792166e-06,
+        0.0005014245014245014,
+        0.00022222222222222223
+      ],
+      "points_per_total_energy": 16549.76980473091
+    },
+    "chikuwa": {
+      "energy": [
+        0.00044588333477222367,
+        5.698005698005698e-05,
+        0.0
+      ],
+      "points_per_total_energy": 15908.893212773262
+    },
+    "gift": {
+      "energy": [
+        5.2175414494255075e-05,
+        0.0003864734299516908,
+        5.505319514981351e-05
+      ],
+      "points_per_total_energy": 56714.3697095646
+    },
+    "research": {
+      "energy": [
+        1.4388903277792166e-06,
+        0.0007236467236467237,
+        6.17283950617284e-05
+      ],
+      "points_per_total_energy": 40670.34856076954
+    },
+    "oden": {
+      "energy": [
+        0.0013157253126388929,
+        0.0007755618866729977,
+        0.001388888888888889
+      ],
+      "points_per_total_energy": 86202.53469849491
+    }
+  },
+  "rare_target_with_pity": {
+    "assumption": "only_two_S4_species_unowned",
+    "expected_encounters": 35.49543113295812,
+    "median": 42,
+    "p95": 42,
+    "maximum": 42,
+    "cdf": [
+      {
+        "encounters": 1,
+        "probability": 0.002
+      },
+      {
+        "encounters": 2,
+        "probability": 0.003996
+      },
+      {
+        "encounters": 3,
+        "probability": 0.005988008
+      },
+      {
+        "encounters": 4,
+        "probability": 0.007976031984
+      },
+      {
+        "encounters": 5,
+        "probability": 0.009960079920032
+      },
+      {
+        "encounters": 6,
+        "probability": 0.011940159760191936
+      },
+      {
+        "encounters": 7,
+        "probability": 0.013916279440671551
+      },
+      {
+        "encounters": 8,
+        "probability": 0.015888446881790207
+      },
+      {
+        "encounters": 9,
+        "probability": 0.017856669988026628
+      },
+      {
+        "encounters": 10,
+        "probability": 0.019820956648050576
+      },
+      {
+        "encounters": 11,
+        "probability": 0.021781314734754476
+      },
+      {
+        "encounters": 12,
+        "probability": 0.023737752105284966
+      },
+      {
+        "encounters": 13,
+        "probability": 0.025690276601074397
+      },
+      {
+        "encounters": 14,
+        "probability": 0.027638896047872247
+      },
+      {
+        "encounters": 15,
+        "probability": 0.029583618255776503
+      },
+      {
+        "encounters": 16,
+        "probability": 0.031524451019264946
+      },
+      {
+        "encounters": 17,
+        "probability": 0.03346140211722642
+      },
+      {
+        "encounters": 18,
+        "probability": 0.035394479312991965
+      },
+      {
+        "encounters": 19,
+        "probability": 0.03732369035436598
+      },
+      {
+        "encounters": 20,
+        "probability": 0.03924904297365725
+      },
+      {
+        "encounters": 21,
+        "probability": 0.20311611853196165
+      },
+      {
+        "encounters": 22,
+        "probability": 0.21238052193579604
+      },
+      {
+        "encounters": 23,
+        "probability": 0.2215496901764138
+      },
+      {
+        "encounters": 24,
+        "probability": 0.2306245807877054
+      },
+      {
+        "encounters": 25,
+        "probability": 0.239606141717858
+      },
+      {
+        "encounters": 26,
+        "probability": 0.248495311425233
+      },
+      {
+        "encounters": 27,
+        "probability": 0.25729301897328516
+      },
+      {
+        "encounters": 28,
+        "probability": 0.26600018412453214
+      },
+      {
+        "encounters": 29,
+        "probability": 0.27461771743358476
+      },
+      {
+        "encounters": 30,
+        "probability": 0.2831465203392462
+      },
+      {
+        "encounters": 31,
+        "probability": 0.29158748525569106
+      },
+      {
+        "encounters": 32,
+        "probability": 0.2999414956627318
+      },
+      {
+        "encounters": 33,
+        "probability": 0.30820942619518293
+      },
+      {
+        "encounters": 34,
+        "probability": 0.31639214273133137
+      },
+      {
+        "encounters": 35,
+        "probability": 0.3244905024805222
+      },
+      {
+        "encounters": 36,
+        "probability": 0.33250535406986803
+      },
+      {
+        "encounters": 37,
+        "probability": 0.3404375376300921
+      },
+      {
+        "encounters": 38,
+        "probability": 0.34828788488051216
+      },
+      {
+        "encounters": 39,
+        "probability": 0.3560572192131745
+      },
+      {
+        "encounters": 40,
+        "probability": 0.36374635577614733
+      },
+      {
+        "encounters": 41,
+        "probability": 0.3713561015559802
+      },
+      {
+        "encounters": 42,
+        "probability": 1.0
+      }
+    ]
+  },
+  "stage4_aggregate_bounds": {
+    "balanced": {
+      "no_birds": {
+        "points_upper_bound": 7780837.5,
+        "deliveries": {
+          "kelp": 65231.25,
+          "dried": 63062.5,
+          "gift": 60000.0,
+          "research": 6000.0,
+          "oden": 18000.0
+        }
+      },
+      "one_of_each": {
+        "points_upper_bound": 24127532.933,
+        "deliveries": {
+          "kelp": 61180.991,
+          "dried": 91814.581,
+          "gift": 103500.0,
+          "research": 34883.858,
+          "oden": 64800.0
+        }
+      }
+    },
+    "gas_scarce": {
+      "no_birds": {
+        "points_upper_bound": 4642567.995,
+        "deliveries": {
+          "kelp": 130923.466,
+          "gift": 60000.0,
+          "research": 41916.509,
+          "oden": 4531.309
+        }
+      },
+      "one_of_each": {
+        "points_upper_bound": 11257269.022,
+        "deliveries": {
+          "kelp": 152391.384,
+          "gift": 103500.0,
+          "research": 85310.93,
+          "oden": 17748.455
+        }
+      }
+    },
+    "electric_scarce": {
+      "no_birds": {
+        "points_upper_bound": 3526625.0,
+        "deliveries": {
+          "fish": 58250.0,
+          "kelp": 151875.0,
+          "salt": 46687.5,
+          "dried": 90000.0,
+          "oden": 8437.5
+        }
+      },
+      "one_of_each": {
+        "points_upper_bound": 12394316.786,
+        "deliveries": {
+          "fish": 69706.071,
+          "kelp": 164290.179,
+          "salt": 62354.464,
+          "dried": 117000.0,
+          "oden": 37231.071
+        }
+      }
+    },
+    "water_scarce": {
+      "no_birds": {
+        "points_upper_bound": 4839048.98,
+        "deliveries": {
+          "fish": 66232.653,
+          "dried": 70000.0,
+          "chikuwa": 48979.592,
+          "gift": 60000.0,
+          "research": 40285.714,
+          "oden": 3306.122
+        }
+      },
+      "one_of_each": {
+        "points_upper_bound": 10650461.676,
+        "deliveries": {
+          "fish": 138687.735,
+          "dried": 97000.0,
+          "chikuwa": 72780.2,
+          "gift": 103500.0,
+          "research": 85314.233,
+          "oden": 12398.256
+        }
+      }
+    },
+    "empty": {
+      "no_birds": {
+        "points_upper_bound": 0.0,
+        "deliveries": {}
+      },
+      "one_of_each": {
+        "points_upper_bound": 0.0,
+        "deliveries": {}
+      }
+    }
+  }
+}

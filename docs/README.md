@@ -10,10 +10,14 @@
 
 | 文書 | 内容 |
 |---|---|
-| [方向性とゲーム仕様](product-direction/README.md) | 目的・課題の仮説、現実の行動とエネルギーの対応、工場・拡張・納品・週ノルマ・ペンギン解放のルール |
+| [方向性とゲーム仕様](product-direction/README.md) | 目的・課題の仮説、現実の行動とエネルギーの対応、工場・拡張・レベル上げ用の納品・ペンギンの解放と獲得のルール |
 | [組み合わせと倉庫の提案](product-direction/logistics-proposal.md) | 不規則な配置の扱い、自動配送、大型倉庫、階層をまたぐ資源の中継 |
+| [施設・資源の次数とバランス](product-direction/factory-flow-proposal.md) | 加工の次数、施設候補、生産比率、エネルギー、納品評価の案 |
+| [ペンギンの種類と効果](product-direction/penguin-effects-proposal.md) | 既存19種の所持効果、羽数による成長、すれ違いの出現確率、新種保証 |
+| [ドメイン知識](domain/README.md) | 工場ゲームの原典調査、設計の知識、数量検証、収集効果の考え方 |
 | [競合・既存コードの調査](product-direction/research.md) | 競合との比較、参考にする実装、iOS 連携と性能の検証事項 |
 | [ペルソナ分析](product-direction/personas.md) | 行動・動機に基づく利用者像の仮説と検証方法 |
+| [課題・対象者・独自性と発表の整理](product-direction/positioning.md) | セルフケアを包括する課題候補、日常行動を工場のエネルギー源にする特徴、参考採点、90秒発表案 |
 | [確認事項](product-direction/questions.md) | 回答済みの仕様と、優先順位を付けた未決事項 |
 
 ## backend と API の設計
