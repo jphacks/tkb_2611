@@ -42,23 +42,25 @@ project-penguin の `infra/account.yaml` (開発者グループ) は、このス
    ]
    ```
 
-   これを `infra/backend.local.json` として保存する。テーブルの上限 (`ProdMaxReadRequestUnits` など) と呼び出しの目安 (`JudgeInvocationsPerHourAlarm`) は既定値のままでよく、変えるときだけ足す。
+   これを `infra/backend.local.json` として保存する。3 つとも必須で、`AlertEmail` は手本の `<...>` のままだと形が合わず、変更セットの作成で弾かれる。テーブルの上限 (`ProdMaxReadRequestUnits` など) と呼び出しの目安 (`JudgeInvocationsPerHourAlarm`) は既定値のままでよく、変えるときだけ足す。
 
 3. 変更セットを作り、中身を確かめてから実行する。
 
    ```bash
    aws cloudformation create-change-set --profile penguin --region ap-northeast-1 \
      --stack-name penguin-backend --change-set-name "cs-$(date +%s)" \
-     --change-set-type CREATE \
+     --change-set-type UPDATE \
      --template-body file://infra/backend.yaml \
      --parameters file://infra/backend.local.json \
      --capabilities CAPABILITY_IAM \
      --tags Key=project,Value=penguin Key=managed-by,Value=cloudformation
    ```
 
-   - 2 回目からは `--change-set-type UPDATE` にする。
+   - スタック `penguin-backend` はもうあるので UPDATE で作る。スタックを新しく作るときだけ `--change-set-type CREATE` にする。
    - `describe-change-set` で中身を見る。**本番のテーブルに `Replacement: True` が出たら実行しない** (件数が消える)。
    - テーブルの上限 (`OnDemandThroughput`) の変更は置き換えにならない。
+   - 管理ポリシーの `Description` を変えると、そのポリシーは置き換え (ARN が変わる) になる。Export しているポリシー (`NovaInvokePolicy`・`CommunityDevTablePolicy`) では、`account.yaml` が import している Export の値が変わることになり、更新が失敗するので避ける。
+   - テンプレートの日本語 (コメント・Metadata・Parameters と Outputs の Description) は、CloudFormation に保存されると「?」に化ける (原因は未確認)。資源の値は英語なので動きには影響せず、コンソールの表示が化けるだけ。
    - 確かめたら `execute-change-set` で実行する。
    - 実行後に届く SNS の購読の確認メールのリンクを開く。開くまでアラームは届かない。
 
