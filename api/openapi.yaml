@@ -5,7 +5,7 @@ info:
   title: Project Penguin API
   # 契約の版。項目を足したら上げる。正本は jphacks/tkb_2611 の api/openapi.yaml で、
   # project-penguin の api/ はその写し (scripts/check_api_contract.py --against で一致を確かめる)。
-  version: 1.1.0
+  version: 1.2.0
   summary: Unity クライアント (Sh1n1230/project-penguin) と backend (jphacks/tkb_2611) の契約
   description: |
     ## 前方互換の規則
@@ -17,6 +17,7 @@ info:
        `quests[].kind`・`proof` はそのお題を出さない、`error.code` は `internal` として扱う。
     3. **後から足す項目はすべて省略可にする。必須の項目は増やさない・消さない・意味を変えない。**
        (1.1.0 で、どのサーバーも返していなかった省略可の `co2e` を外した。CO₂ ではなくインフラの素材で見せると決めたため)
+       (1.2.0 で、iOS ネイティブのクライアント向けに水の写真 (`/v1/water/estimate`) とすれ違い (`/v1/encounters`) の口を足した。既存の口は変えていない)
     4. 壊す変更が要るときはパスの版を上げる (`/v2/`)。`/v1/` は審査が終わるまで残す。
 
     ## 共通
@@ -48,6 +49,8 @@ info:
     - 判定の `Idempotency-Key` は写真 1 枚ごとの乱数で、送り直しを見分けるためだけに使う。端末や人とは結び付かない。
     - みんなの氷山に残すのは、件数と、提出の記録 (`Idempotency-Key` と期限だけ。期限が来たら消える) だけ (DynamoDB、project-penguin の ADR 0002)。
     - 判定の `activity` は、その日の移動の種類ごとの分数の要約だけ。時刻ごとの記録と位置は送らない。
+    - すれ違いのトークンは、端末が作る 16 バイトの乱数で、端末や人とは結び付かない。クライアントはアプリの 1 日ごとに作り直す。
+      位置は送らない・残さない。サーバーの記録 (2 つのトークンの組と、トークンごとの報告の回数) は 2 日で消える。
 
 servers:
   - url: /api
@@ -58,6 +61,8 @@ tags:
   - name: eco-photo
   - name: community
   - name: quests
+  - name: water
+  - name: encounters
 
 paths:
   /v1/health:
@@ -224,6 +229,99 @@ paths:
         "500": { $ref: "#/components/responses/Internal" }
         "503": { $ref: "#/components/responses/Unavailable" }
 
+  /v1/water/estimate:
+    post:
+      tags: [water]
+      operationId: estimateWater
+      summary: ペットボトルの写真 1 枚から、写っている水の量を見積もる
+      description: |
+        手入力した水の量の裏付けに使う。扱うのはペットボトルだけ。AI には容器の種類と水位の割合だけを答えさせ、
+        `amount_ml` はサーバーが容量の表 (ラベルの容量) × `fill_ratio` で計算する。`decision` もサーバーが決める。
+        写っている量をどう資源にするか (飲んだ量との比べ方) はクライアントが決める。
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: 写真 1 枚ごとにクライアントが作る乱数。送り直しでも同じ値を送る。1.2.0 のサーバーは記録に使わない
+          schema: { type: string, pattern: "^[A-Za-z0-9-]{16,64}$" }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  contentMediaType: image/jpeg
+                  description: JPEG。長い辺 1280px まで、1 MB まで
+            encoding:
+              image:
+                contentType: image/jpeg
+      responses:
+        "200":
+          description: "見積もれた (ペットボトルが写っていなかったときも 200 で `container: unknown`)"
+          headers:
+            Date: { $ref: "#/components/headers/Date" }
+            Cache-Control: { $ref: "#/components/headers/CacheControl" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WaterEstimate" }
+              examples:
+                accept: { externalValue: examples/water-estimate.200.accept.json }
+                retake: { externalValue: examples/water-estimate.200.retake.json }
+                reject: { externalValue: examples/water-estimate.200.reject.json }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "413": { $ref: "#/components/responses/TooLarge" }
+        "415": { $ref: "#/components/responses/BadRequest" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/Internal" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+
+  /v1/encounters:
+    post:
+      tags: [encounters]
+      operationId: reportEncounter
+      summary: すれ違った相手のトークンを報告し、相互確認が取れたかを返す
+      description: |
+        BLE で交わしたトークンの組を、両方の端末が互いを報告したときだけ成立 (`matched: true`) にする。
+        相手が自分のトークンを見ていないと成立しないので、他人の広告の再生や自作の広告では成立しない。
+        先に報告した側は `matched: false` を受け取り、あとで同じ報告を送り直して `matched: true` を受け取る。
+        同じ報告は何度送っても同じ結果になり、送り直しは 1 日の報告の上限に数えない。
+        サーバーはトークンを発行せず、ペンギンも付与しない (どのペンギンにするかは `pair_id` を種にクライアントが決める)。
+        1 日の報告の上限を超えると 429 `rate_limited` (`Retry-After` は次のアプリの 1 日までの秒数)。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EncounterReport" }
+      responses:
+        "200":
+          description: 報告を受け付けた
+          headers:
+            Date: { $ref: "#/components/headers/Date" }
+            Cache-Control: { $ref: "#/components/headers/CacheControl" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EncounterResult" }
+              examples:
+                waiting: { externalValue: examples/encounter.200.waiting.json }
+                matched: { externalValue: examples/encounter.200.matched.json }
+        "400":
+          description: "送ったものが受け付けられない (`token_invalid`・`day_invalid`)"
+          headers:
+            Date: { $ref: "#/components/headers/Date" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+              examples:
+                tokenInvalid: { externalValue: examples/error.400.token_invalid.json }
+                dayInvalid: { externalValue: examples/error.400.day_invalid.json }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/Internal" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+
 components:
   headers:
     Date:
@@ -298,7 +396,7 @@ components:
           examples:
             internal: { externalValue: examples/error.500.internal.json }
     Unavailable:
-      description: 判定に使う AI が使えない (枠の上限・障害)
+      description: 判定に使う AI・すれ違いの記録の保存先が使えない (枠の上限・障害)
       headers:
         Date: { $ref: "#/components/headers/Date" }
         Retry-After: { $ref: "#/components/headers/RetryAfter" }
@@ -532,6 +630,90 @@ components:
         reward: { $ref: "#/components/schemas/Reward" }
         message: { $ref: "#/components/schemas/ScreenText" }
 
+    WaterContainer:
+      type: string
+      description: |
+        写っていた容器。扱うのはペットボトルだけで、数字はラベルの容量 (ml)。表のどれでもなければ `unknown`。
+        クライアントは知らない値を `unknown` として扱う (容量は後から足す)。
+      enum: [pet_bottle_350, pet_bottle_500, unknown]
+
+    WaterDecision:
+      type: string
+      description: |
+        サーバーの結論 (AI の出力をそのまま使わない)。
+        - `accept`: `amount_ml` を使ってよい
+        - `retake`: ペットボトルが見分けられない・確かさが低い。`retake_hint` を出して撮り直してもらう
+        - `reject`: 使わない (画面を撮った写真など)。理由は `checks` で伝える
+
+        クライアントは知らない値を `retake` として扱う。
+      enum: [accept, retake, reject]
+
+    WaterEstimate:
+      type: object
+      required: [schema_version, container, fill_ratio, amount_ml, confidence, decision]
+      properties:
+        schema_version: { $ref: "#/components/schemas/SchemaVersion" }
+        container: { $ref: "#/components/schemas/WaterContainer" }
+        fill_ratio:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: 容器の容量に対する、写っている水の割合
+        amount_ml:
+          type: integer
+          minimum: 0
+          maximum: 2000
+          description: 写っている水の量。容量 × `fill_ratio` を四捨五入したもの。`container` が `unknown` なら 0
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        decision: { $ref: "#/components/schemas/WaterDecision" }
+        checks:
+          type: array
+          maxItems: 8
+          items: { $ref: "#/components/schemas/Check" }
+        retake_hint:
+          type: string
+          maxLength: 60
+          description: "`retake` のときの案内"
+        comment:
+          type: string
+          maxLength: 40
+          description: ペンギンのひとこと
+
+    EncounterToken:
+      type: string
+      description: 端末が作る 16 バイトの乱数を base64url (パディングなし) にした 22 文字
+      pattern: "^[A-Za-z0-9_-]{22}$"
+
+    EncounterReport:
+      type: object
+      required: [day, self_token, peer_token]
+      additionalProperties: false
+      properties:
+        day:
+          type: string
+          format: date
+          description: |
+            アプリの 1 日 (端末の時刻から 3 時間引いた JST の日付)。例: 2026-10-25 02:59 JST は `2026-10-24`。
+            サーバーは自分の時計でのアプリの 1 日の前後 1 日まで受け付け、外れたら 400 `day_invalid`。
+        self_token: { $ref: "#/components/schemas/EncounterToken" }
+        peer_token:
+          $ref: "#/components/schemas/EncounterToken"
+          description: BLE で見た相手のトークン。`self_token` と同じなら 400 `token_invalid`
+
+    EncounterResult:
+      type: object
+      required: [schema_version, matched, pair_id]
+      properties:
+        schema_version: { $ref: "#/components/schemas/SchemaVersion" }
+        matched: { type: boolean, description: 相手も自分を報告していれば true }
+        pair_id:
+          type: string
+          pattern: "^[0-9a-f]{16}$"
+          description: |
+            2 つのトークンの組の ID。両方の端末で同じ値になる。
+            `sha256((min(a, b) + max(a, b)).encode("ascii")).hexdigest()[:16]` (min・max は文字列の序数比較)。
+            例: `AQEBAQEBAQEBAQEBAQEBAQ` と `AgICAgICAgICAgICAgICAg` → `e5ecc329c8fcc058`
+
     ErrorCode:
       type: string
       description: |
@@ -543,8 +725,10 @@ components:
         | `code_invalid` | 400 | false | QR・合言葉が違う |
         | `quest_closed` | 404 | false | お題が無い・期間外 |
         | `already_redeemed` | 409 | false | もう受け取っている |
+        | `token_invalid` | 400 | false | すれ違いのトークンの形が違う・自分と相手が同じ・本文が読めない |
+        | `day_invalid` | 400 | false | すれ違いの `day` がサーバーのアプリの 1 日から離れすぎている |
         | `rate_limited` | 429 | true | 呼びすぎ (`Retry-After`) |
-        | `upstream_unavailable` | 503 | true | 判定に使う AI が使えない |
+        | `upstream_unavailable` | 503 | true | 判定に使う AI・すれ違いの記録の保存先が使えない |
         | `internal` | 500 | true | サーバーの不具合 |
 
         クライアントは知らない code を `internal` として扱う。
@@ -555,6 +739,8 @@ components:
         - code_invalid
         - quest_closed
         - already_redeemed
+        - token_invalid
+        - day_invalid
         - rate_limited
         - upstream_unavailable
         - internal

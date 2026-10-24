@@ -40,6 +40,8 @@ SCHEMA_OF = {
     "community-goal": "CommunityGoal",
     "quests": "QuestList",
     "redeem": "RedeemResult",
+    "water-estimate": "WaterEstimate",
+    "encounter": "EncounterResult",
     "error": "ErrorResponse",
 }
 
@@ -51,6 +53,8 @@ ERROR_TABLE: dict[str, tuple[set[int], bool]] = {
     "code_invalid": ({400}, False),
     "quest_closed": ({404}, False),
     "already_redeemed": ({409}, False),
+    "token_invalid": ({400}, False),
+    "day_invalid": ({400}, False),
     "rate_limited": ({429}, True),
     "upstream_unavailable": ({503}, True),
     "internal": ({500}, True),

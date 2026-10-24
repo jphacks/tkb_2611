@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "day_invalid",
+    "message": "端末の日付を確かめてね",
+    "retryable": false
+  }
+}
