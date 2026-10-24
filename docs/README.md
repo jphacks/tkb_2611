@@ -27,6 +27,7 @@
 | 文書 | 内容 |
 |---|---|
 | [`architecture.md`](architecture.md) | Unity の Web ビルド・Vercel・FastAPI・AI の構成、公開の流れ、設定ファイルの切り替え |
+| [`submission.md`](submission.md) | JPHACKS の登録フォームに記入するチーム名・アイデア・技術 |
 | [`hackday.md`](hackday.md) | 事前開発と当日開発の区分、3 人の分担、当日の流れ、完了の定義 |
 | [`decisions.md`](decisions.md) | このリポジトリに関わる決定と理由 |
 | [`personal-info.md`](personal-info.md) | 個人に関わる内容を入れないためのフック・CI・拒否リスト |
