@@ -37,6 +37,10 @@ namespace ProjectPenguin.Domain.HealthFactory
         public int BoardSize {get; internal set;} public int InputCapacity {get; internal set;} public int Slots {get; internal set;} public int ProcessingDurationMs {get; internal set;}
         public int MaxSteps {get; internal set;} public int StepDay {get; internal set;} public long GrantedGas {get; internal set;} public int StepMultiplier {get; internal set;}
         public bool PassiveFixture {get; internal set;} public bool AssignedFixture {get; internal set;}
+        /// <summary>すれ違いで得たペンギン (種ID→羽数) の写し。</summary>
+        public IReadOnlyDictionary<string,int> Penguins {get; internal set;}
+        /// <summary>資源ごとの加算 (%)。1羽 +10%。</summary>
+        public int GasBonusPercent {get; internal set;} public int ElectricityBonusPercent {get; internal set;} public int WaterBonusPercent {get; internal set;}
         public bool BufferBuilt {get; internal set;} public bool Upgraded {get; internal set;}
         public string StopReason {get; internal set;}
         public IReadOnlyList<bool> Routes {get; internal set;} public IReadOnlyList<int> RouteCosts {get; internal set;}

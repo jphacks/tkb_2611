@@ -1,7 +1,8 @@
 {
-  "api_base_url": "",
+  "api_base_url": "https://project-penguin-nu.vercel.app/api",
   "judge": "mock",
   "community": false,
   "quests": false,
-  "demo_mode": false
+  "demo_mode": false,
+  "encounters": true
 }

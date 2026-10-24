@@ -10,6 +10,7 @@ namespace ProjectPenguin.HealthFactoryPrototype
         internal const string Steps6000="FixtureSteps6000", Steps10000="FixtureSteps10000", Steps15000="FixtureSteps15000";
         internal const string Water="FixtureWater", Screen="FixtureScreen", Passive="FixturePassive", Assigned="FixtureAssigned";
         internal const string Left="MoveLeft", Right="MoveRight", Up="MoveUp", Down="MoveDown";
+        internal const string Encounters="HealthEncounters", EncounterStatus="EncounterStatus", FakeEncounter="FixtureEncounter";
         internal const string Card="FacilityCard", Wire="RectRoute", Cargo="RectCargo", Label="Label", Record="RecordInfo", Fixture="FixtureInfo";
     }
 }

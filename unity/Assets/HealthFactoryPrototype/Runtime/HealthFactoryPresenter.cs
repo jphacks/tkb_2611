@@ -15,7 +15,7 @@ namespace ProjectPenguin.HealthFactoryPrototype
         private readonly Transform _plot;
         private readonly HealthFactoryDriver _driver;
         private readonly RectTransform _canvas, _safe;
-        private readonly Text _resources, _quote, _status, _message, _details, _record, _pause, _route0, _route1;
+        private readonly Text _resources, _quote, _status, _message, _details, _record, _pause, _route0, _route1, _encounter;
         private readonly RectTransform[] _cards=new RectTransform[3];
         private readonly Text[] _stock=new Text[3];
         private readonly UnityEngine.UI.Image[] _wires=new UnityEngine.UI.Image[2], _cargo=new UnityEngine.UI.Image[4];
@@ -90,7 +90,13 @@ namespace ProjectPenguin.HealthFactoryPrototype
                 Button(controls,HealthFactoryUiNames.Assigned,"アサイン 切替",3,4,-200,driver.ToggleAssignment,true);
             }
             _record=Label(HealthFactoryUiNames.Record,controls,new Vector2(0,-265),new Vector2(950,50),"",22,Ink);
-            Label(HealthFactoryUiNames.Policy,controls,new Vector2(0,-307),new Vector2(950,33),"専用試作 · 保存なし · 週次報酬なし · 画像選択／解析／すれ違い通信は未接続",20,Ink);
+            Label(HealthFactoryUiNames.Policy,controls,new Vector2(0,-307),new Vector2(950,33),"専用試作 · 保存なし · 週次報酬なし · 画像選択／解析は未接続 · すれ違いは画面を開いている間だけ",20,Ink);
+            // すれ違いの行は操作の欄のすぐ上に置く (施設のカードはこの行より上に寄せる)。
+            var encounters=Panel(HealthFactoryUiNames.Encounters,_safe,new Vector2(0,720),new Vector2(1000,96),new Color(.97f,.99f,1,.98f));
+            encounters.anchorMin=encounters.anchorMax=new Vector2(.5f,0);
+            _encounter=Label(HealthFactoryUiNames.EncounterStatus,encounters,new Vector2(driver.DevelopmentInputs?-120:0,0),
+                new Vector2(driver.DevelopmentInputs?720:960,90),"",22,Ink);
+            if(driver.DevelopmentInputs)Button(encounters,HealthFactoryUiNames.FakeEncounter,"合成すれ違い",3,4,0,driver.FakeEncounter,true);
         }
         internal void Render(HealthFactoryView v,HealthFactoryQuote q)
         {
@@ -103,6 +109,8 @@ namespace ProjectPenguin.HealthFactoryPrototype
             _message.text=_driver.Message;_pause.text=_driver.Paused?"時計を再開":"一時停止";
             _route0.text=$"経路1 {(v.Routes[0]?"ON":"OFF")} · {v.RouteCosts[0]}ガス";
             _route1.text=$"経路2 {(v.Routes[1]?"ON":"OFF")} · {v.RouteCosts[1]}ガス";
+            var birds=0;foreach(var p in v.Penguins)birds+=p.Value;
+            _encounter.text=_driver.EncounterStatus+$"\n所持 {birds}羽 · 加算 ガス+{v.GasBonusPercent}% 電気+{v.ElectricityBonusPercent}% 水+{v.WaterBonusPercent}%";
             _record.text=_driver.DevelopmentInputs?$"青い欄は開発用の偽入力 · {_driver.RecordDay} · 写真・実測ではありません\n{v.StopReason}":v.StopReason;
             _plot.localScale=Vector3.one*(v.BoardSize/16f);
             _boardSize=v.BoardSize;
@@ -113,7 +121,7 @@ namespace ProjectPenguin.HealthFactoryPrototype
                 _points[i]=ScreenPoint(_facilities[i].position+Vector3.up*.55f);
                 var card=_points[i]+new Vector2(i==1?-258:258,0);
                 card.x=Mathf.Clamp(card.x,-_canvas.rect.width*.5f+170,_canvas.rect.width*.5f-170);
-                card.y=Mathf.Clamp(card.y,-_canvas.rect.height*.5f+730,_canvas.rect.height*.5f-465);
+                card.y=Mathf.Clamp(card.y,-_canvas.rect.height*.5f+830,_canvas.rect.height*.5f-465);
                 _cards[i].anchoredPosition=card;
                 _cards[i].GetComponent<UnityEngine.UI.Image>().color=_driver.Selected==i?new Color(.67f,.94f,.88f,.98f):new Color(.98f,1,1,.96f);
             }

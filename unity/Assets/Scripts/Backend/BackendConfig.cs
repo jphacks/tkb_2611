@@ -98,13 +98,15 @@ namespace ProjectPenguin.Backend
     {
         public static readonly BackendConfig Default = new BackendConfig(null, JudgeMode.Mock, false, false, false);
 
-        public BackendConfig(string apiBaseUrl, JudgeMode judge, bool communityEnabled, bool questsEnabled, bool demoMode)
+        public BackendConfig(string apiBaseUrl, JudgeMode judge, bool communityEnabled, bool questsEnabled, bool demoMode,
+            bool encountersEnabled = false)
         {
             ApiBaseUrl = string.IsNullOrWhiteSpace(apiBaseUrl) ? null : apiBaseUrl.TrimEnd('/');
             Judge = ApiBaseUrl == null ? JudgeMode.Mock : judge;
             CommunityEnabled = ApiBaseUrl != null && communityEnabled;
             QuestsEnabled = ApiBaseUrl != null && questsEnabled;
             DemoMode = demoMode;
+            EncountersEnabled = ApiBaseUrl != null && encountersEnabled;
         }
 
         /// <summary>backend の根 (「https://…/api」)。無ければ null で、backend を使う機能はすべて切る。</summary>
@@ -119,6 +121,9 @@ namespace ProjectPenguin.Backend
         /// ふだんは切り替えず「もう一度撮ってね」を出す。
         /// </summary>
         public bool DemoMode { get; }
+
+        /// <summary>すれ違いの相互確認を backend で行う。切っていれば端末の中だけで確かめる (<see cref="MockEncounterReporter"/>)。</summary>
+        public bool EncountersEnabled { get; }
 
         public bool UsesBackend => ApiBaseUrl != null;
 
@@ -152,7 +157,7 @@ namespace ProjectPenguin.Backend
             }
 
             var judge = string.Equals(dto.judge, "http", StringComparison.OrdinalIgnoreCase) ? JudgeMode.Http : JudgeMode.Mock;
-            return new BackendConfig(Resolve(dto.api_base_url, pageUrl), judge, dto.community, dto.quests, dto.demo_mode);
+            return new BackendConfig(Resolve(dto.api_base_url, pageUrl), judge, dto.community, dto.quests, dto.demo_mode, dto.encounters);
         }
 #endif
 
@@ -188,6 +193,7 @@ namespace ProjectPenguin.Backend
             public bool community;
             public bool quests;
             public bool demo_mode;
+            public bool encounters;
         }
 #pragma warning restore IDE1006
     }

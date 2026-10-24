@@ -14,6 +14,8 @@ namespace ProjectPenguin.Backend
         public const string CodeInvalid = "code_invalid";
         public const string QuestClosed = "quest_closed";
         public const string AlreadyRedeemed = "already_redeemed";
+        public const string TokenInvalid = "token_invalid";
+        public const string DayInvalid = "day_invalid";
         public const string RateLimited = "rate_limited";
         public const string UpstreamUnavailable = "upstream_unavailable";
         public const string Internal = "internal";
@@ -23,7 +25,7 @@ namespace ProjectPenguin.Backend
 
         private static readonly string[] Known =
         {
-            ImageMissing, ImageInvalid, ImageTooLarge, CodeInvalid, QuestClosed, AlreadyRedeemed, RateLimited,
+            ImageMissing, ImageInvalid, ImageTooLarge, CodeInvalid, QuestClosed, AlreadyRedeemed, TokenInvalid, DayInvalid, RateLimited,
             UpstreamUnavailable, Internal,
         };
 

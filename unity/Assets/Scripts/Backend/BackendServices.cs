@@ -9,13 +9,14 @@ namespace ProjectPenguin.Backend
     public sealed class BackendServices
     {
         private BackendServices(BackendConfig config, PenguinApiClient client, IEcoPhotoJudge judge, ICommunityGoalSource community,
-            IQuestSource quests)
+            IQuestSource quests, IEncounterReporter encounters)
         {
             Config = config;
             Client = client;
             Judge = judge;
             Community = community;
             Quests = quests;
+            Encounters = encounters;
         }
 
         public BackendConfig Config { get; }
@@ -31,13 +32,16 @@ namespace ProjectPenguin.Backend
         /// <summary>お題を切っているなら null。</summary>
         public IQuestSource Quests { get; }
 
+        /// <summary>すれ違いの相互確認。切っているときは端末の中だけで確かめる口 (null にはしない)。</summary>
+        public IEncounterReporter Encounters { get; }
+
         public static BackendServices Create(BackendConfig config, IHttpTransport transport)
         {
             config ??= BackendConfig.Default;
             var mock = new MockEcoPhotoJudge();
             if (!config.UsesBackend)
             {
-                return new BackendServices(config, null, mock, null, null);
+                return new BackendServices(config, null, mock, null, null, new MockEncounterReporter());
             }
 
             var client = new PenguinApiClient(config.ApiBaseUrl, transport);
@@ -50,7 +54,8 @@ namespace ProjectPenguin.Backend
 
             return new BackendServices(config, client, judge,
                 config.CommunityEnabled ? new HttpCommunityGoalSource(client) : null,
-                config.QuestsEnabled ? new HttpQuestSource(client) : null);
+                config.QuestsEnabled ? new HttpQuestSource(client) : null,
+                config.EncountersEnabled ? new HttpEncounterReporter(client) : new MockEncounterReporter());
         }
 
         private static Task<BackendServices> _shared;
