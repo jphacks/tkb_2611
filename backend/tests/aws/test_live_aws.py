@@ -17,6 +17,7 @@ from botocore.exceptions import ClientError
 from mypy_boto3_bedrock_runtime import BedrockRuntimeClient
 from mypy_boto3_dynamodb import DynamoDBClient
 
+from penguin_backend.water.model import NovaWaterModel
 from tests.support import photos
 from tests.support.bedrock import NOVA_MODEL_ID, REGION
 from tests.support.dynamodb import table_specs
@@ -88,6 +89,15 @@ def test_nova_answers_with_the_judge_tool(runtime: BedrockRuntimeClient) -> None
     assert 0 <= float(answer["confidence"]) <= 1
     # 偽物 (support/bedrock.converse_tool_use) の既定のトークン数が実測と大きくずれていないか
     assert response["usage"]["inputTokens"] > 0
+
+
+def test_nova_answers_the_water_tool_within_the_table(runtime: BedrockRuntimeClient) -> None:
+    # 本番と同じプロンプトとツールの定義で、検証を通る答えが返ること
+    # (合成の写真なので、中身の正しさは問わない)
+    reading = NovaWaterModel(runtime, NOVA_MODEL_ID).read(photos.jpeg())
+
+    assert reading.container in {"pet_bottle_350", "pet_bottle_500", "unknown"}
+    assert 0 <= reading.fill_ratio <= 1
 
 
 def test_other_models_are_denied_for_developers(runtime: BedrockRuntimeClient) -> None:
