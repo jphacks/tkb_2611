@@ -1,0 +1,21 @@
+{
+    "name": "ProjectPenguin.Presentation",
+    "rootNamespace": "ProjectPenguin.Presentation",
+    "references": [
+        "ProjectPenguin.Domain",
+        "ProjectPenguin.Systems",
+        "Unity.InputSystem",
+        "Unity.ugui",
+        "ProjectPenguin.Backend",
+        "ProjectPenguin.Data"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

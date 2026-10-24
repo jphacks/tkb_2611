@@ -1,0 +1,30 @@
+.village-app { flex-grow: 1; -unity-font-definition: var(--font-regular); color: var(--color-text); font-size: 32px; }
+.village-header { margin: 32px 28px; padding: 24px; background-color: var(--color-surface); border-radius: 36px; }
+.village-eyebrow { font-size: 22px; color: var(--color-primary); -unity-font-definition: var(--font-bold); letter-spacing: 4px; }
+.village-title { font-size: 44px; -unity-font-definition: var(--font-bold); flex-grow: 1; white-space: normal; }
+.village-heading-row { flex-direction: row; align-items: center; margin-bottom: 16px; }
+.village-profile { font-size: 24px; color: var(--color-text-sub); }
+.village-resources { flex-direction: row; flex-wrap: wrap; }
+.village-resource { flex-grow: 1; padding: 16px 10px; border-radius: 22px; margin: 4px; -unity-font-definition: var(--font-bold); font-size: 30px; }
+.village-gas { background-color: #FFF0E5; color: #A64A10; }
+.village-electricity { background-color: #FFF6CC; color: #7C5C00; }
+.village-water { background-color: #E6F3FF; color: #1565C0; }
+.village-fish { background-color: #DEF5EE; color: #176850; }
+.village-tools { position: absolute; left: 32px; right: 32px; bottom: 190px; }
+.village-row { flex-direction: row; }
+.village-button { flex-grow: 1; min-height: 100px; padding: 16px 24px; margin: 8px; background-color: var(--color-surface-solid); color: var(--color-primary-dark); border-width: 0; border-radius: 50px; font-size: 34px; -unity-font-definition: var(--font-bold); white-space: normal; }
+.village-button:active { background-color: var(--color-primary-soft); }
+.village-button:disabled { opacity: 0.45; }
+.village-primary { background-color: var(--color-primary); color: white; }
+.village-notice { padding: 24px 32px; background-color: var(--color-surface); border-radius: 30px; white-space: normal; font-size: 30px; margin-bottom: 12px; }
+.village-tray { position: absolute; left: 24px; right: 24px; bottom: 180px; background-color: var(--color-surface-solid); border-radius: 36px; padding: 24px; }
+.village-sheet { position: absolute; left: 16px; right: 16px; top: 340px; bottom: 170px; background-color: var(--color-ice-50); border-radius: 40px; padding: 28px; border-width: 3px; border-color: white; }
+.village-content { flex-grow: 1; }
+.village-card { background-color: white; border-radius: 30px; margin: 8px 0 20px 0; padding: 24px; }
+.village-card-title { font-size: 38px; -unity-font-definition: var(--font-bold); margin-bottom: 16px; white-space: normal; }
+.village-body { font-size: 30px; white-space: normal; margin-bottom: 20px; }
+.village-subtle { color: var(--color-text-sub); font-size: 26px; white-space: normal; }
+.village-navigation { position: absolute; left: 0; right: 0; bottom: 0; background-color: white; padding: 16px 12px 24px 12px; border-top-left-radius: 36px; border-top-right-radius: 36px; }
+.village-nav-button { flex-grow: 1; flex-basis: 0; min-height: 106px; margin: 4px; border-width: 0; border-radius: 30px; background-color: var(--color-ice-50); color: var(--color-text); font-size: 26px; -unity-font-definition: var(--font-bold); padding: 8px 2px; }
+.village-hidden { display: none; }
+.village-thumbnail { height: 240px; margin-bottom: 12px; }

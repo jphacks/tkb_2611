@@ -1,0 +1,5 @@
+{
+  "name": "ProjectPenguin.VillageUiPrototype",
+  "references": ["ProjectPenguin.Domain", "Unity.ugui", "Unity.InputSystem"],
+  "autoReferenced": false
+}

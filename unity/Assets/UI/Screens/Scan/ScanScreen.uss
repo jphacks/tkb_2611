@@ -1,0 +1,55 @@
+/* スキャン画面のレイアウトだけを書く。見た目は DesignSystem のコンポーネントに任せる */
+
+.scan {
+    flex-grow: 1;
+    background-color: var(--color-camera-bg);
+}
+
+/* カメラ映像の表示領域。回転した映像がはみ出しても画面外に描かない */
+.scan__viewport {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    overflow: hidden;
+}
+
+/* 回転がないときの既定の配置。回転時の位置と大きさは ReceiptCameraPreview が上書きする */
+.scan__preview {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.scan__overlay {
+    flex-grow: 1;
+}
+
+.scan__top-bar {
+    flex-direction: row;
+    padding: var(--space-3) var(--space-4) 0 var(--space-4);
+}
+
+.scan__guide {
+    margin-top: var(--space-4);
+}
+
+.scan__frame {
+    flex-grow: 1;
+    margin: var(--space-6) var(--space-7);
+}
+
+.scan__status {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    background-color: var(--color-scrim);
+    white-space: normal;
+}
+
+.scan__controls {
+    align-items: center;
+    padding-bottom: var(--space-7);
+}

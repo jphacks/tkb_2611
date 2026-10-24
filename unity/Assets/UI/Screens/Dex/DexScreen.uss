@@ -1,0 +1,37 @@
+/* 図鑑画面のレイアウトだけを書く。見た目は DesignSystem のコンポーネントに任せる */
+
+.dex__safe {
+    flex-grow: 1;
+}
+
+.dex__scroll {
+    flex-grow: 1;
+}
+
+.dex__content {
+    padding: 0 var(--space-4) var(--space-4) var(--space-4);
+}
+
+.dex__summary {
+    flex-direction: row;
+    align-items: center;
+}
+
+.dex__summary-body {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: var(--space-3);
+}
+
+.dex__hint {
+    white-space: normal;
+}
+
+.dex__grid {
+    margin-top: var(--space-3);
+}
+
+.dex__note {
+    margin-top: var(--space-2);
+    white-space: normal;
+}

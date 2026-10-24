@@ -1,0 +1,122 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="RecordScreen.uss" />
+    <ui:VisualElement name="root" class="pp-page">
+        <ui:VisualElement class="record__safe pp-safe-area">
+            <ui:VisualElement class="pp-header">
+                <ui:VisualElement class="pp-header__spacer" />
+                <ui:Label text="記録" class="pp-header__title" />
+                <ui:VisualElement class="pp-header__spacer" />
+            </ui:VisualElement>
+
+            <ui:ScrollView class="record__scroll">
+                <ui:VisualElement class="record__content">
+                    <ui:VisualElement class="pp-card pp-elevated">
+                        <ui:VisualElement class="record__chart-header">
+                            <ui:Label text="今週受け取った資源" class="pp-text-label pp-text-bold" />
+                            <ui:Label name="weekSummary" text="記録 0 / 7 日" class="pp-text-caption pp-text-sub" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="resourceChart" class="pp-bar-chart">
+                            <ui:VisualElement class="pp-bar-chart__col">
+                                <ui:Label text="-" class="pp-bar-chart__value" />
+                                <ui:VisualElement class="pp-bar-chart__track">
+                                    <ui:VisualElement class="pp-bar-chart__bar" />
+                                </ui:VisualElement>
+                                <ui:Label text="月" class="pp-bar-chart__label" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="pp-bar-chart__col">
+                                <ui:Label text="-" class="pp-bar-chart__value" />
+                                <ui:VisualElement class="pp-bar-chart__track">
+                                    <ui:VisualElement class="pp-bar-chart__bar" />
+                                </ui:VisualElement>
+                                <ui:Label text="火" class="pp-bar-chart__label" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="pp-bar-chart__col">
+                                <ui:Label text="-" class="pp-bar-chart__value" />
+                                <ui:VisualElement class="pp-bar-chart__track">
+                                    <ui:VisualElement class="pp-bar-chart__bar" />
+                                </ui:VisualElement>
+                                <ui:Label text="水" class="pp-bar-chart__label" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="pp-bar-chart__col">
+                                <ui:Label text="-" class="pp-bar-chart__value" />
+                                <ui:VisualElement class="pp-bar-chart__track">
+                                    <ui:VisualElement class="pp-bar-chart__bar" />
+                                </ui:VisualElement>
+                                <ui:Label text="木" class="pp-bar-chart__label" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="pp-bar-chart__col">
+                                <ui:Label text="-" class="pp-bar-chart__value" />
+                                <ui:VisualElement class="pp-bar-chart__track">
+                                    <ui:VisualElement class="pp-bar-chart__bar" />
+                                </ui:VisualElement>
+                                <ui:Label text="金" class="pp-bar-chart__label" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="pp-bar-chart__col">
+                                <ui:Label text="-" class="pp-bar-chart__value" />
+                                <ui:VisualElement class="pp-bar-chart__track">
+                                    <ui:VisualElement class="pp-bar-chart__bar" />
+                                </ui:VisualElement>
+                                <ui:Label text="土" class="pp-bar-chart__label" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="pp-bar-chart__col">
+                                <ui:Label text="-" class="pp-bar-chart__value" />
+                                <ui:VisualElement class="pp-bar-chart__track">
+                                    <ui:VisualElement class="pp-bar-chart__bar" />
+                                </ui:VisualElement>
+                                <ui:Label text="日" class="pp-bar-chart__label" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="record__stats">
+                        <ui:VisualElement class="pp-card pp-elevated record__stat">
+                            <ui:VisualElement class="pp-icon-badge">
+                                <ui:VisualElement class="pp-icon pp-icon--check pp-icon--primary" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="record__stat-body">
+                                <ui:Label text="記録した日" class="pp-text-caption pp-text-sub" />
+                                <ui:Label name="totalValue" text="0 日" class="pp-text-title pp-text-heavy pp-text-primary" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="pp-card pp-elevated record__stat record__stat--end">
+                            <ui:VisualElement class="pp-icon-badge pp-icon-badge--eco">
+                                <ui:VisualElement class="pp-icon pp-icon--flag pp-icon--eco" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="record__stat-body">
+                                <ui:Label text="連続" class="pp-text-caption pp-text-sub" />
+                                <ui:Label name="streakValue" text="0 日" class="pp-text-title pp-text-heavy pp-text-eco" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="record__stats">
+                        <ui:VisualElement class="pp-card pp-elevated record__stat">
+                            <ui:VisualElement class="pp-icon-badge">
+                                <ui:VisualElement class="pp-icon pp-icon--penguin pp-icon--original" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="record__stat-body">
+                                <ui:Label text="来たペンギン" class="pp-text-caption pp-text-sub" />
+                                <ui:Label name="penguinValue" text="1 羽" class="pp-text-title pp-text-heavy pp-text-primary" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="pp-card pp-elevated record__stat record__stat--end">
+                            <ui:VisualElement class="pp-icon-badge">
+                                <ui:VisualElement class="pp-icon pp-icon--deliver pp-icon--point" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="record__stat-body">
+                                <ui:Label text="港への納品" class="pp-text-caption pp-text-sub" />
+                                <ui:Label name="deliveredValue" text="0 回" class="pp-text-title pp-text-heavy pp-text-point" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <ui:Label text="受け取りの記録" class="pp-section-title" />
+                    <ui:VisualElement name="history" class="pp-card pp-elevated record__history" />
+                    <ui:Label text="写真そのものは保存していません。記録には分類と受け取った資源だけが残ります。" class="pp-text-caption pp-text-sub record__note" />
+                </ui:VisualElement>
+            </ui:ScrollView>
+
+            <ui:VisualElement class="pp-tab-bar-spacer" picking-mode="Ignore" />
+            <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,130 @@
+/*
+ * Project Penguin Design Tokens
+ * 基準解像度 1080x1920 (PanelSettings)。設計上の 1pt ≒ 2.75px。
+ * 値の意味と使い分けは docs/design-system.md を参照。
+ */
+
+:root {
+    /* ---- Font: 差し替えはこの 3 行だけ ----
+     * .ttf を直接指定する。FontAsset (.asset) を作って参照すると、使った文字が
+     * アセットに書き込まれて全員の作業ツリーに差分が出る (docs/design-system.md)。
+     */
+    --font-regular: url("project://database/Assets/UI/Fonts/MPLUSRounded1c-Regular.ttf");
+    --font-bold: url("project://database/Assets/UI/Fonts/MPLUSRounded1c-Bold.ttf");
+    --font-heavy: url("project://database/Assets/UI/Fonts/MPLUSRounded1c-ExtraBold.ttf");
+
+    /* ---- Color: brand ---- */
+    --color-primary: #1F8BEA;
+    --color-primary-dark: #1565C0;
+    --color-primary-soft: #D8EDFC;
+    --color-ice-50: #EEF7FF;
+    --color-ice-100: #D8EDFC;
+    --color-ice-200: #B5DBF7;
+
+    /* ---- Color: semantic ---- */
+    --color-eco: #2EB872;
+    --color-eco-soft: #DDF5E8;
+    --color-accent: #FFC928;
+    --color-accent-dark: #E0A800;
+    --color-point: #F5A623;
+    --color-danger: #E5534B;
+    --color-danger-soft: #FCE3E1;
+
+    /* ---- Color: 島の資源 (アイコンの tint と数値) ---- */
+    --color-res-electricity: #F2B705;
+    --color-res-water: #1F8BEA;
+    --color-res-gas: #F2762E;
+    --color-res-allmighty: #9B6BE0;
+    --color-res-fish: #2A7FC0;
+    --color-res-pearl: #C98BB9;
+
+    /* ---- Color: text & surface ---- */
+    --color-text: #17385F;
+    --color-text-sub: #6B8199;
+    --color-text-on-primary: #FFFFFF;
+    --color-surface: rgba(255, 255, 255, 0.95);
+    --color-surface-glass: rgba(255, 255, 255, 0.8);
+    --color-surface-solid: #FFFFFF;
+    --color-divider: #E3EEF7;
+    --color-elevation: rgba(23, 56, 95, 0.12);
+
+    /* ---- Color: camera (暗い背景の画面) ---- */
+    --color-camera-bg: #0E1A26;
+    --color-on-dark-button: rgba(255, 255, 255, 0.18);
+    --color-on-dark-button-hover: rgba(255, 255, 255, 0.3);
+    --color-scrim: rgba(14, 26, 38, 0.55);
+
+    /* ---- Spacing ---- */
+    --space-1: 8px;
+    --space-2: 16px;
+    --space-3: 24px;
+    --space-4: 32px;
+    --space-5: 40px;
+    --space-6: 48px;
+    --space-7: 64px;
+    --space-8: 96px;
+
+    /* ---- Radius ----
+     * UI Toolkit は角丸が短辺の半分を超えると楕円に潰れる。
+     * --radius-full は正方形 (円) 専用。ピル型は control-height と対の --radius-pill-* を使う。
+     */
+    --radius-sm: 16px;
+    --radius-md: 28px;
+    --radius-lg: 44px;
+    --radius-full: 999px;
+
+    /* ---- Control height (ピル型部品の高さ) と対応する角丸 ---- */
+    --control-height-sm: 48px;
+    --control-height-md: 72px;
+    --control-height-lg: 112px;
+    --radius-pill-sm: 24px;
+    --radius-pill-md: 36px;
+    --radius-pill-lg: 56px;
+
+    /* ---- Type scale ---- */
+    --font-size-caption: 28px;
+    --font-size-body: 34px;
+    --font-size-label: 38px;
+    --font-size-title: 46px;
+    --font-size-headline: 60px;
+    --font-size-display: 96px;
+
+    /* ---- Icon size ---- */
+    --icon-sm: 40px;
+    --icon-md: 56px;
+    --icon-lg: 80px;
+    --icon-xl: 112px;
+
+    --raid-view-height: 360px;
+    --raid-venue-view-height: 540px;
+    --raid-storm-sky: #6B8AAC;
+    --raid-snow-surface: #F1F7FC;
+    --raid-scene-text: #FFFFFF;
+    --raid-sheet-radius: 32px;
+
+    /* ---- Motion ---- */
+    --duration-fast: 0.12s;
+
+    -unity-font-definition: var(--font-regular);
+    font-size: var(--font-size-body);
+    color: var(--color-text);
+}
+
+/* ---- Text utilities ---- */
+.pp-text-caption { font-size: var(--font-size-caption); }
+.pp-text-body { font-size: var(--font-size-body); }
+.pp-text-label { font-size: var(--font-size-label); }
+.pp-text-title { font-size: var(--font-size-title); }
+.pp-text-headline { font-size: var(--font-size-headline); }
+.pp-text-display { font-size: var(--font-size-display); }
+
+.pp-text-bold { -unity-font-definition: var(--font-bold); }
+.pp-text-heavy { -unity-font-definition: var(--font-heavy); }
+
+.pp-text-sub { color: var(--color-text-sub); }
+.pp-text-primary { color: var(--color-primary); }
+.pp-text-eco { color: var(--color-eco); }
+.pp-text-point { color: var(--color-point); }
+.pp-text-danger { color: var(--color-danger); }
+.pp-text-inverse { color: var(--color-text-on-primary); }
+.pp-text-center { -unity-text-align: middle-center; }

@@ -1,0 +1,6 @@
+{
+  "name": "ProjectPenguin.HealthFactoryPrototype",
+  "rootNamespace": "ProjectPenguin.HealthFactoryPrototype",
+  "references": ["ProjectPenguin.Domain", "ProjectPenguin.Systems", "ProjectPenguin.Backend", "Unity.ugui", "Unity.InputSystem"],
+  "autoReferenced": false
+}

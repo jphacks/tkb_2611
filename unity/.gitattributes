@@ -1,0 +1,128 @@
+# ---------------------------------------------------------------
+# 改行コードの正規化
+#   リポジトリ内も作業ツリーも LF で統一する。
+#   Windows / macOS を併用しても差分が出ず、.editorconfig の
+#   end_of_line = lf、Unity YAML の eol=lf、ruff の出力とも一致する。
+#   OS 依存に変換すると Windows だけ CRLF になり、整形ツールの出力と
+#   git の変換が綱引きするため text=auto では止めない。
+# ---------------------------------------------------------------
+* text=auto eol=lf
+
+*.cs        text eol=lf diff=csharp
+*.md        text eol=lf
+*.json      text eol=lf
+*.py        text eol=lf
+*.toml      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.shader    text eol=lf
+*.hlsl      text eol=lf
+*.cginc     text eol=lf
+*.uss       text eol=lf
+*.uxml      text eol=lf
+*.asmdef    text eol=lf
+*.asmref    text eol=lf
+.editorconfig text eol=lf
+
+*.sh        text eol=lf
+# Windows 専用スクリプトだけは CRLF でないと動かない場合がある。
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
+
+# ---------------------------------------------------------------
+# Unity YAML アセットのマージドライバ
+#   シーン / プレハブのコンフリクトを UnityYAMLMerge が構造的に解決する。
+#   利用するには各自の .git/config への登録が必要 (README のセットアップ参照)。
+#   未登録の環境では単に通常マージにフォールバックするため実害はない。
+#   拡張子の一覧は .claude/hooks/guard_write.py の UNITY_YAML と .editorconfig にそろえる。
+# ---------------------------------------------------------------
+*.unity            merge=unityyaml eol=lf
+*.prefab           merge=unityyaml eol=lf
+*.asset            merge=unityyaml eol=lf
+*.mat              merge=unityyaml eol=lf
+*.anim             merge=unityyaml eol=lf
+*.controller       merge=unityyaml eol=lf
+*.overrideController merge=unityyaml eol=lf
+*.physicMaterial   merge=unityyaml eol=lf
+*.physicsMaterial2D merge=unityyaml eol=lf
+*.meta             merge=unityyaml eol=lf
+*.mask             merge=unityyaml eol=lf
+*.playable         merge=unityyaml eol=lf
+*.terrainlayer     merge=unityyaml eol=lf
+*.signal           merge=unityyaml eol=lf
+*.lighting         merge=unityyaml eol=lf
+*.spriteatlas      merge=unityyaml eol=lf
+*.spriteatlasv2    merge=unityyaml eol=lf
+*.mixer            merge=unityyaml eol=lf
+*.renderTexture    merge=unityyaml eol=lf
+*.preset           merge=unityyaml eol=lf
+*.giparams         merge=unityyaml eol=lf
+*.shadervariants   merge=unityyaml eol=lf
+*.guiskin          merge=unityyaml eol=lf
+*.fontsettings     merge=unityyaml eol=lf
+*.flare            merge=unityyaml eol=lf
+*.brush            merge=unityyaml eol=lf
+*.inputactions     text eol=lf
+
+# ---------------------------------------------------------------
+# Git LFS
+#   3D モデル・テクスチャ・音声などのバイナリは LFS で管理する。
+#   後から追跡対象を増やすと履歴の書き換えが必要になるため先に広く指定する。
+# ---------------------------------------------------------------
+# 3D モデル
+*.fbx   filter=lfs diff=lfs merge=lfs -text
+*.FBX   filter=lfs diff=lfs merge=lfs -text
+*.blend filter=lfs diff=lfs merge=lfs -text
+*.obj   filter=lfs diff=lfs merge=lfs -text
+*.dae   filter=lfs diff=lfs merge=lfs -text
+*.3ds   filter=lfs diff=lfs merge=lfs -text
+*.max   filter=lfs diff=lfs merge=lfs -text
+*.ma    filter=lfs diff=lfs merge=lfs -text
+*.mb    filter=lfs diff=lfs merge=lfs -text
+
+# テクスチャ / 画像
+*.png   filter=lfs diff=lfs merge=lfs -text
+*.PNG   filter=lfs diff=lfs merge=lfs -text
+*.jpg   filter=lfs diff=lfs merge=lfs -text
+*.jpeg  filter=lfs diff=lfs merge=lfs -text
+*.psd   filter=lfs diff=lfs merge=lfs -text
+*.tga   filter=lfs diff=lfs merge=lfs -text
+*.tif   filter=lfs diff=lfs merge=lfs -text
+*.tiff  filter=lfs diff=lfs merge=lfs -text
+*.bmp   filter=lfs diff=lfs merge=lfs -text
+*.gif   filter=lfs diff=lfs merge=lfs -text
+*.exr   filter=lfs diff=lfs merge=lfs -text
+*.hdr   filter=lfs diff=lfs merge=lfs -text
+*.cubemap filter=lfs diff=lfs merge=lfs -text
+
+# 音声
+*.wav   filter=lfs diff=lfs merge=lfs -text
+*.mp3   filter=lfs diff=lfs merge=lfs -text
+*.ogg   filter=lfs diff=lfs merge=lfs -text
+*.aif   filter=lfs diff=lfs merge=lfs -text
+*.aiff  filter=lfs diff=lfs merge=lfs -text
+
+# 動画
+*.mp4   filter=lfs diff=lfs merge=lfs -text
+*.mov   filter=lfs diff=lfs merge=lfs -text
+*.webm  filter=lfs diff=lfs merge=lfs -text
+
+# その他バイナリ
+*.unitypackage filter=lfs diff=lfs merge=lfs -text
+*.dll   filter=lfs diff=lfs merge=lfs -text
+*.so    filter=lfs diff=lfs merge=lfs -text
+*.ttf   filter=lfs diff=lfs merge=lfs -text
+*.otf   filter=lfs diff=lfs merge=lfs -text
+
+# ---------------------------------------------------------------
+# GitHub の言語集計 (Linguist)
+#   外部から取り込んだコードを集計から外し、主言語を実態 (C#) に合わせる。
+#   diff・マージ・LFS の扱いには影響しない。
+#   https://github.com/github-linguist/linguist/blob/main/docs/overrides.md
+# ---------------------------------------------------------------
+# TextMesh Pro が自動で取り込んだシェーダとリソース (パスの空白は [[:space:]] で表す)
+Assets/TextMesh[[:space:]]Pro/** linguist-vendored
+# 外部のエージェント用スキル (skills-lock.json で管理)
+.agents/skills/** linguist-vendored
+.claude/skills/** linguist-vendored

@@ -30,8 +30,10 @@ from openapi_spec_validator import validate as validate_spec
 
 ROOT = Path(__file__).resolve().parent.parent
 API = ROOT / "api"
-SUBJECTS_CS = ROOT / "Assets" / "Scripts" / "Domain" / "Island" / "EcoActions.cs"
-ERRORS_CS = ROOT / "Assets" / "Scripts" / "Backend" / "BackendError.cs"
+# Unity のプロジェクトは、提出用リポジトリでは unity/ に、project-penguin では直下にある。
+ASSETS = ROOT / "unity" / "Assets" if (ROOT / "unity" / "Assets").exists() else ROOT / "Assets"
+SUBJECTS_CS = ASSETS / "Scripts" / "Domain" / "Island" / "EcoActions.cs"
+ERRORS_CS = ASSETS / "Scripts" / "Backend" / "BackendError.cs"
 
 # 例のファイル名 `<対象>.<HTTP 状態>.<場合>.json` の対象 → 本文のスキーマ。
 SCHEMA_OF = {

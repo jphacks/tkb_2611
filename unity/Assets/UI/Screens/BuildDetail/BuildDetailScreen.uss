@@ -1,0 +1,20 @@
+/* 建物の説明のレイアウトだけを書く。見た目は DesignSystem/Game.uss に任せる */
+
+.build-detail__panel {
+    padding-right: 280px;
+}
+
+.build-detail__costs {
+    margin-top: var(--space-2);
+}
+
+.build-detail__owned {
+    margin-top: var(--space-2);
+}
+
+/* 丸いボタンを説明の札の右下に重ねる */
+.build-detail__go-row {
+    flex-direction: row;
+    justify-content: flex-end;
+    margin: -220px var(--space-5) var(--space-5) 0;
+}

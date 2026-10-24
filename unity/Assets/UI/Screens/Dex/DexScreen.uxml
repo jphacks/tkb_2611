@@ -1,0 +1,31 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="DexScreen.uss" />
+    <ui:VisualElement name="root" class="pp-page">
+        <ui:VisualElement class="dex__safe pp-safe-area">
+            <ui:VisualElement class="pp-header">
+                <ui:Button name="backButton" class="pp-icon-button">
+                    <ui:VisualElement class="pp-icon pp-icon--chevron-left" picking-mode="Ignore" />
+                </ui:Button>
+                <ui:Label text="ペンギン図鑑" class="pp-header__title" />
+                <ui:VisualElement class="pp-header__spacer" />
+            </ui:VisualElement>
+
+            <ui:ScrollView class="dex__scroll">
+                <ui:VisualElement class="dex__content">
+                    <ui:VisualElement class="pp-card pp-elevated dex__summary">
+                        <ui:VisualElement class="pp-icon-badge">
+                            <ui:VisualElement class="pp-icon pp-icon--book pp-icon--primary" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="dex__summary-body">
+                            <ui:Label name="dexCount" text="1 / 19 種" class="pp-text-title pp-text-heavy pp-text-primary" />
+                            <ui:Label name="dexHint" text="週に 3 日以上記録すると、次の月曜に新しいペンギンが来るよ" class="pp-text-caption pp-text-sub dex__hint" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="dexGrid" class="pp-dex-grid dex__grid" />
+                    <ui:Label text="ペンギンの話は実在のペンギンのことで、アプリの氷とは関係ありません。" class="pp-text-caption pp-text-sub dex__note" />
+                </ui:VisualElement>
+            </ui:ScrollView>
+            <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

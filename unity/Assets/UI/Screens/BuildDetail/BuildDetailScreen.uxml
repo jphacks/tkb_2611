@@ -1,0 +1,56 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="BuildDetailScreen.uss" />
+    <!-- 建物の説明。大きな絵・作るもの・コストと、右下の丸い「建てる」だけを出す。左右のカードで隣の建物へ (BuildScreenPresenter) -->
+    <ui:VisualElement name="root" class="pp-game-page">
+        <ui:VisualElement class="pp-game-page__safe pp-safe-area">
+            <ui:VisualElement class="pp-game-header">
+                <ui:Button name="backButton" class="pp-round-close pp-round-close--left">
+                    <ui:VisualElement class="pp-icon pp-icon--chevron-left pp-icon--primary" picking-mode="Ignore" />
+                </ui:Button>
+                <ui:VisualElement class="pp-game-header__spacer" />
+                <ui:Button name="closeButton" class="pp-round-close">
+                    <ui:VisualElement class="pp-icon pp-icon--close pp-icon--primary" picking-mode="Ignore" />
+                </ui:Button>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="detailStage" class="pp-stage">
+                <ui:VisualElement name="prevCard" class="pp-photo-card pp-photo-card--side pp-photo-card--prev">
+                    <ui:VisualElement name="prevImage" class="pp-photo-card__image pp-thumb" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="nextCard" class="pp-photo-card pp-photo-card--side pp-photo-card--next">
+                    <ui:VisualElement name="nextImage" class="pp-photo-card__image pp-thumb" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="mainCard" class="pp-photo-card">
+                    <ui:VisualElement name="mainImage" class="pp-photo-card__image pp-thumb" picking-mode="Ignore">
+                        <ui:VisualElement name="mainLock" class="pp-lock pp-hidden" picking-mode="Ignore">
+                            <ui:VisualElement class="pp-icon pp-icon--xl pp-icon--lock" picking-mode="Ignore" />
+                            <ui:Label name="mainLockLabel" text="Lv 5" class="pp-lock__label" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="detailPanel" class="pp-info-panel build-detail__panel">
+                <ui:VisualElement class="pp-info-panel__top">
+                    <ui:Label name="detailName" text="漁場" class="pp-info-panel__name" />
+                    <ui:VisualElement name="detailTime" class="pp-chip-time">
+                        <ui:VisualElement class="pp-icon pp-icon--clock pp-icon--primary" picking-mode="Ignore" />
+                        <ui:Label name="detailTimeValue" text="4 秒" class="pp-chip-time__label" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label name="detailLead" text="海から魚を引き上げる" class="pp-info-panel__lead" />
+                <ui:VisualElement name="detailRecipe" class="pp-recipe" />
+                <ui:VisualElement class="pp-info-panel__divider" picking-mode="Ignore" />
+                <ui:VisualElement name="detailCosts" class="pp-counts build-detail__costs" />
+                <ui:Label name="detailOwned" text="0 棟" class="pp-text-caption pp-text-sub build-detail__owned" />
+            </ui:VisualElement>
+            <ui:VisualElement class="build-detail__go-row" picking-mode="Ignore">
+                <ui:Button name="buildButton" class="pp-round-button">
+                    <ui:VisualElement class="pp-round-button__icon pp-icon pp-icon--build" picking-mode="Ignore" />
+                    <ui:Label name="buildButtonLabel" text="建てる" class="pp-round-button__label" picking-mode="Ignore" />
+                </ui:Button>
+            </ui:VisualElement>
+            <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

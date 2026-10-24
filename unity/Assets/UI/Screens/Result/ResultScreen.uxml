@@ -1,0 +1,70 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="ResultScreen.uss" />
+    <ui:VisualElement name="root" class="pp-page">
+        <ui:VisualElement class="result__safe pp-safe-area">
+            <ui:VisualElement class="pp-header">
+                <ui:Button name="backButton" class="pp-icon-button">
+                    <ui:VisualElement class="pp-icon pp-icon--chevron-left" picking-mode="Ignore" />
+                </ui:Button>
+                <ui:Label text="今日のエコ写真" class="pp-header__title" />
+                <ui:VisualElement class="pp-header__spacer" />
+            </ui:VisualElement>
+
+            <ui:ScrollView class="result__scroll">
+                <ui:VisualElement class="result__content">
+                    <ui:VisualElement class="pp-card pp-elevated result__summary">
+                        <ui:VisualElement name="categoryBadge" class="pp-icon-badge pp-icon-badge--eco">
+                            <ui:VisualElement name="categoryIcon" class="pp-icon pp-icon--leaf pp-icon--eco" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="result__summary-body">
+                            <ui:Label name="scannedAt" text="2026/10/27 12:34" class="pp-text-caption pp-text-sub" />
+                            <ui:Label name="photoLabel" text="マイボトル" class="pp-text-title pp-text-heavy" />
+                            <ui:Label name="categoryName" text="物を大切に" class="pp-chip result__category" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="pp-speech result__speech">
+                        <ui:VisualElement class="pp-speech__bubble pp-elevated">
+                            <ui:Label name="commentText" text="マイボトル、かっこいいね" class="pp-speech__text" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="pp-avatar">
+                            <ui:VisualElement class="pp-avatar__image pp-icon pp-icon--penguin pp-icon--original" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <ui:Label name="grantTitle" text="島に届いた資源" class="pp-section-title" />
+                    <ui:VisualElement name="grantList" class="pp-card pp-elevated result__items" />
+
+                    <ui:VisualElement name="checkSection">
+                        <ui:Label text="確かめたこと" class="pp-section-title" />
+                        <ui:VisualElement name="checkList" class="pp-card pp-elevated result__items" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement name="recordCard" class="pp-card pp-card--eco result__total">
+                        <ui:Label name="recordTitle" text="今日の記録ができたよ" class="pp-text-label pp-text-bold" />
+                        <ui:VisualElement class="result__total-value">
+                            <ui:Label name="iceGain" text="+2" class="pp-text-display pp-text-heavy pp-text-eco" />
+                            <ui:Label text="氷" class="pp-text-title pp-text-bold pp-text-eco result__total-unit" />
+                        </ui:VisualElement>
+                        <ui:Label name="recordNote" text="記録を続けると氷が増えて、島を広げられるよ" class="pp-text-caption pp-text-sub pp-text-center" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="pp-card pp-elevated result__compare">
+                        <ui:VisualElement class="pp-icon-badge pp-icon-badge--eco">
+                            <ui:VisualElement class="pp-icon pp-icon--leaf pp-icon--eco" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="result__compare-body">
+                            <ui:Label text="ひとことメモ" class="pp-text-caption pp-text-sub" />
+                            <ui:Label name="tipText" text="小さな行動でも、毎日続けると大きな差になるよ" class="pp-text-bold result__tip" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:ScrollView>
+
+            <ui:VisualElement class="result__footer">
+                <ui:Button name="applyButton" text="島へもどる" class="pp-btn pp-btn--accent pp-btn--block" />
+            </ui:VisualElement>
+            <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,34 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="ScanScreen.uss" />
+    <ui:VisualElement name="root" class="scan">
+        <ui:VisualElement name="previewViewport" class="scan__viewport" picking-mode="Ignore">
+            <ui:Image name="cameraPreview" class="scan__preview" picking-mode="Ignore" />
+        </ui:VisualElement>
+
+        <ui:VisualElement class="scan__overlay pp-safe-area" picking-mode="Ignore">
+            <ui:VisualElement class="scan__top-bar" picking-mode="Ignore">
+                <ui:Button name="closeButton" class="pp-icon-button pp-icon-button--dark">
+                    <ui:VisualElement class="pp-icon pp-icon--close pp-icon--inverse" picking-mode="Ignore" />
+                </ui:Button>
+            </ui:VisualElement>
+
+            <ui:Label name="scanGuide" text="今日のエコな行動を撮ってね&#10;マイボトル・消した電気・食べきったお皿…なんでもOK" class="scan__guide pp-text-label pp-text-bold pp-text-inverse pp-text-center" />
+
+            <ui:VisualElement name="scanFrame" class="pp-scan-frame scan__frame" picking-mode="Ignore">
+                <ui:VisualElement class="pp-scan-frame__corner pp-scan-frame__corner--top-left" picking-mode="Ignore" />
+                <ui:VisualElement class="pp-scan-frame__corner pp-scan-frame__corner--top-right" picking-mode="Ignore" />
+                <ui:VisualElement class="pp-scan-frame__corner pp-scan-frame__corner--bottom-left" picking-mode="Ignore" />
+                <ui:VisualElement class="pp-scan-frame__corner pp-scan-frame__corner--bottom-right" picking-mode="Ignore" />
+                <ui:Label name="cameraStatus" class="scan__status pp-text-bold pp-text-inverse pp-text-center pp-hidden" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="scan__controls" picking-mode="Ignore">
+                <ui:Button name="shutterButton" class="pp-shutter">
+                    <ui:VisualElement class="pp-shutter__core" picking-mode="Ignore" />
+                </ui:Button>
+            </ui:VisualElement>
+
+            <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

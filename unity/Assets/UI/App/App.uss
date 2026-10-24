@@ -1,0 +1,16 @@
+/* 全画面で共有するタブバーを画面の下端に重ねる */
+.app__tab-bar {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+/* はじめての案内などを全画面の最前面に重ねる */
+.app__overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}

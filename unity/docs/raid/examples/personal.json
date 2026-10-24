@@ -1,0 +1,1 @@
+{"schema_version":1,"event_id":"demo","content_version":"1","answered_count":0,"personal_points":0,"completed":false,"question":{"id":"lights","prompt":"自分で操作してよい、誰も使っていない部屋の照明。どうする？","options":[{"id":"off","text":"不要なら消す"},{"id":"on","text":"明るさを最大にする"},{"id":"wait","text":"誰もいなくてもつけておく"}]},"pending_answer":null}

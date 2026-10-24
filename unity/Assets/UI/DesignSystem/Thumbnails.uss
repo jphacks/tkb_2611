@@ -1,0 +1,96 @@
+/* 建物の絵。Production Island > Render Facility Thumbnails が描き出した PNG を指す (このファイルもメニューが書き直す) */
+.pp-thumb {
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.pp-thumb--fishery {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Fishery.png");
+}
+
+.pp-thumb--preparation {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Preparation.png");
+}
+
+.pp-thumb--saltworks {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Saltworks.png");
+}
+
+.pp-thumb--kelp-farm {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_KelpFarm.png");
+}
+
+.pp-thumb--kamaboko {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Kamaboko.png");
+}
+
+.pp-thumb--chikuwa {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Chikuwa.png");
+}
+
+.pp-thumb--drying {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Drying.png");
+}
+
+.pp-thumb--oden {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Oden.png");
+}
+
+.pp-thumb--warehouse {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Warehouse.png");
+}
+
+.pp-thumb--dormitory {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Dormitory.png");
+}
+
+.pp-thumb--research {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Research.png");
+}
+
+.pp-thumb--sorter {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Sorter.png");
+}
+
+.pp-thumb--electric-amplifier {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_ElectricAmplifier.png");
+}
+
+.pp-thumb--water-amplifier {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_WaterAmplifier.png");
+}
+
+.pp-thumb--gas-amplifier {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_GasAmplifier.png");
+}
+
+.pp-thumb--ice-house {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_IceHouse.png");
+}
+
+.pp-thumb--harbor-0 {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Harbor0.png");
+}
+
+.pp-thumb--harbor-1 {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Harbor1.png");
+}
+
+.pp-thumb--harbor-2 {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Harbor2.png");
+}
+
+.pp-thumb--harbor-3 {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Harbor3.png");
+}
+
+.pp-thumb--harbor-4 {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Harbor4.png");
+}
+
+.pp-thumb--harbor-5 {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Harbor5.png");
+}
+
+.pp-thumb--expand {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Expand.png");
+}

@@ -1,0 +1,5 @@
+/* 建物の一覧のレイアウトだけを書く。見た目は DesignSystem/Game.uss の棚に任せる */
+
+.build__scroll {
+    flex-grow: 1;
+}

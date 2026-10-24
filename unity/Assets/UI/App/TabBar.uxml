@@ -1,0 +1,29 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:VisualElement name="tabBarRoot" class="pp-tab-bar">
+        <ui:VisualElement class="pp-tab-bar__tabs">
+            <ui:Button name="tabHome" class="pp-tab pp-tab--active">
+                <ui:VisualElement class="pp-tab__icon pp-icon--home" picking-mode="Ignore" />
+                <ui:Label text="すみか" class="pp-tab__label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:Button name="tabRecord" class="pp-tab">
+                <ui:VisualElement class="pp-tab__icon pp-icon--receipt" picking-mode="Ignore" />
+                <ui:Label text="記録" class="pp-tab__label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:Button name="tabScan" class="pp-tab">
+                <ui:VisualElement class="pp-tab__fab" picking-mode="Ignore">
+                    <ui:VisualElement class="pp-tab__icon pp-icon--camera" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:Label text="スキャン" class="pp-tab__label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:Button name="tabMission" class="pp-tab">
+                <ui:VisualElement class="pp-tab__icon pp-icon--flag" picking-mode="Ignore" />
+                <ui:Label text="ミッション" class="pp-tab__label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:Button name="tabMenu" class="pp-tab">
+                <ui:VisualElement class="pp-tab__icon pp-icon--menu" picking-mode="Ignore" />
+                <ui:Label text="メニュー" class="pp-tab__label" picking-mode="Ignore" />
+            </ui:Button>
+        </ui:VisualElement>
+        <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+    </ui:VisualElement>
+</ui:UXML>

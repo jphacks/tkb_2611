@@ -1,0 +1,67 @@
+/* ミッション画面のレイアウトだけを書く。見た目は DesignSystem のコンポーネントに任せる */
+
+.mission__safe {
+    flex-grow: 1;
+}
+
+.mission__scroll {
+    flex-grow: 1;
+}
+
+.mission__content {
+    padding: 0 var(--space-4) var(--space-4) var(--space-4);
+}
+
+.mission__speech {
+    margin: 0 var(--space-6) var(--space-3) 0;
+}
+
+.mission__section-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mission__section-title {
+    margin: 0;
+}
+
+.mission__card {
+    margin-top: var(--space-2);
+}
+
+.mission__card--selected {
+    border-width: 4px;
+    border-color: var(--color-primary);
+}
+
+.mission__card--done {
+    border-width: 4px;
+    border-color: var(--color-eco);
+}
+
+.mission__hint {
+    white-space: normal;
+}
+
+.mission__answers {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: var(--space-1);
+}
+
+.mission__info {
+    flex-direction: row;
+    align-items: center;
+    margin-top: var(--space-4);
+}
+
+.mission__info-body {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: var(--space-3);
+}
+
+.mission__info-text {
+    white-space: normal;
+}

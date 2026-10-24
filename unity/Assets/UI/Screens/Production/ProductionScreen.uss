@@ -1,0 +1,12 @@
+/* 生産量のレイアウトだけを書く。見た目は DesignSystem/Game.uss に任せる */
+
+.production__scroll {
+    flex-grow: 1;
+}
+
+.production__summary {
+    flex-shrink: 0;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: var(--space-2) var(--space-4) 0 var(--space-4);
+}

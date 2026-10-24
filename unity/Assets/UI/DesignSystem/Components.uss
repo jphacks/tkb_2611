@@ -1,0 +1,1305 @@
+/*
+ * Project Penguin Components
+ * 値は Tokens.uss の変数だけを使う。命名は .pp-<block>__<element>--<modifier>。
+ */
+
+/* ============ Base ============ */
+
+/* Unity 既定テーマを読まないため、UIDocument のルートを画面いっぱいに広げる指定を自前で持つ */
+.unity-ui-document__root {
+    flex-grow: 1;
+}
+
+/* ScrollView も同じ理由で最低限の伸縮を持たせる (これが無いと中身が縮んで重なる) */
+.unity-scroll-view__content-and-vertical-scroll-container {
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+.unity-scroll-view__content-viewport {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.unity-scroll-view__content-container {
+    flex-shrink: 0;
+}
+
+/* App.uxml に並べた画面。表示中の 1 つ以外に --hidden を付ける */
+.pp-screen {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.pp-screen--hidden,
+.pp-hidden {
+    display: none;
+}
+
+/* 3D ワールドを透かさない画面の背景 */
+.pp-page {
+    flex-grow: 1;
+    background-color: var(--color-ice-50);
+}
+
+/* 共有タブバー (中央のスキャンボタンのはみ出しを含む) の裏に中身が潜らないよう、タブ画面の最下部に置く。下端の余白は隣の .pp-safe-area__bottom が足す */
+.pp-tab-bar-spacer {
+    height: 200px;
+    flex-shrink: 0;
+}
+
+/* ============ Surface ============ */
+
+.pp-card {
+    background-color: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+}
+
+.pp-card--glass {
+    background-color: var(--color-surface-glass);
+}
+
+/* 合計 CO₂e など、良い結果を強調するカード */
+.pp-card--eco {
+    border-width: 4px;
+    border-color: var(--color-eco);
+    background-color: var(--color-eco-soft);
+}
+
+.pp-section-title {
+    margin: var(--space-4) var(--space-1) var(--space-2) var(--space-1);
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-bold);
+}
+
+/* box-shadow の代替。下辺だけ濃い枠で浮いて見せる */
+.pp-elevated {
+    border-bottom-width: 6px;
+    border-bottom-color: var(--color-elevation);
+}
+
+.pp-divider {
+    height: 2px;
+    background-color: var(--color-divider);
+    margin: var(--space-2) 0;
+}
+
+/* ============ Icon ============ */
+
+.pp-icon {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    flex-shrink: 0;
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: var(--color-text);
+}
+
+.pp-icon--sm { width: var(--icon-sm); height: var(--icon-sm); }
+.pp-icon--lg { width: var(--icon-lg); height: var(--icon-lg); }
+.pp-icon--xl { width: var(--icon-xl); height: var(--icon-xl); }
+
+.pp-icon--primary { -unity-background-image-tint-color: var(--color-primary); }
+.pp-icon--eco { -unity-background-image-tint-color: var(--color-eco); }
+.pp-icon--point { -unity-background-image-tint-color: var(--color-point); }
+.pp-icon--sub { -unity-background-image-tint-color: var(--color-text-sub); }
+.pp-icon--inverse { -unity-background-image-tint-color: var(--color-text-on-primary); }
+/* 多色アイコン (ペンギン等) は着色しない */
+.pp-icon--original { -unity-background-image-tint-color: #FFFFFF; }
+
+.pp-icon--snowflake { background-image: url("project://database/Assets/UI/DesignSystem/Icons/snowflake.svg"); }
+.pp-icon--leaf { background-image: url("project://database/Assets/UI/DesignSystem/Icons/leaf.svg"); }
+.pp-icon--gear { background-image: url("project://database/Assets/UI/DesignSystem/Icons/gear.svg"); }
+.pp-icon--home { background-image: url("project://database/Assets/UI/DesignSystem/Icons/home.svg"); }
+.pp-icon--receipt { background-image: url("project://database/Assets/UI/DesignSystem/Icons/receipt.svg"); }
+.pp-icon--camera { background-image: url("project://database/Assets/UI/DesignSystem/Icons/camera.svg"); }
+.pp-icon--flag { background-image: url("project://database/Assets/UI/DesignSystem/Icons/flag.svg"); }
+.pp-icon--menu { background-image: url("project://database/Assets/UI/DesignSystem/Icons/menu.svg"); }
+.pp-icon--chevron-right { background-image: url("project://database/Assets/UI/DesignSystem/Icons/chevron-right.svg"); }
+.pp-icon--close { background-image: url("project://database/Assets/UI/DesignSystem/Icons/close.svg"); }
+/* ゲームの看板のペンギン (Penguin_v002) の頭。Production Island > Render Mascot Icon が 3D モデルから描き出す */
+.pp-icon--penguin { background-image: url("project://database/Assets/UI/DesignSystem/Icons/penguin-mascot.png"); }
+.pp-icon--chevron-left { background-image: url("project://database/Assets/UI/DesignSystem/Icons/chevron-left.svg"); }
+.pp-icon--check { background-image: url("project://database/Assets/UI/DesignSystem/Icons/check.svg"); }
+.pp-icon--book { background-image: url("project://database/Assets/UI/DesignSystem/Icons/book.svg"); }
+.pp-icon--bell { background-image: url("project://database/Assets/UI/DesignSystem/Icons/bell.svg"); }
+.pp-icon--help { background-image: url("project://database/Assets/UI/DesignSystem/Icons/help.svg"); }
+
+/* アイコンを淡色の円で囲む */
+.pp-icon-badge {
+    width: 96px;
+    height: 96px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    background-color: var(--color-ice-50);
+}
+
+.pp-icon-badge--eco { background-color: var(--color-eco-soft); }
+
+/* ============ Button ============ */
+
+.pp-btn {
+    height: var(--control-height-lg);
+    margin: 0;
+    padding: 0 var(--space-6);
+    border-width: 0;
+    border-radius: var(--radius-pill-lg);
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-bold);
+    -unity-text-align: middle-center;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    transition-duration: var(--duration-fast);
+}
+
+.pp-btn:hover { background-color: var(--color-primary-dark); }
+.pp-btn:active { scale: 0.97 0.97; }
+.pp-btn:disabled { opacity: 0.4; }
+
+.pp-btn--accent {
+    background-color: var(--color-accent);
+    color: var(--color-text);
+    border-bottom-width: 6px;
+    border-bottom-color: var(--color-accent-dark);
+}
+
+.pp-btn--accent:hover { background-color: var(--color-accent-dark); }
+
+.pp-btn--ghost {
+    background-color: var(--color-ice-50);
+    color: var(--color-primary);
+}
+
+.pp-btn--ghost:hover { background-color: var(--color-ice-100); }
+
+.pp-btn--block { align-self: stretch; }
+
+.pp-icon-button {
+    margin: 0;
+    padding: 0;
+    width: 96px;
+    height: 96px;
+    border-width: 0;
+    border-radius: var(--radius-full);
+    background-color: var(--color-surface-glass);
+    align-items: center;
+    justify-content: center;
+    transition-duration: var(--duration-fast);
+}
+
+.pp-icon-button:hover { background-color: var(--color-surface); }
+.pp-icon-button:active { scale: 0.92 0.92; }
+
+/* カメラ画面など暗い背景の上に置く版 */
+.pp-icon-button--dark { background-color: var(--color-on-dark-button); }
+.pp-icon-button--dark:hover { background-color: var(--color-on-dark-button-hover); }
+
+/* ============ Badge / Chip ============ */
+
+.pp-badge {
+    align-self: flex-start;
+    height: var(--control-height-sm);
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-pill-sm);
+    -unity-text-align: middle-center;
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+}
+
+.pp-badge--eco { background-color: var(--color-eco); }
+.pp-badge--accent { background-color: var(--color-accent); color: var(--color-text); }
+.pp-badge--danger { background-color: var(--color-danger); }
+
+.pp-chip {
+    align-self: flex-start;
+    height: var(--control-height-sm);
+    padding: 0 var(--space-3);
+    border-width: 2px;
+    border-color: var(--color-ice-100);
+    border-radius: var(--radius-pill-sm);
+    -unity-text-align: middle-center;
+    background-color: var(--color-ice-50);
+    color: var(--color-primary);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+}
+
+/* ============ Progress (ui:ProgressBar の内部要素を上書き) ============ */
+
+.pp-progress {
+    flex-grow: 1;
+    margin: 0;
+}
+
+.pp-progress .unity-progress-bar__container {
+    flex-grow: 1;
+    justify-content: center;
+}
+
+.pp-progress .unity-progress-bar__background {
+    height: 16px;
+    border-width: 0;
+    border-radius: 8px;
+    background-color: var(--color-ice-100);
+}
+
+.pp-progress .unity-progress-bar__progress {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    border-width: 0;
+    border-radius: 8px;
+    background-color: var(--color-primary);
+}
+
+.pp-progress .unity-progress-bar__title-container {
+    display: none;
+}
+
+.pp-progress--eco .unity-progress-bar__progress { background-color: var(--color-eco); }
+.pp-progress--point .unity-progress-bar__progress { background-color: var(--color-point); }
+
+/* ============ Stat card (氷の量 / CO₂削減) ============ */
+
+.pp-stat-card {
+    flex-direction: row;
+    align-items: center;
+    padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
+}
+
+.pp-stat-card__body {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: var(--space-2);
+}
+
+.pp-stat-card__label {
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+}
+
+.pp-stat-card__meter {
+    flex-direction: row;
+    align-items: center;
+    margin-top: var(--space-1);
+}
+
+.pp-stat-card__value {
+    margin-left: var(--space-1);
+    min-width: 72px;
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+    -unity-text-align: middle-right;
+}
+
+/* ============ Avatar / Speech bubble ============ */
+
+.pp-avatar {
+    width: 152px;
+    height: 152px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-width: 6px;
+    border-color: var(--color-ice-100);
+    border-radius: var(--radius-full);
+    background-color: #FFFFFF;
+    /* 看板のペンギンの胸から上を丸く切り抜く */
+    overflow: hidden;
+}
+
+.pp-avatar__image {
+    width: 100%;
+    height: 100%;
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+/* DOM は [bubble, avatar] の順にし、row-reverse で avatar を左かつ前面に描く */
+.pp-speech {
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.pp-speech__bubble {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: -40px;
+    padding: var(--space-3) var(--space-5) var(--space-3) var(--space-7);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface);
+}
+
+.pp-speech__text {
+    white-space: normal;
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-bold);
+}
+
+/* ============ Segmented control (デイリー / ウィークリー) ============ */
+
+.pp-segmented {
+    flex-direction: row;
+    padding: 6px;
+    border-radius: 42px;
+    background-color: var(--color-ice-50);
+}
+
+.pp-segmented__item {
+    flex-grow: 1;
+    height: var(--control-height-md);
+    margin: 0;
+    padding: 0 var(--space-3);
+    border-width: 0;
+    border-radius: var(--radius-pill-md);
+    background-color: rgba(0, 0, 0, 0);
+    color: var(--color-text-sub);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-bold);
+    -unity-text-align: middle-center;
+    transition-duration: var(--duration-fast);
+}
+
+.pp-segmented__item--active {
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
+}
+
+/* ============ List item (解析結果の品目行) ============ */
+
+.pp-list-item {
+    flex-direction: row;
+    align-items: center;
+    padding: var(--space-2) 0;
+    border-bottom-width: 2px;
+    border-bottom-color: var(--color-divider);
+}
+
+.pp-list-item--last { border-bottom-width: 0; }
+
+.pp-list-item__body {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: var(--space-2);
+}
+
+.pp-list-item__title {
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-bold);
+}
+
+.pp-list-item__sub {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-sub);
+}
+
+.pp-list-item__trailing {
+    margin-left: var(--space-2);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-bold);
+}
+
+/* ============ Tab bar ============ */
+
+.pp-tab-bar {
+    padding-top: var(--space-2);
+    border-top-left-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-lg);
+    background-color: var(--color-surface);
+}
+
+.pp-tab-bar__tabs {
+    flex-direction: row;
+    align-items: flex-end;
+    height: 150px;
+}
+
+.pp-tab {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin: 0;
+    padding: 0 0 var(--space-2) 0;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    align-items: center;
+    justify-content: flex-end;
+    transition-duration: var(--duration-fast);
+}
+
+.pp-tab:active { scale: 0.94 0.94; }
+
+.pp-tab__icon {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: var(--color-text-sub);
+}
+
+.pp-tab__label {
+    margin-top: 6px;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-sub);
+    -unity-font-definition: var(--font-bold);
+}
+
+.pp-tab--active .pp-tab__icon { -unity-background-image-tint-color: var(--color-primary); }
+.pp-tab--active .pp-tab__label { color: var(--color-primary); }
+
+/* 中央の浮いたスキャンボタン */
+.pp-tab__fab {
+    width: 148px;
+    height: 148px;
+    margin-bottom: 2px;
+    align-items: center;
+    justify-content: center;
+    border-width: 8px;
+    border-color: #FFFFFF;
+    border-radius: var(--radius-full);
+    background-color: var(--color-primary);
+}
+
+.pp-tab__fab > .pp-tab__icon {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+    -unity-background-image-tint-color: var(--color-text-on-primary);
+}
+
+/* ============ Camera (レシートスキャン) ============ */
+
+/* 撮影枠。四隅の L 字だけを描き、中は透かす */
+.pp-scan-frame {
+    align-items: center;
+    justify-content: center;
+}
+
+.pp-scan-frame__corner {
+    position: absolute;
+    width: 96px;
+    height: 96px;
+    border-color: #FFFFFF;
+}
+
+.pp-scan-frame__corner--top-left {
+    top: 0;
+    left: 0;
+    border-top-width: 8px;
+    border-left-width: 8px;
+    border-top-left-radius: var(--radius-sm);
+}
+
+.pp-scan-frame__corner--top-right {
+    top: 0;
+    right: 0;
+    border-top-width: 8px;
+    border-right-width: 8px;
+    border-top-right-radius: var(--radius-sm);
+}
+
+.pp-scan-frame__corner--bottom-left {
+    bottom: 0;
+    left: 0;
+    border-bottom-width: 8px;
+    border-left-width: 8px;
+    border-bottom-left-radius: var(--radius-sm);
+}
+
+.pp-scan-frame__corner--bottom-right {
+    right: 0;
+    bottom: 0;
+    border-right-width: 8px;
+    border-bottom-width: 8px;
+    border-bottom-right-radius: var(--radius-sm);
+}
+
+/* シャッター: 白い輪の中に primary の円 */
+.pp-shutter {
+    width: 184px;
+    height: 184px;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    border-width: 10px;
+    border-color: #FFFFFF;
+    border-radius: var(--radius-full);
+    background-color: var(--color-on-dark-button);
+    transition-duration: var(--duration-fast);
+}
+
+.pp-shutter:active { scale: 0.92 0.92; }
+
+.pp-shutter__core {
+    width: 132px;
+    height: 132px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-primary);
+}
+
+/* ============ Header (戻る + タイトル) ============ */
+
+/* 左右に同じ幅の要素を置いてタイトルを中央に保つ。戻るボタンが無い画面は __spacer を 2 つ置く */
+.pp-header {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    padding: var(--space-3) var(--space-4) var(--space-2) var(--space-4);
+}
+
+.pp-header__title {
+    flex-grow: 1;
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-heavy);
+    -unity-text-align: middle-center;
+}
+
+.pp-header__spacer {
+    width: 96px;
+    height: 96px;
+    flex-shrink: 0;
+}
+
+/* ============ Step list (解析中の段階表示) ============ */
+
+.pp-step {
+    flex-direction: row;
+    align-items: center;
+    padding: var(--space-2) 0;
+}
+
+.pp-step__index {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    background-color: var(--color-ice-100);
+}
+
+.pp-step__number {
+    color: var(--color-text-sub);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-bold);
+}
+
+.pp-step__label {
+    flex-grow: 1;
+    margin-left: var(--space-2);
+    color: var(--color-text-sub);
+    font-size: var(--font-size-body);
+}
+
+.pp-step__check {
+    display: none;
+}
+
+.pp-step--active .pp-step__index { background-color: var(--color-primary); }
+.pp-step--active .pp-step__number { color: var(--color-text-on-primary); }
+.pp-step--active .pp-step__label {
+    color: var(--color-primary);
+    -unity-font-definition: var(--font-bold);
+}
+
+.pp-step--done .pp-step__index { background-color: var(--color-eco-soft); }
+.pp-step--done .pp-step__number { color: var(--color-eco); }
+.pp-step--done .pp-step__label { color: var(--color-text); }
+.pp-step--done .pp-step__check { display: flex; }
+
+/* ============ Mission card ============ */
+
+.pp-mission-card {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--space-3);
+}
+
+.pp-mission-card__body {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin: 0 var(--space-2);
+}
+
+.pp-mission-card__title {
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-bold);
+}
+
+.pp-mission-card__meter {
+    flex-direction: row;
+    align-items: center;
+    margin-top: var(--space-1);
+}
+
+.pp-mission-card__count {
+    margin-left: var(--space-2);
+    min-width: 72px;
+    color: var(--color-text-sub);
+    font-size: var(--font-size-caption);
+    -unity-text-align: middle-right;
+}
+
+/* ============ Bar chart (CO₂ の推移) ============ */
+
+/* 棒の高さはデータ次第なので、__bar の height (%) はスクリプトが入れる */
+.pp-bar-chart {
+    flex-direction: row;
+    height: 360px;
+}
+
+.pp-bar-chart__col {
+    flex-grow: 1;
+    flex-basis: 0;
+    align-items: center;
+}
+
+.pp-bar-chart__track {
+    flex-grow: 1;
+    align-self: stretch;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.pp-bar-chart__bar {
+    width: 48px;
+    border-top-left-radius: var(--radius-sm);
+    border-top-right-radius: var(--radius-sm);
+    background-color: var(--color-primary);
+}
+
+.pp-bar-chart__bar--today { background-color: var(--color-eco); }
+
+.pp-bar-chart__value {
+    margin-bottom: var(--space-1);
+    color: var(--color-text-sub);
+    font-size: var(--font-size-caption);
+}
+
+.pp-bar-chart__label {
+    margin-top: var(--space-1);
+    color: var(--color-text-sub);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+}
+
+/* ============ Menu card (メニューのグリッド) ============ */
+
+.pp-menu-grid__row {
+    flex-direction: row;
+    margin-bottom: var(--space-3);
+}
+
+.pp-menu-card {
+    flex-grow: 1;
+    flex-basis: 0;
+    height: 200px;
+    margin: 0 var(--space-3) 0 0;
+    padding: 0 var(--space-3);
+    flex-direction: row;
+    align-items: center;
+    border-width: 4px;
+    border-color: var(--color-ice-100);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface);
+    transition-duration: var(--duration-fast);
+}
+
+.pp-menu-card:hover { border-color: var(--color-ice-200); }
+.pp-menu-card:active { scale: 0.97 0.97; }
+
+.pp-menu-card--end { margin-right: 0; }
+
+.pp-menu-card__label {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: var(--space-2);
+    white-space: normal;
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-bold);
+    -unity-text-align: middle-center;
+}
+
+/* ============ Close band (全画面シートを閉じる下部の帯) ============ */
+
+.pp-close-band {
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    border-top-left-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-lg);
+    background-color: var(--color-primary);
+    transition-duration: var(--duration-fast);
+}
+
+.pp-close-band:hover { background-color: var(--color-primary-dark); }
+
+.pp-close-band__content {
+    height: 180px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ============ 生産の島のアイコン (icon-*.svg) ============ */
+
+.pp-icon--allmighty { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-allmighty.svg"); }
+.pp-icon--build { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-build.svg"); }
+.pp-icon--chikuwa { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-chikuwa.svg"); }
+.pp-icon--connect { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-connect.svg"); }
+.pp-icon--decrease { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-decrease.svg"); }
+.pp-icon--deliver { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-deliver.svg"); }
+.pp-icon--demolish { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-demolish.svg"); }
+.pp-icon--disconnect { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-disconnect.svg"); }
+.pp-icon--dried-fish { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-dried-fish.svg"); }
+.pp-icon--electricity { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-electricity.svg"); }
+.pp-icon--expand-island { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-expand-island.svg"); }
+.pp-icon--fish { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-fish.svg"); }
+.pp-icon--gas { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-gas.svg"); }
+.pp-icon--gas-empty { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-gas-empty.svg"); }
+.pp-icon--increase { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-increase.svg"); }
+.pp-icon--kamaboko { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-kamaboko.svg"); }
+.pp-icon--kelp { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-kelp.svg"); }
+.pp-icon--level { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-level.svg"); }
+.pp-icon--material-wait { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-material-wait.svg"); }
+.pp-icon--move { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-move.svg"); }
+.pp-icon--no-coast { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-no-coast.svg"); }
+.pp-icon--oden { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-oden.svg"); }
+.pp-icon--pearl { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-pearl.svg"); }
+.pp-icon--priority-one { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-priority-one.svg"); }
+.pp-icon--production { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-production.svg"); }
+.pp-icon--recipe-high { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-recipe-high.svg"); }
+.pp-icon--recipe-low { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-recipe-low.svg"); }
+.pp-icon--research { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-research.svg"); }
+.pp-icon--salt { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-salt.svg"); }
+.pp-icon--storage-full { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-storage-full.svg"); }
+.pp-icon--surimi { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-surimi.svg"); }
+.pp-icon--time-forward { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-time-forward.svg"); }
+.pp-icon--undo { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-undo.svg"); }
+.pp-icon--warning { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-warning.svg"); }
+.pp-icon--water { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-water.svg"); }
+.pp-icon--worker-shortage { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-worker-shortage.svg"); }
+
+/* 資源ごとのアイコンの色 */
+.pp-icon--res-electricity { -unity-background-image-tint-color: var(--color-res-electricity); }
+.pp-icon--res-water { -unity-background-image-tint-color: var(--color-res-water); }
+.pp-icon--res-gas { -unity-background-image-tint-color: var(--color-res-gas); }
+.pp-icon--res-allmighty { -unity-background-image-tint-color: var(--color-res-allmighty); }
+.pp-icon--res-fish { -unity-background-image-tint-color: var(--color-res-fish); }
+.pp-icon--res-pearl { -unity-background-image-tint-color: var(--color-res-pearl); }
+.pp-icon--danger { -unity-background-image-tint-color: var(--color-danger); }
+
+/* ============ 資源の表示 (ホームの上部) ============ */
+
+/* レベルと資源を 1 本の白い帯にまとめる (設定ボタンと同じ高さ) */
+.pp-resource-bar {
+    flex-direction: row;
+    align-items: center;
+    height: 96px;
+    padding: 0 var(--space-3) 0 8px;
+    border-radius: 48px;
+    background-color: var(--color-surface-glass);
+}
+
+.pp-resource {
+    flex-direction: row;
+    flex-shrink: 1;
+    align-items: center;
+    margin-right: var(--space-2);
+    transition-duration: 0.18s;
+}
+
+.pp-resource--last { margin-right: 0; }
+
+.pp-resource--bump { scale: 1.15 1.15; }
+
+.pp-resource__icon {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.pp-resource__value {
+    margin-left: 2px;
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.pp-resource--empty .pp-resource__value { color: var(--color-danger); }
+
+/* レベルの丸 */
+.pp-level {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+    margin-right: var(--space-2);
+    border-radius: var(--radius-full);
+    background-color: var(--color-primary);
+    align-items: center;
+    justify-content: center;
+}
+
+.pp-level__caption {
+    font-size: 18px;
+    color: var(--color-text-on-primary);
+    -unity-font-definition: var(--font-bold);
+    -unity-text-align: middle-center;
+}
+
+.pp-level__value {
+    margin-top: -6px;
+    font-size: var(--font-size-label);
+    color: var(--color-text-on-primary);
+    -unity-font-definition: var(--font-heavy);
+    -unity-text-align: middle-center;
+}
+
+/* ============ 道具ボタン (ホームの右下。設定ボタンと同じ丸) ============ */
+
+.pp-tool {
+    margin: 0 0 var(--space-2) 0;
+    padding: 0;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    align-items: center;
+    transition-duration: var(--duration-fast);
+}
+
+.pp-tool:active { scale: 0.92 0.92; }
+
+.pp-tool--last { margin-bottom: 0; }
+
+.pp-tool__circle {
+    width: 96px;
+    height: 96px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-surface-glass);
+    align-items: center;
+    justify-content: center;
+}
+
+.pp-tool__label {
+    margin-top: 4px;
+    padding: 2px var(--space-1);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface-glass);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+    -unity-text-align: middle-center;
+}
+
+.pp-tool__dot {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-danger);
+    border-width: 4px;
+    border-color: var(--color-surface);
+}
+
+.pp-tool--active .pp-tool__circle { background-color: var(--color-primary); }
+.pp-tool--active .pp-icon { -unity-background-image-tint-color: var(--color-text-on-primary); }
+
+/* ============ 下から出るシート ============ */
+
+.pp-sheet {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    justify-content: flex-end;
+}
+
+.pp-sheet__scrim {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(14, 26, 38, 0.25);
+}
+
+.pp-sheet__panel {
+    max-height: 72%;
+    padding: var(--space-2) var(--space-4) 0 var(--space-4);
+    border-top-left-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-lg);
+    background-color: var(--color-surface-solid);
+    translate: 0 0;
+    transition-duration: 0.22s;
+}
+
+.pp-sheet--closed .pp-sheet__panel { translate: 0 100%; }
+
+.pp-sheet__handle {
+    flex-shrink: 0;
+    align-self: center;
+    width: 120px;
+    height: 12px;
+    margin-bottom: var(--space-2);
+    border-radius: 6px;
+    background-color: var(--color-ice-200);
+}
+
+.pp-sheet__header {
+    flex-shrink: 0;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--space-2);
+}
+
+.pp-sheet__title {
+    flex-grow: 1;
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.pp-sheet__body {
+    flex-shrink: 1;
+}
+
+.pp-sheet__footer {
+    flex-shrink: 0;
+    flex-direction: row;
+    padding: var(--space-2) 0;
+}
+
+/* ============ シートの中の行 ============ */
+
+.pp-row {
+    flex-direction: row;
+    align-items: center;
+    padding: var(--space-2) 0;
+    border-bottom-width: 2px;
+    border-bottom-color: var(--color-divider);
+}
+
+.pp-row--last { border-bottom-width: 0; }
+
+.pp-row__body {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin: 0 var(--space-2);
+}
+
+.pp-row__title {
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-bold);
+}
+
+.pp-row__sub {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-sub);
+    white-space: normal;
+}
+
+.pp-row--locked { opacity: 0.45; }
+
+.pp-row:active { background-color: var(--color-ice-50); }
+
+/* コスト (アイコン + 数) */
+.pp-cost {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.pp-cost__item {
+    flex-direction: row;
+    align-items: center;
+    margin-right: var(--space-2);
+}
+
+.pp-cost__icon {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+}
+
+.pp-cost__value {
+    margin-left: 4px;
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+}
+
+.pp-cost__item--short .pp-cost__value { color: var(--color-danger); }
+
+/* 施設の状態 */
+.pp-status {
+    flex-direction: row;
+    align-items: center;
+    align-self: flex-start;
+    height: var(--control-height-sm);
+    padding: 0 var(--space-2) 0 var(--space-1);
+    border-radius: var(--radius-pill-sm);
+    background-color: var(--color-eco-soft);
+}
+
+.pp-status__icon {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    -unity-background-image-tint-color: var(--color-eco);
+}
+
+.pp-status__label {
+    margin-left: 4px;
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+    color: var(--color-eco);
+}
+
+.pp-status--warn { background-color: #FFF1D6; }
+.pp-status--warn .pp-status__icon { -unity-background-image-tint-color: var(--color-point); }
+.pp-status--warn .pp-status__label { color: var(--color-point); }
+.pp-status--bad { background-color: var(--color-danger-soft); }
+.pp-status--bad .pp-status__icon { -unity-background-image-tint-color: var(--color-danger); }
+.pp-status--bad .pp-status__label { color: var(--color-danger); }
+
+/* 増やす・減らす */
+.pp-stepper {
+    flex-direction: row;
+    align-items: center;
+}
+
+.pp-stepper__button {
+    width: var(--control-height-md);
+    height: var(--control-height-md);
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    border-radius: var(--radius-full);
+    background-color: var(--color-ice-50);
+    color: var(--color-primary);
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-heavy);
+    -unity-text-align: middle-center;
+}
+
+.pp-stepper__button:active { scale: 0.92 0.92; }
+.pp-stepper__button:disabled { opacity: 0.35; }
+
+.pp-stepper__value {
+    min-width: 120px;
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-heavy);
+    -unity-text-align: middle-center;
+}
+
+/* 小さいピル型のボタン (シートの中の操作) */
+.pp-pill {
+    height: var(--control-height-md);
+    margin: 0 var(--space-1) var(--space-1) 0;
+    padding: 0 var(--space-3);
+    border-width: 0;
+    border-radius: var(--radius-pill-md);
+    background-color: var(--color-ice-50);
+    color: var(--color-primary);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+    -unity-text-align: middle-center;
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    white-space: nowrap;
+    transition-duration: var(--duration-fast);
+}
+
+.pp-pill:active { scale: 0.95 0.95; }
+.pp-pill:disabled { opacity: 0.4; }
+.pp-pill--primary { background-color: var(--color-primary); color: var(--color-text-on-primary); }
+.pp-pill--danger { background-color: var(--color-danger-soft); color: var(--color-danger); }
+.pp-pill--selected { background-color: var(--color-primary); color: var(--color-text-on-primary); }
+
+/* ============ 一時的な知らせ ============ */
+
+.pp-toast-layer {
+    position: absolute;
+    top: 25%;
+    right: 0;
+    left: 0;
+    align-items: center;
+}
+
+.pp-toast {
+    max-width: 90%;
+    margin-bottom: var(--space-1);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-lg);
+    background-color: rgba(23, 56, 95, 0.88);
+    color: var(--color-text-on-primary);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-bold);
+    -unity-text-align: middle-center;
+    white-space: normal;
+    opacity: 1;
+    translate: 0 0;
+    transition-duration: 0.25s;
+}
+
+.pp-toast--hidden {
+    opacity: 0;
+    translate: 0 -40px;
+}
+
+/* 受け取った資源が浮かんで消える */
+.pp-gain {
+    position: absolute;
+    flex-direction: row;
+    align-items: center;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-pill-md);
+    background-color: var(--color-surface);
+    opacity: 1;
+    translate: 0 0;
+    transition-duration: 1.1s;
+}
+
+.pp-gain--gone {
+    opacity: 0;
+    translate: 0 -160px;
+}
+
+.pp-gain__value {
+    margin-left: 4px;
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-heavy);
+}
+
+/* ============ 真ん中に出す確認 ============ */
+
+.pp-modal {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: var(--space-4);
+    background-color: var(--color-scrim);
+    align-items: center;
+    justify-content: center;
+}
+
+.pp-modal__card {
+    align-self: stretch;
+    padding: var(--space-5) var(--space-4) var(--space-4) var(--space-4);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface-solid);
+    align-items: center;
+}
+
+.pp-modal__title {
+    margin-top: var(--space-2);
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-heavy);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+.pp-modal__text {
+    margin: var(--space-2) 0 var(--space-3) 0;
+    color: var(--color-text-sub);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+/* ============ 置き場所を選ぶ間の帯 ============ */
+
+.pp-banner {
+    flex-direction: row;
+    align-items: center;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface);
+    border-bottom-width: 6px;
+    border-bottom-color: var(--color-elevation);
+}
+
+.pp-banner__text {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin: 0 var(--space-2);
+    white-space: normal;
+    -unity-font-definition: var(--font-bold);
+}
+
+/* ============ 図鑑 ============ */
+
+.pp-dex-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.pp-dex-card {
+    width: 48.5%;
+    margin-bottom: var(--space-2);
+    padding: var(--space-3) var(--space-2);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface);
+    border-bottom-width: 6px;
+    border-bottom-color: var(--color-elevation);
+    align-items: center;
+}
+
+.pp-dex-card__image {
+    width: var(--icon-xl);
+    height: var(--icon-xl);
+}
+
+.pp-dex-card__name {
+    margin-top: var(--space-1);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-bold);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+.pp-dex-card__fact {
+    margin-top: 4px;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-sub);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+.pp-dex-card__bonus {
+    margin-top: var(--space-1);
+    align-self: center;
+}
+
+.pp-dex-card--locked .pp-dex-card__image { -unity-background-image-tint-color: var(--color-ice-200); }
+.pp-dex-card--locked .pp-dex-card__name { color: var(--color-text-sub); }
+
+/* ============ 入力欄 (ui:TextField) ============ */
+
+.pp-text-field {
+    margin: 0;
+}
+
+.pp-text-field .unity-base-text-field__input {
+    height: var(--control-height-lg);
+    padding: 0 var(--space-3);
+    border-width: 3px;
+    border-color: var(--color-ice-200);
+    border-radius: var(--radius-pill-lg);
+    background-color: var(--color-ice-50);
+    color: var(--color-text);
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-bold);
+    -unity-text-align: middle-center;
+}
+
+.pp-text-field .unity-label { display: none; }

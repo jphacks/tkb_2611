@@ -1,0 +1,640 @@
+/*
+ * ゲームの画面 (建てる・建物の説明・港・施設・生産量) の共通部品。
+ * 文字を減らし、絵とアイコンと数字で伝える。画面は全体が切り替わる (シートを重ねない)。
+ * 色と余白は Tokens.uss を使う。使い方は docs/design-system.md の「ゲームの画面」。
+ */
+
+/* ============ 画面 ============ */
+
+/* 画面が切り替わるときの入り方。ScreenNavigator が表示の直後に外す */
+.pp-screen {
+    transition-duration: 0.2s;
+    transition-timing-function: ease-out-cubic;
+}
+
+.pp-screen--entering {
+    opacity: 0;
+    translate: 0 48px;
+}
+
+.pp-game-page {
+    flex-grow: 1;
+    background-color: var(--color-ice-100);
+}
+
+.pp-game-page__safe {
+    flex-grow: 1;
+}
+
+.pp-game-header {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    padding: var(--space-3) var(--space-4) var(--space-2) var(--space-4);
+}
+
+.pp-game-header__spacer {
+    flex-grow: 1;
+}
+
+/* 画面の名前の札 */
+.pp-title-chip {
+    height: 104px;
+    padding: 0 var(--space-5);
+    border-radius: var(--radius-full);
+    background-color: var(--color-surface-solid);
+    border-bottom-width: 8px;
+    border-bottom-color: var(--color-ice-200);
+    color: var(--color-primary-dark);
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-heavy);
+    -unity-text-align: middle-center;
+}
+
+/* 右上の大きな丸い × と、左上の ‹ */
+.pp-round-close {
+    margin: 0;
+    padding: 0;
+    width: 120px;
+    height: 120px;
+    border-width: 0;
+    border-radius: var(--radius-full);
+    background-color: var(--color-surface-solid);
+    border-bottom-width: 8px;
+    border-bottom-color: var(--color-ice-200);
+    align-items: center;
+    justify-content: center;
+    transition-duration: var(--duration-fast);
+}
+
+.pp-round-close:active {
+    scale: 0.9 0.9;
+}
+
+.pp-round-close--left {
+    margin-right: var(--space-2);
+}
+
+.pp-round-close .pp-icon {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+}
+
+/* ============ 棚 (建物・品物の一覧) ============ */
+
+.pp-shelf {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: var(--space-2) var(--space-4) var(--space-4) var(--space-4);
+}
+
+.pp-shelf-card {
+    width: 31.5%;
+    margin-bottom: var(--space-3);
+    padding: var(--space-1);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface-solid);
+    border-bottom-width: 8px;
+    border-bottom-color: var(--color-ice-200);
+    align-items: stretch;
+    transition-duration: var(--duration-fast);
+}
+
+.pp-shelf-card:active {
+    scale: 0.94 0.94;
+}
+
+.pp-shelf-card__thumb {
+    height: 260px;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-ice-50);
+    -unity-background-scale-mode: scale-to-fit;
+    align-items: center;
+    justify-content: center;
+}
+
+.pp-shelf-card__name {
+    margin-top: var(--space-1);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+    -unity-text-align: middle-center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 右上の小さな数 (建てた数など) */
+.pp-shelf-card__badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    min-width: 56px;
+    height: 56px;
+    padding: 0 12px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-heavy);
+    -unity-text-align: middle-center;
+}
+
+/* 新しく建てられるようになったもの */
+.pp-shelf-card__new {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    height: 52px;
+    padding: 0 14px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-accent);
+    color: var(--color-text);
+    font-size: 24px;
+    -unity-font-definition: var(--font-heavy);
+    -unity-text-align: middle-center;
+}
+
+/* まだ建てられないもの: 絵を薄くし、鍵とレベルを重ねる */
+/* 鍵のかかったものは影絵のように暗くする */
+.pp-shelf-card--locked .pp-shelf-card__thumb {
+    -unity-background-image-tint-color: rgba(23, 56, 95, 0.4);
+}
+
+.pp-shelf-card--locked .pp-shelf-card__name {
+    color: var(--color-text-sub);
+}
+
+.pp-lock {
+    align-items: center;
+    justify-content: center;
+}
+
+.pp-lock__label {
+    margin-top: 4px;
+    padding: 0 16px;
+    height: 48px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-text);
+    color: var(--color-text-on-primary);
+    font-size: 26px;
+    -unity-font-definition: var(--font-heavy);
+    -unity-text-align: middle-center;
+}
+
+/* ============ 大きな写真のカード (選んだもの) ============ */
+
+/* 残りの高さの真ん中に選んだカードを置く */
+.pp-stage {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    min-height: 700px;
+    overflow: hidden;
+}
+
+.pp-photo-card {
+    width: 620px;
+    height: 620px;
+    padding: 28px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface-solid);
+    border-bottom-width: 12px;
+    border-bottom-color: var(--color-ice-200);
+    rotate: 3deg;
+    transition-duration: 0.18s;
+}
+
+.pp-photo-card__image {
+    flex-grow: 1;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-ice-50);
+    -unity-background-scale-mode: scale-to-fit;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 左右に少しだけ見える隣のカード */
+.pp-photo-card--side {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    padding: 18px;
+    opacity: 0.75;
+    rotate: -4deg;
+}
+
+.pp-photo-card--prev {
+    left: -220px;
+}
+
+.pp-photo-card--next {
+    right: -220px;
+    rotate: 5deg;
+}
+
+.pp-photo-card--locked .pp-photo-card__image {
+    -unity-background-image-tint-color: rgba(23, 56, 95, 0.4);
+}
+
+/* 切り替えたときに一瞬だけ縮める */
+.pp-photo-card--swap {
+    scale: 0.92 0.92;
+    rotate: -2deg;
+}
+
+/* ============ 説明の札 ============ */
+
+.pp-info-panel {
+    margin: 0 var(--space-4);
+    padding: var(--space-4) var(--space-4) var(--space-4) var(--space-4);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface-solid);
+    border-bottom-width: 10px;
+    border-bottom-color: var(--color-ice-200);
+}
+
+.pp-info-panel__top {
+    flex-direction: row;
+    align-items: center;
+}
+
+.pp-info-panel__name {
+    flex-grow: 1;
+    flex-shrink: 1;
+    font-size: var(--font-size-headline);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.pp-info-panel__lead {
+    margin-top: var(--space-1);
+    font-size: var(--font-size-body);
+    color: var(--color-text-sub);
+    white-space: normal;
+}
+
+.pp-chip-time {
+    flex-direction: row;
+    align-items: center;
+    height: 72px;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-full);
+    background-color: var(--color-ice-50);
+}
+
+.pp-chip-time__label {
+    margin-left: 6px;
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-heavy);
+}
+
+/* 材料 → できるもの */
+.pp-recipe {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: var(--space-3);
+}
+
+.pp-recipe__arrow {
+    margin: 0 var(--space-2);
+}
+
+/* 「アイコン … 30」 */
+.pp-count {
+    flex-direction: row;
+    align-items: center;
+    margin-right: var(--space-3);
+}
+
+.pp-count__icon {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+}
+
+.pp-count__value {
+    margin-left: 8px;
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.pp-count--short .pp-count__value {
+    color: var(--color-danger);
+}
+
+.pp-counts {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: var(--space-3);
+}
+
+/* 作り方とコストの間の区切り */
+.pp-info-panel__divider {
+    height: 4px;
+    margin-top: var(--space-3);
+    border-radius: 2px;
+    background-color: var(--color-ice-100);
+}
+
+/* ============ 大きな丸いボタン ============ */
+
+.pp-round-button {
+    margin: 0;
+    padding: 0;
+    width: 240px;
+    height: 240px;
+    border-width: 0;
+    border-radius: var(--radius-full);
+    background-color: var(--color-eco);
+    border-bottom-width: 14px;
+    border-bottom-color: #1E8752;
+    align-items: center;
+    justify-content: center;
+    transition-duration: var(--duration-fast);
+}
+
+.pp-round-button:active {
+    scale: 0.92 0.92;
+}
+
+.pp-round-button:disabled {
+    background-color: #B9C6D3;
+    border-bottom-color: #8FA0B2;
+}
+
+.pp-round-button__icon {
+    width: 104px;
+    height: 104px;
+    -unity-background-image-tint-color: #FFFFFF;
+}
+
+.pp-round-button__label {
+    margin-top: 4px;
+    color: #FFFFFF;
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.pp-round-button--primary {
+    background-color: var(--color-primary);
+    border-bottom-color: var(--color-primary-dark);
+}
+
+.pp-round-button--small {
+    width: 168px;
+    height: 168px;
+    border-bottom-width: 10px;
+}
+
+.pp-round-button--small .pp-round-button__icon {
+    width: 72px;
+    height: 72px;
+}
+
+.pp-round-button--small .pp-round-button__label {
+    font-size: var(--font-size-caption);
+}
+
+/* 小さな丸い道具 (移す・取り壊す・ペンギンの ±) */
+.pp-mini-button {
+    margin: 0 0 0 var(--space-2);
+    padding: 0;
+    width: 112px;
+    height: 112px;
+    border-width: 0;
+    border-radius: var(--radius-full);
+    background-color: var(--color-ice-50);
+    border-bottom-width: 6px;
+    border-bottom-color: var(--color-ice-200);
+    align-items: center;
+    justify-content: center;
+    transition-duration: var(--duration-fast);
+}
+
+.pp-mini-button:active {
+    scale: 0.9 0.9;
+}
+
+.pp-mini-button:disabled {
+    opacity: 0.35;
+}
+
+.pp-mini-button__label {
+    font-size: 64px;
+    -unity-font-definition: var(--font-heavy);
+    color: var(--color-primary);
+    -unity-text-align: middle-center;
+}
+
+.pp-mini-button--danger .pp-icon {
+    -unity-background-image-tint-color: var(--color-danger);
+}
+
+/* ============ 一覧のカード (注文・品物) ============ */
+
+.pp-tile {
+    flex-direction: row;
+    align-items: center;
+    margin: 0 var(--space-4) var(--space-3) var(--space-4);
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface-solid);
+    border-bottom-width: 10px;
+    border-bottom-color: var(--color-ice-200);
+}
+
+.pp-tile__art {
+    width: 200px;
+    height: 200px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-ice-50);
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.pp-tile__art .pp-icon {
+    width: 128px;
+    height: 128px;
+}
+
+.pp-tile__body {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin: 0 var(--space-3);
+}
+
+.pp-tile__big {
+    font-size: var(--font-size-headline);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.pp-tile__small {
+    margin-top: 4px;
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-bold);
+    color: var(--color-text-sub);
+}
+
+.pp-tile--waiting {
+    opacity: 0.7;
+}
+
+/* 品物の一覧 (3 列) */
+.pp-item-card {
+    flex-shrink: 0;
+    width: 31.5%;
+    margin-bottom: var(--space-3);
+    padding: var(--space-2) var(--space-1);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface-solid);
+    border-bottom-width: 8px;
+    border-bottom-color: var(--color-ice-200);
+    align-items: center;
+}
+
+.pp-item-card .pp-icon {
+    width: 112px;
+    height: 112px;
+}
+
+.pp-item-card__value {
+    margin-top: var(--space-1);
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.pp-item-card__rate {
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+    color: var(--color-eco);
+}
+
+.pp-item-card--short .pp-item-card__rate {
+    color: var(--color-danger);
+}
+
+.pp-item-card--idle {
+    opacity: 0.45;
+}
+
+/* ペンギンの並び (働き手) */
+.pp-workers {
+    flex-direction: row;
+    align-items: center;
+}
+
+.pp-worker {
+    width: 96px;
+    height: 96px;
+    margin-right: 8px;
+    -unity-background-image-tint-color: #FFFFFF;
+}
+
+/* まだ配属していない席は、薄い影だけにする */
+.pp-worker--empty {
+    -unity-background-image-tint-color: rgba(23, 56, 95, 0.16);
+}
+
+/* レベルの星のような丸 */
+.pp-level-pips {
+    flex-direction: row;
+    align-items: center;
+}
+
+.pp-level-pip {
+    width: 36px;
+    height: 36px;
+    margin-right: 8px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-ice-200);
+}
+
+.pp-level-pip--on {
+    background-color: var(--color-accent);
+}
+
+/* 写真のカードの左下に重ねるレベル */
+.pp-level-badge {
+    position: absolute;
+    left: -16px;
+    bottom: -16px;
+    width: 136px;
+    height: 136px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-accent);
+    border-bottom-width: 8px;
+    border-bottom-color: var(--color-accent-dark);
+    align-items: center;
+    justify-content: center;
+}
+
+.pp-level-badge__caption {
+    font-size: 24px;
+    -unity-font-definition: var(--font-heavy);
+    color: var(--color-text);
+}
+
+.pp-level-badge__value {
+    margin-top: -12px;
+    font-size: 64px;
+    -unity-font-definition: var(--font-heavy);
+    color: var(--color-text);
+}
+
+/* 置き場所を選ぶ間の ✓ / ✕ */
+.pp-place-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.pp-place-bar__thumb {
+    width: 168px;
+    height: 168px;
+    margin: 0 var(--space-3);
+    border-radius: var(--radius-full);
+    background-color: var(--color-surface-solid);
+    border-bottom-width: 8px;
+    border-bottom-color: var(--color-ice-200);
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.pp-place-bar__hint {
+    margin-top: var(--space-2);
+    align-self: center;
+    padding: 0 var(--space-3);
+    height: 72px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-danger);
+    color: #FFFFFF;
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-bold);
+    -unity-text-align: middle-center;
+}
+
+.pp-round-button--cancel {
+    background-color: var(--color-surface-solid);
+    border-bottom-color: var(--color-ice-200);
+}
+
+.pp-round-button--cancel .pp-round-button__icon {
+    -unity-background-image-tint-color: var(--color-danger);
+}
+
+/* 画面の下に余白を残す */
+.pp-bottom-space {
+    height: var(--space-6);
+    flex-shrink: 0;
+}
+
+/* ============ 追加のアイコン ============ */
+
+.pp-icon--lock { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-lock.svg"); }
+.pp-icon--clock { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-clock.svg"); }
+.pp-icon--boat { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-boat.svg"); }
+.pp-icon--arrow-right { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-arrow-right.svg"); }
+.pp-icon--upgrade { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-upgrade.svg"); }
+.pp-icon--white { -unity-background-image-tint-color: #FFFFFF; }
