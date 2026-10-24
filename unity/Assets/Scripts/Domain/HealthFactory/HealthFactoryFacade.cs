@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ProjectPenguin.Domain.Encounter;
 namespace ProjectPenguin.Domain.HealthFactory
 {
     public sealed class HealthFactoryFacade
@@ -17,26 +18,29 @@ namespace ProjectPenguin.Domain.HealthFactory
             if(steps<0||steps>172800)return Fail("疑わしい歩数です。付与せず再確認してください");
             var previous=day==_state.LastDay?_state.MaxSteps:0;
             var maximum=Math.Max(previous,steps);
-            var delta=(long)(maximum/500-previous/500)*_state.StepMultiplier;
+            var basic=(long)(maximum/500-previous/500)*_state.StepMultiplier;
+            var carry=_state.GasCarry;var bonus=Bonus(basic,_state.Birds(EncounterResource.Gas),ref carry);var delta=checked(basic+bonus);
             var balance=checked(_state.Gas+delta);var granted=checked(_state.GrantedGas+delta);
-            _state.LastDay=day;_state.MaxSteps=maximum;_state.Gas=balance;_state.GrantedGas=granted;
-            return Ok(delta==0?"受領済み、または次の500歩まで待機":$"歩数差分からガス +{delta}",delta);
+            _state.LastDay=day;_state.MaxSteps=maximum;_state.Gas=balance;_state.GrantedGas=granted;_state.GasCarry=carry;
+            return Ok(delta==0?"受領済み、または次の500歩まで待機":$"歩数差分からガス +{delta}"+BonusNote(bonus),delta);
         }
         public HealthFactoryResult AcceptWater(string id,int day,int today,bool confirmed)
         {
             if(!confirmed||day<0||day!=today||string.IsNullOrWhiteSpace(id))return Fail("水の対象日と記録内容の確認が必要です");
             if(_state.ReceiptIds.Contains(id)||_state.WaterDays.Contains(day))return Fail("この記録または対象日は受領済みです");
-            var balance=checked(_state.Water+3);_state.ReceiptIds.Add(id);_state.WaterDays.Add(day);_state.Water=balance;
-            return Ok("確認済みの水分補給記録：水 +3（摂取量の実測ではありません）",3);
+            var carry=_state.WaterCarry;var bonus=Bonus(3,_state.Birds(EncounterResource.Water),ref carry);var delta=3+bonus;
+            var balance=checked(_state.Water+delta);_state.ReceiptIds.Add(id);_state.WaterDays.Add(day);_state.Water=balance;_state.WaterCarry=carry;
+            return Ok($"確認済みの水分補給記録：水 +{delta}（摂取量の実測ではありません）"+BonusNote(bonus),delta);
         }
         public HealthFactoryResult AcceptScreen(string id,int day,int used,int today,bool fullDay,bool confirmed)
         {
             if(!confirmed||!fullDay||today<1||day!=today-1||used<0||used>1440||string.IsNullOrWhiteSpace(id))
                 return Fail("前日の確定記録と0〜1440分の使用時間が必要です");
             if(_state.ReceiptIds.Contains(id)||_state.ScreenDays.Contains(day))return Fail("この記録または対象日は受領済みです");
-            var delta=(1440-used)/120;var balance=checked(_state.Electricity+delta);
-            _state.ReceiptIds.Add(id);_state.ScreenDays.Add(day);_state.Electricity=balance;
-            return Ok($"前日使用{used}分の確認記録：電気 +{delta}",delta);
+            var basic=(1440-used)/120;var carry=_state.ElectricityCarry;
+            var bonus=Bonus(basic,_state.Birds(EncounterResource.Electricity),ref carry);var delta=basic+bonus;var balance=checked(_state.Electricity+delta);
+            _state.ReceiptIds.Add(id);_state.ScreenDays.Add(day);_state.Electricity=balance;_state.ElectricityCarry=carry;
+            return Ok($"前日使用{used}分の確認記録：電気 +{delta}"+BonusNote(bonus),delta);
         }
         public HealthFactoryResult AdvanceTo(long ms)
         {
@@ -80,6 +84,22 @@ namespace ProjectPenguin.Domain.HealthFactory
         }
         public HealthFactoryResult SetPenguinFixture(bool passive,bool assigned)
         {_state.PassiveFixture=passive;_state.AssignedFixture=assigned;return Ok("テスト個体：今後の歩数差分倍率と加工時間だけ変更。実通信なし");}
+        /// <summary>すれ違いで得たペンギンを 1 羽足す。効果は今後の受け取りだけで、受領済みの分にはさかのぼらない。</summary>
+        public HealthFactoryResult GrantPenguin(string speciesId)
+        {
+            var s=EncounterPenguins.Find(speciesId);if(s==null)return Fail("知らない種類のペンギンです");
+            _state.Penguins.TryGetValue(s.Id,out var n);_state.Penguins[s.Id]=checked(n+1);
+            return Ok(s.Resource==EncounterResource.None?$"すれ違いで{s.Name}を獲得。対象の資源はこの試作に無く、所持だけ記録":
+                $"すれ違いで{s.Name}を獲得。今後の{ResourceName(s.Resource)}の受け取り +10%",1);
+        }
+        // 1羽 +10% の加算。小数は資源ごとに繰り越す (penguin-effects-proposal.md)。基礎量0は0のまま。
+        private static long Bonus(long basic,int birds,ref int carry)
+        {
+            if(basic<=0||birds<=0)return 0;
+            var tenths=checked(basic*birds*EncounterPenguins.BonusTenthsPerBird+carry);carry=(int)(tenths%10);return tenths/10;
+        }
+        private static string BonusNote(long bonus)=>bonus>0?$"（うちペンギン +{bonus}）":"";
+        private static string ResourceName(EncounterResource r)=>r==EncounterResource.Gas?"ガス":r==EncounterResource.Electricity?"電気":"水";
         public HealthFactoryQuote Quote(int? today=null)
         {
             var s=_state.Clone();var spent=s.Spent;s.Gas=1000000;
@@ -98,6 +118,9 @@ namespace ProjectPenguin.Domain.HealthFactory
                 Processing=s.ProcessEnd>0,ProcessStart=s.ProcessStart,ProcessEnd=s.ProcessEnd,Water=s.Water,Electricity=s.Electricity,
                 BoardSize=s.BoardSize,InputCapacity=s.InputCapacity,Slots=s.Slots,ProcessingDurationMs=s.ProcessingDurationMs,
                 MaxSteps=s.MaxSteps,StepDay=s.LastDay,GrantedGas=s.GrantedGas,StepMultiplier=s.StepMultiplier,PassiveFixture=s.PassiveFixture,AssignedFixture=s.AssignedFixture,
+                Penguins=new System.Collections.ObjectModel.ReadOnlyDictionary<string,int>(new Dictionary<string,int>(s.Penguins)),
+                GasBonusPercent=s.Birds(EncounterResource.Gas)*10,ElectricityBonusPercent=s.Birds(EncounterResource.Electricity)*10,
+                WaterBonusPercent=s.Birds(EncounterResource.Water)*10,
                 BufferBuilt=s.BufferBuilt,Upgraded=s.Upgraded,
                 StopReason=s.Stored==4?"目標達成 · 報酬なし":s.Deliveries.Count>0||s.ProcessEnd>0?"支払済みの配送・加工が進行中":
                     !s.Routes[0]||!s.Routes[1]?"未接続の経路があります":s.Gas==0?"ガス不足 · 在庫と施設を保持して待機":"材料・容量・次の開始を待機",

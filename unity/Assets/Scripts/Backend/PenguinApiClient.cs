@@ -20,6 +20,7 @@ namespace ProjectPenguin.Backend
         public const string HealthPath = "/v1/health";
         public const string CommunityGoalPath = "/v1/community/goal";
         public const string QuestsPath = "/v1/quests";
+        public const string EncountersPath = "/v1/encounters";
 
         private readonly string _baseUrl;
         private readonly IHttpTransport _transport;
@@ -62,6 +63,13 @@ namespace ProjectPenguin.Backend
             var body = Encoding.UTF8.GetBytes(JsonUtility.ToJson(new RedeemRequestDto { code = code ?? "" }));
             var path = QuestsPath + "/" + Uri.EscapeDataString(questId ?? "") + "/redeem";
             return SendAsync<RedeemResultDto>(UnityWebRequest.kHttpVerbPOST, path, body, "application/json", cancellationToken);
+        }
+
+        /// <summary>すれ違いの報告。同じ報告は何度送っても同じ結果になる (契約) ので、送り直しても数えすぎない。</summary>
+        internal Task<EncounterResultDto> ReportEncounterAsync(string day, string selfToken, string peerToken, CancellationToken cancellationToken)
+        {
+            var body = Encoding.UTF8.GetBytes(JsonUtility.ToJson(new EncounterReportDto { day = day, self_token = selfToken, peer_token = peerToken }));
+            return SendAsync<EncounterResultDto>(UnityWebRequest.kHttpVerbPOST, EncountersPath, body, "application/json", cancellationToken);
         }
 
         private async Task<T> SendAsync<T>(string method, string path, byte[] body, string contentType, CancellationToken cancellationToken,

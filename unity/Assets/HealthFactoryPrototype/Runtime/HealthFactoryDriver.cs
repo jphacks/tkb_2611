@@ -14,6 +14,7 @@ namespace ProjectPenguin.HealthFactoryPrototype
         [SerializeField] private Transform[] _facilities;
         [SerializeField] private Transform _plot;
         private HealthFactoryPresenter _presenter;
+        private HealthFactoryEncounters _encounters;
         private IStepSource _native;
         private DateTimeOffset _queryFrom;
         private int _queryDay;
@@ -25,6 +26,7 @@ namespace ProjectPenguin.HealthFactoryPrototype
         public bool Paused {get;private set;}=true;
         public string Message {get;private set;}="配置の予測を比較し、開発用の累計歩数を受領して再開してください";
         public string StepStatus {get;private set;}="実歩数：iOS専用・未接続（偽入力とは別）";
+        public string EncounterStatus=>_encounters?.Status??"すれ違い：準備中";
         public bool DevelopmentInputs=>Application.isEditor||Debug.isDebugBuild;
         public int Selected=>_selected;
         public string RecordDay=>DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(9)).ToString("yyyy-MM-dd");
@@ -34,6 +36,8 @@ namespace ProjectPenguin.HealthFactoryPrototype
         private void Start()
         {
             Factory=new HealthFactoryFacade();
+            _encounters=new HealthFactoryEncounters(EncounterRadios.Create(),()=>(long)(Time.realtimeSinceStartupAsDouble*1000),
+                id=>Apply(Factory.GrantPenguin(id)),message=>{Message=message;Refresh();});
             _presenter=new HealthFactoryPresenter(transform,_camera,_font,_facilities,_plot,this);
 #if UNITY_IOS && !UNITY_EDITOR
             _native=StepSources.Create();RequestNativeSteps();
@@ -48,6 +52,7 @@ namespace ProjectPenguin.HealthFactoryPrototype
                 Factory.AdvanceTo((long)_elapsedMs);
             }
             PollNative();
+            if(!_suspended)_encounters.Poll(Today);
             if(Time.unscaledTime>=_nextRefresh){Refresh();_nextRefresh=Time.unscaledTime+.1f;}
         }
         public void Apply(HealthFactoryResult result){Message=result.Reason;Refresh();}
@@ -70,6 +75,8 @@ namespace ProjectPenguin.HealthFactoryPrototype
         {if(DevelopmentInputs){var v=Factory.CreateView();Apply(Factory.SetPenguinFixture(!v.PassiveFixture,v.AssignedFixture));}}
         public void ToggleAssignment()
         {if(DevelopmentInputs){var v=Factory.CreateView();Apply(Factory.SetPenguinFixture(v.PassiveFixture,!v.AssignedFixture));}}
+        public void FakeEncounter()
+        {if(DevelopmentInputs)_=_encounters.FakeEncounterAsync();}
         public void RestartTrial()
         {
             if(!DevelopmentInputs)return;
@@ -102,7 +109,11 @@ namespace ProjectPenguin.HealthFactoryPrototype
             if(!_querying&&Time.unscaledTime>=_nextQuery)RequestNativeSteps();
         }
         private void OnApplicationPause(bool paused)
-        {_suspended=paused;if(!paused&&Factory!=null&&_native!=null){_querying=false;RequestNativeSteps();}}
+        {
+            _suspended=paused;if(paused)_encounters?.Suspend();
+            if(!paused&&Factory!=null&&_native!=null){_querying=false;RequestNativeSteps();}
+        }
+        private void OnDestroy()=>_encounters?.Suspend();
         private void Refresh(){if(_presenter!=null&&Factory!=null)_presenter.Render(Factory.CreateView(),Factory.Quote(Today));}
     }
 }

@@ -131,5 +131,21 @@ namespace ProjectPenguin.Backend
         public string message;
     }
 
+    [Serializable]
+    internal sealed class EncounterReportDto
+    {
+        public string day;
+        public string self_token;
+        public string peer_token;
+    }
+
+    [Serializable]
+    internal sealed class EncounterResultDto
+    {
+        public string schema_version;
+        public bool matched;
+        public string pair_id;
+    }
+
 #pragma warning restore IDE1006
 }
