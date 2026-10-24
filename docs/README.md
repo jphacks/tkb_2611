@@ -20,6 +20,7 @@
 | [生活習慣と攻略の違い](product-direction/lifestyle-strategy-proposal.md) | 現行の目的・課題・対象者。攻略の収束を課題とする企画案、電気の取得方法、エフォート・コンボ・建設費の前提、資源の増え方の案、日ごとの調整、継続に向けた拡張案 |
 | [過去の案](product-direction/past/README.md) | 現行の企画と矛盾するため移した、セルフケアを主題とする課題・対象者・発表の整理 |
 | [確認事項](product-direction/questions.md) | 回答済みの仕様と、優先順位を付けた未決事項 |
+| [工場ゲームの実装指示](product-direction/implementation-handoff.md) | 実装済み部分と不足、仕様・数値の参照先、実装順序と受け入れ条件 |
 
 ## backend と API の設計
 
