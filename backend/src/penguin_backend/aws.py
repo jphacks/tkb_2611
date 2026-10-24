@@ -9,20 +9,26 @@ Vercel の関数は、要求ごとに付く x-vercel-oidc-token で IAM ロー�
 テストはここに偽物 (Stubber・moto) を渡す。
 """
 
+from __future__ import annotations
+
 import logging
 import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import boto3
 from botocore.config import Config
 from fastapi import Request
-from mypy_boto3_bedrock_runtime import BedrockRuntimeClient
-from mypy_boto3_dynamodb import DynamoDBClient
-from mypy_boto3_sts import STSClient
 
 from penguin_backend.settings import Settings
+
+if TYPE_CHECKING:
+    # 型のスタブ (mypy-boto3-*) は開発用の依存で、本番の関数には入らない。型の検査のときだけ読む
+    from mypy_boto3_bedrock_runtime import BedrockRuntimeClient
+    from mypy_boto3_dynamodb import DynamoDBClient
+    from mypy_boto3_sts import STSClient
 
 logger = logging.getLogger(__name__)
 

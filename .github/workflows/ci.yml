@@ -151,6 +151,14 @@ jobs:
         run: uv run mypy .
       - name: unit test (pytest)
         run: uv run pytest -q
+      # Vercel の関数には本番の依存 (uv export --no-dev) だけが入る。型のスタブなど開発用の依存を
+      # 実行時に import していると、公開して初めて落ちる (FUNCTION_INVOCATION_FAILED) ので、ここで止める
+      - name: import with production dependencies only
+        run: |
+          uv export --no-dev --frozen --no-emit-project -q -o "$RUNNER_TEMP/requirements.txt"
+          uv venv -q "$RUNNER_TEMP/prod"
+          VIRTUAL_ENV="$RUNNER_TEMP/prod" uv pip install -q -r "$RUNNER_TEMP/requirements.txt"
+          PYTHONPATH=src "$RUNNER_TEMP/prod/bin/python" -c "import penguin_backend.app"
 
   # IaC (CloudFormation) の書き方の検査。デプロイはオーナーだけが手元から行う (infra/README.md)。
   infra:

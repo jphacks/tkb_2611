@@ -5,16 +5,21 @@ ml と decision はサーバーが決める (decide.py)。
 写真と AI の生の出力は、ログ・例外の文に入れない (.claude/rules/privacy.md)。記録するのは数だけ。
 """
 
+from __future__ import annotations
+
 import logging
 import time
-from typing import Any, Protocol, get_args
+from typing import TYPE_CHECKING, Any, Protocol, get_args
 
 from botocore.exceptions import BotoCoreError, ClientError
-from mypy_boto3_bedrock_runtime import BedrockRuntimeClient
 from pydantic import BaseModel, ValidationError, field_validator
 
 from penguin_backend.errors import ApiError
 from penguin_backend.schemas import WaterContainer
+
+if TYPE_CHECKING:
+    # 型のスタブは開発用の依存なので、型の検査のときだけ読む (aws.py と同じ)
+    from mypy_boto3_bedrock_runtime import BedrockRuntimeClient
 
 logger = logging.getLogger(__name__)
 
