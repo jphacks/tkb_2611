@@ -12,16 +12,21 @@ Settings.encounter_table_name から受け取るので、専用のテーブル�
 トークンは端末やユーザーと結び付かない乱数だが、ログには出さない (.claude/rules/privacy.md)。
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 from collections.abc import Callable
 from datetime import date, datetime, timedelta, timezone
-from typing import NoReturn
+from typing import TYPE_CHECKING, NoReturn
 
 from botocore.exceptions import BotoCoreError, ClientError
-from mypy_boto3_dynamodb import DynamoDBClient
 
 from penguin_backend.errors import ApiError
+
+if TYPE_CHECKING:
+    # 型のスタブは開発用の依存なので、型の検査のときだけ読む (aws.py と同じ)
+    from mypy_boto3_dynamodb import DynamoDBClient
 
 logger = logging.getLogger(__name__)
 
