@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.1.0",
+  "subject": "my_bottle",
+  "comment": "画面の中のボトルみたい。本物を撮ってね",
+  "confidence": 0.88,
+  "decision": "reject",
+  "checks": [
+    {
+      "id": "subject",
+      "label": "写っていたもの",
+      "passed": true,
+      "detail": "マイボトル"
+    },
+    {
+      "id": "not_screen",
+      "label": "画面を撮った写真ではない",
+      "passed": false
+    }
+  ]
+}

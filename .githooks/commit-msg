@@ -1,0 +1,4 @@
+#!/bin/sh
+# コミットメッセージに、個人に関わる内容が無いかを見る。
+root="$(git rev-parse --show-toplevel)" || exit 1
+exec "$root/.githooks/_python" "$root/scripts/check_personal_info.py" --message-file "$1"

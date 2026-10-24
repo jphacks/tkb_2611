@@ -1,0 +1,169 @@
+# ---------------------------------------------------------------
+# tkb_2611 (ueco / Project Penguin の backend) - CI
+#   Unity クライアントは Sh1n1230/project-penguin にあり、ここでは回さない。
+# ---------------------------------------------------------------
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # このリポジトリは public で残り続ける (CLAUDE.md の絶対規則 0)。ローカルのフックを入れていない人の
+  # push もここで見る。名前の拒否リストは Secret (PERSONAL_DENYLIST) から渡し、ログには出さない。
+  personal-info:
+    name: 個人に関わる内容の検査
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: 追跡しているファイル
+        env:
+          PENGUIN_PERSONAL_DENYLIST: ${{ secrets.PERSONAL_DENYLIST }}
+        run: python scripts/check_personal_info.py --all
+
+      - name: PR のコミット (追加行とメッセージ)
+        if: github.event_name == 'pull_request'
+        env:
+          PENGUIN_PERSONAL_DENYLIST: ${{ secrets.PERSONAL_DENYLIST }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python scripts/check_personal_info.py --range "$BASE_SHA..$HEAD_SHA"
+
+      - name: main に入ったコミット
+        if: github.event_name == 'push'
+        env:
+          PENGUIN_PERSONAL_DENYLIST: ${{ secrets.PERSONAL_DENYLIST }}
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.sha }}
+        run: |
+          if git cat-file -e "$BEFORE_SHA" 2>/dev/null; then
+            python scripts/check_personal_info.py --range "$BEFORE_SHA..$AFTER_SHA"
+          else
+            python scripts/check_personal_info.py --range "$AFTER_SHA"
+          fi
+
+      # PR の題と本文は event の値を直接 run に埋め込まず (注入を防ぐ)、API から取ってファイルで渡す。
+      - name: PR の題と本文
+        if: github.event_name == 'pull_request'
+        env:
+          PENGUIN_PERSONAL_DENYLIST: ${{ secrets.PERSONAL_DENYLIST }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq '.title + "\n" + (.body // "")' > "$RUNNER_TEMP/pr.txt"
+          python scripts/check_personal_info.py --text-file "$RUNNER_TEMP/pr.txt"
+
+      - name: 拒否リストの設定
+        env:
+          PENGUIN_PERSONAL_DENYLIST: ${{ secrets.PERSONAL_DENYLIST }}
+        run: |
+          if [ -z "$PENGUIN_PERSONAL_DENYLIST" ]; then
+            echo "::warning::Secret PERSONAL_DENYLIST が無いので、名前の検査をしていません (docs/personal-info.md)。"
+          fi
+
+      - name: 検査のテスト
+        run: pip install --quiet pytest==8.4.2 && python -m pytest -q tests
+
+  secrets:
+    name: 秘密情報の検査
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: 追跡対象ファイルの検査
+        run: python scripts/check_secrets.py
+
+      # gitleaks-action は org のリポジトリではライセンスキーが要るので、gitleaks 本体 (MIT) を
+      # 版と checksum を固定して直接動かす。
+      - name: gitleaks (履歴全体)
+        env:
+          GITLEAKS_VERSION: 8.30.1
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$RUNNER_TEMP/$archive" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$archive" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" git --config .gitleaks.toml --redact --no-banner --exit-code 1 .
+
+  contract:
+    name: Unity との契約 (api/)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: '3.12'
+
+      # Web ビルドは作り直さないので、契約を壊す変更 (必須の項目を足す・例がスキーマに合わない) をここで止める。
+      - name: 契約の検査
+        run: >-
+          uv run --no-project --with openapi-spec-validator==0.9.0
+          --with jsonschema==4.26.0 --with pyyaml==6.0.3 python scripts/check_api_contract.py
+
+  backend:
+    name: backend (lint / format / type / test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - run: uv sync --all-extras --dev
+      - name: format (ruff format --check)
+        run: uv run ruff format --check .
+      - name: lint (ruff check)
+        run: uv run ruff check .
+      - name: type-check (mypy)
+        run: uv run mypy .
+      - name: unit test (pytest)
+        run: uv run pytest -q
+
+  # IaC (CloudFormation) の書き方の検査。デプロイはオーナーだけが手元から行う (infra/README.md)。
+  infra:
+    name: IaC の検査 (cfn-lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          lfs: false
+
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: '3.12'
+
+      - name: cfn-lint
+        run: uv run --no-project --with cfn-lint==1.58.0 cfn-lint --regions ap-northeast-1 -- infra/*.yaml

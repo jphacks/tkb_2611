@@ -1,0 +1,9 @@
+#!/bin/sh
+# フックから使う Python を選ぶ (python3 → python)。どちらも無ければ止める。
+for candidate in python3 python; do
+  if command -v "$candidate" >/dev/null 2>&1; then
+    exec "$candidate" "$@"
+  fi
+done
+echo "Python が見つかりません。個人情報の検査を通せないので止めます。" >&2
+exit 1

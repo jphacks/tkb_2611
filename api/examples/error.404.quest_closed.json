@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "quest_closed",
+    "message": "このお題はもう終わったよ",
+    "retryable": false
+  }
+}

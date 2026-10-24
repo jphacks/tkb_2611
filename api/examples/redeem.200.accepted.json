@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.1.0",
+  "accepted": true,
+  "reward": {
+    "kind": "decoration",
+    "id": "jphacks_flag"
+  },
+  "message": "会場の旗をもらったよ！"
+}

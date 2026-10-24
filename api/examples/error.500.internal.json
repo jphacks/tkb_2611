@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "internal",
+    "message": "うまくいかなかったよ。少し待ってからもう一度ためしてね",
+    "retryable": true
+  }
+}

@@ -1,0 +1,23 @@
+# 秘密 (API キーは Vercel の環境変数にだけ置く)
+.env
+.env.*
+!.env.example
+
+# 個人に関わる語の拒否リスト (名前など)。絶対にコミットしない (docs/personal-info.md)
+.personal-denylist
+
+# Python
+__pycache__/
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# 写真・SQLite をリポジトリに入れない
+*.db
+*.sqlite*
+
+.DS_Store
+
+# IaC のデプロイ時のパラメータ (通知先のメールアドレスや Vercel のチーム名を含むので入れない)
+infra/*.local.json

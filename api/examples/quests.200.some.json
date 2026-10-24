@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.1.0",
+  "poll_seconds": 300,
+  "quests": [
+    {
+      "id": "bottle-week",
+      "kind": "chokotto",
+      "title": "マイボトルの日",
+      "description": "マイボトルの写真を撮ると、お魚の袋がもらえるよ",
+      "starts_at": "2026-10-24T00:00:00Z",
+      "ends_at": "2026-10-26T15:00:00Z",
+      "proof": "photo",
+      "subjects": [
+        "my_bottle"
+      ],
+      "reward": {
+        "kind": "fish_pack",
+        "id": "fish_small",
+        "amount": 1
+      },
+      "enabled": true
+    },
+    {
+      "id": "venue-tkb",
+      "kind": "odekake",
+      "title": "会場のペンギンに会いに行こう",
+      "description": "東京B 会場の QR を読むと、限定の飾りがもらえるよ",
+      "starts_at": "2026-10-24T01:20:00Z",
+      "ends_at": "2026-10-25T08:00:00Z",
+      "proof": "qr",
+      "reward": {
+        "kind": "decoration",
+        "id": "jphacks_flag"
+      },
+      "enabled": true
+    }
+  ]
+}

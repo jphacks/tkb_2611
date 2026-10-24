@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "already_redeemed",
+    "message": "このご褒美はもう受け取ってるよ",
+    "retryable": false
+  }
+}

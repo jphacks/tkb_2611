@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.4.0",
+  "quests": [
+    {
+      "id": "night-walk",
+      "kind": "night",
+      "title": "夜のおさんぽ",
+      "description": "未来のお題",
+      "starts_at": "2026-10-24T00:00:00Z",
+      "ends_at": "2026-10-26T00:00:00Z",
+      "proof": "nfc",
+      "reward": {
+        "kind": "badge",
+        "id": "moon"
+      },
+      "enabled": true
+    },
+    {
+      "id": "eco-bag",
+      "kind": "chokotto",
+      "title": "エコバッグの日",
+      "description": "エコバッグの写真で時短がもらえるよ",
+      "starts_at": "2026-10-24T00:00:00Z",
+      "ends_at": "2026-10-26T00:00:00Z",
+      "proof": "photo",
+      "subjects": [
+        "eco_bag"
+      ],
+      "reward": {
+        "kind": "time_skip",
+        "id": "skip_30m",
+        "amount": 30
+      },
+      "enabled": true
+    }
+  ]
+}
