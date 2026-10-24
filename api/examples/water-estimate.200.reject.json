@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.2.0",
+  "container": "pet_bottle_500",
+  "fill_ratio": 1,
+  "amount_ml": 500,
+  "confidence": 0.88,
+  "decision": "reject",
+  "checks": [
+    { "id": "container", "label": "写っていたもの", "passed": true, "detail": "500ml のペットボトル" },
+    { "id": "screen", "label": "画面を撮った写真ではない", "passed": false }
+  ],
+  "comment": "本物のペットボトルを撮ってね"
+}

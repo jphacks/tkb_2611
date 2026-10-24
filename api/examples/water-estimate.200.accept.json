@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.2.0",
+  "container": "pet_bottle_500",
+  "fill_ratio": 0.6,
+  "amount_ml": 300,
+  "confidence": 0.92,
+  "decision": "accept",
+  "checks": [
+    { "id": "container", "label": "写っていたもの", "passed": true, "detail": "500ml のペットボトル" },
+    { "id": "screen", "label": "画面を撮った写真ではない", "passed": true }
+  ],
+  "comment": "水分補給、いいね"
+}

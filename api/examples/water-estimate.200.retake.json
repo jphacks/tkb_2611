@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.2.0",
+  "container": "unknown",
+  "fill_ratio": 0,
+  "amount_ml": 0,
+  "confidence": 0.2,
+  "decision": "retake",
+  "checks": [
+    { "id": "container", "label": "写っていたもの", "passed": false, "detail": "ペットボトルが見えない" },
+    { "id": "screen", "label": "画面を撮った写真ではない", "passed": true }
+  ],
+  "retake_hint": "ペットボトル全体が入るように撮ってね",
+  "comment": "うーん、よく見えなかったよ"
+}

@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "token_invalid",
+    "message": "すれ違いの記録を読めなかったよ",
+    "retryable": false
+  }
+}

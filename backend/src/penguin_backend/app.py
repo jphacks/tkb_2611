@@ -1,28 +1,41 @@
 """FastAPI アプリの入口。
 
 本番は Vercel に Web ビルドと同じ URL で置き、`/api/*` だけがここに届く (docs/web-deploy.md)。
-写真判定とみんなの氷山の口は Hack Day に足す。いまは疎通の確認 (`/api/healthz`) だけを持つ。
+口は疎通の確認 (`/api/v1/health`)・水の写真 (`api/water.py`)・すれ違い (`api/encounters.py`)。
+AWS のクライアントは clients (既定は Vercel の OIDC でロールを借りる aws.AwsClients) から受け取る。
 """
 
 import logging
 from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from penguin_backend import __version__
+from penguin_backend.api import encounters, water
+from penguin_backend.aws import AwsClients, ClientsProvider
+from penguin_backend.errors import MESSAGES, ApiError, handle_api_error
+from penguin_backend.schemas import SCHEMA_VERSION
 from penguin_backend.settings import Settings
 
 logger = logging.getLogger(__name__)
 
-# 守っている契約の版 (api/openapi.yaml の info.version)。
-SCHEMA_VERSION = "1.1.0"
-# 処理されなかった例外のときに画面に出す文 (契約の例 error.500.internal.json と同じ)。
-INTERNAL_MESSAGE = "うまくいかなかったよ。少し待ってからもう一度ためしてね"
+__all__ = ["SCHEMA_VERSION", "app", "create_app"]
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def _now() -> datetime:
+    return datetime.now(UTC)
+
+
+def create_app(
+    settings: Settings | None = None,
+    *,
+    clients: ClientsProvider | None = None,
+    clock: Callable[[], datetime] = _now,
+) -> FastAPI:
+    """clients と clock はテストで偽物 (Stubber・moto・固定の時刻) に差し替える。"""
     settings = settings or Settings()
 
     # 一般公開する URL なので、API の一覧 (/docs など) は出さない。
@@ -33,6 +46,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         redoc_url=None,
         openapi_url=None,
     )
+    app.state.settings = settings
+    app.state.clients = clients or AwsClients(settings)
+    app.state.clock = clock
+    app.add_exception_handler(ApiError, handle_api_error)
 
     @app.middleware("http")
     async def answer_unhandled_errors(
@@ -47,7 +64,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             logger.error("unhandled %s on %s", type(error).__name__, request.url.path)
             # 契約の ErrorResponse の形 (api/examples/error.500.internal.json と同じ文)。
             return JSONResponse(
-                {"error": {"code": "internal", "message": INTERNAL_MESSAGE, "retryable": True}},
+                {"error": {"code": "internal", "message": MESSAGES["internal"], "retryable": True}},
                 status_code=500,
                 headers={"Cache-Control": "no-store"},
             )
@@ -73,6 +90,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # 応答の Date を端末の時計合わせに使うので、CDN に溜めさせない。
         response.headers["Cache-Control"] = "no-store"
         return {"status": "ok", "version": __version__, "schema_version": SCHEMA_VERSION}
+
+    # include_router は FastAPI 0.146 から道を app.routes に並べない (未実装の一覧のテストが道を
+    # 見られなくなる) ので、ルートの関数を直に登録する。
+    app.add_api_route(water.PATH, water.estimate_water, methods=["POST"])
+    app.add_api_route(encounters.PATH, encounters.report_encounter, methods=["POST"])
 
     return app
 
