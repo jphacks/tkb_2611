@@ -17,7 +17,7 @@ from penguin_backend.settings import Settings
 logger = logging.getLogger(__name__)
 
 # 守っている契約の版 (api/openapi.yaml の info.version)。
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.1.0"
 # 処理されなかった例外のときに画面に出す文 (契約の例 error.500.internal.json と同じ)。
 INTERNAL_MESSAGE = "うまくいかなかったよ。少し待ってからもう一度ためしてね"
 
@@ -59,7 +59,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             CORSMiddleware,
             allow_origins=settings.cors_origins,
             allow_methods=["GET", "POST"],
-            allow_headers=["Content-Type"],
+            # Idempotency-Key は判定の送り直しを見分ける写真ごとの乱数 (契約 1.1.0)。
+            # 独自のヘッダーなので、ブラウザの事前確認で許す。
+            allow_headers=["Content-Type", "Idempotency-Key"],
             expose_headers=["Date"],
         )
 
