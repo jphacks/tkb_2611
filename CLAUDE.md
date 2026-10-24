@@ -60,6 +60,9 @@ CI (`.github/workflows/ci.yml`) は個人に関わる内容・秘密情報・契
 
 - **commit・push・PR はユーザーが指示したときだけ。** `main` に直接 push しない。`<type>/<内容>` の作業ブランチを切る。force push・`--no-verify`・履歴の書き換えはしない。
 - コミットメッセージは `<type>(<scope>): <日本語の要約>` (type は `feat` / `fix` / `refactor` / `perf` / `test` / `docs` / `chore` / `ci`、scope は `backend` / `api` / `docs` / `ci`)。1 コミット 1 論点。
+- **GitHub flow。** main はルールセットで守ってあり、PR を通さないと入らない。マージは squash だけで、CI の 5 つの検査 (`.github/workflows/ci.yml` のジョブ) が通っている必要がある。squash したコミットの題と本文は PR の題と説明になるので、PR の題もコミットメッセージと同じ形で書く。マージしたブランチは自動で消える。
+- **CI のジョブの `name:` を変えたら、ルールセット「main (GitHub flow)」の必須の検査も同じ名前に直す。** 直さないと、どの PR もマージできなくなる。
+- 開始タグ `hackday-start` はルールセットで固定してあり、打った後は消すことも付け直すこともできない。
 - Hack Day 中は、主要な PR を README の「Hack Day 中に開発した差分」に載せられるよう、PR の説明に「何を作ったか」を 1 行で書く。
 
 ## スキル

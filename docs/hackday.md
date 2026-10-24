@@ -31,8 +31,8 @@ AI の画像解析の入出力そのものは半日で終わる見込み。残�
 
 ## 当日の流れ
 
-1. **10:20** オーナーが main に注釈付きタグ `hackday-start` を打つ (`git tag -a hackday-start -m "Hack Day 開始" && git push origin hackday-start`)。
-2. 各自 `<type>/<内容>` のブランチで作り、PR → CI → マージ。PR の説明に「何を作ったか」を 1 行で書く (README の差分の節に使う)。
+1. **10:20** オーナーが main に注釈付きタグ `hackday-start` を打つ (`git tag -a hackday-start -m "Hack Day 開始" && git push origin hackday-start`)。タグはルールセットで固定され、付け直せないので、打つ前に `git fetch && git log -1 origin/main` で打つ先を確かめ、`origin/main` を指定して打つ。
+2. 各自 `<type>/<内容>` のブランチで作り、PR → CI → squash マージ。PR の説明に「何を作ったか」を 1 行で書く (README の差分の節に使う)。
 3. 公開役が main を Vercel に上げる (`docs/architecture.md` の「公開の流れ」)。最初は `penguin-config.json` を `judge: "mock"` のままにし、判定が動いたら `"http"` にして上げ直す。みんなの氷山とお題も、できたものから `true` にする。
 4. **中間発表 (1 日目 19:10)** で QR を配る前に、本番の URL で一周できることを確かめる。
 5. **Code Freeze (2 日目 15:00)** までにマージを終える。README の「Hack Day 中に開発した差分」に `hackday-start...main` の比較リンクと主要な PR を並べる。
