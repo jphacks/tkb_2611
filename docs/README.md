@@ -22,6 +22,9 @@
 | [確認事項](product-direction/questions.md) | 回答済みの仕様と、優先順位を付けた未決事項 |
 | [工場ゲームの実装指示](product-direction/implementation-handoff.md) | 実装済み部分と不足、仕様・数値の参照先、実装順序と受け入れ条件 |
 | [工場ゲームの実装と検証](product-direction/implementation-progress.md) | 新しい専用シーン、試作設定、実装計画、検証結果と未確認の範囲 |
+| [歩行と効率化の設計案](product-direction/walking-health-concept.md) | 歩行による燃料補給と配置改善を比較する健康促進の補足案 |
+| [物流ゲームのC#構造](product-direction/csharp-architecture.md) | 状態・公開入口・計算・表示・保存の責務と依存関係 |
+| [歩行と効率化の実装計画](product-direction/walking-implementation-plan.md) | 燃料消費、歩数付与、予測、保存復帰、iOS検証の手順 |
 
 ## backend と API の設計
 
