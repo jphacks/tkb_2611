@@ -69,6 +69,9 @@ CI (`.github/workflows/ci.yml`) は個人に関わる内容・秘密情報・契
 
 | 作業 | 使うもの |
 |---|---|
+| 日本語の文書の作成・推敲 | `yomiyasu` (`.claude/skills/yomiyasu/SKILL.md`) |
 | コミット / PR の前の検査 | `/verify` |
+
+日本語の文書を作成・推敲するときは、先に `yomiyasu` の指示を読む。意味・条件・未確定事項を保って文章を整え、保存時に同梱のリンターで点検する。
 
 ゲームの規則・画面・Unity 側の実装は project-penguin にある。仕様を確かめるときは `docs/README.md` の「仕様の置き場所」から辿る。
