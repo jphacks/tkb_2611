@@ -1,0 +1,37 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="ProductionScreen.uss" />
+    <!-- 生産量。品物ごとに手もちと 1 時間あたりの増減だけを並べる (ProductionScreenPresenter) -->
+    <ui:VisualElement name="root" class="pp-game-page">
+        <ui:VisualElement class="pp-game-page__safe pp-safe-area">
+            <ui:VisualElement class="pp-game-header">
+                <ui:Label text="生産量" class="pp-title-chip" />
+                <ui:VisualElement class="pp-game-header__spacer" />
+                <ui:Button name="closeButton" class="pp-round-close">
+                    <ui:VisualElement class="pp-icon pp-icon--close pp-icon--primary" picking-mode="Ignore" />
+                </ui:Button>
+            </ui:VisualElement>
+            <ui:ScrollView class="production__scroll">
+                <ui:VisualElement class="production__summary">
+                    <ui:VisualElement class="pp-item-card">
+                        <ui:VisualElement class="pp-icon pp-icon--gas pp-icon--res-gas" picking-mode="Ignore" />
+                        <ui:Label name="gasValue" text="5 時間" class="pp-item-card__value" />
+                        <ui:Label name="gasRate" text="-2/時" class="pp-item-card__rate" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="pp-item-card">
+                        <ui:VisualElement class="pp-icon pp-icon--penguin pp-icon--original" picking-mode="Ignore" />
+                        <ui:Label name="workersValue" text="3 / 4" class="pp-item-card__value" />
+                        <ui:Label name="workersRate" text="はたらく" class="pp-item-card__rate" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="pp-item-card">
+                        <ui:VisualElement class="pp-icon pp-icon--storage-full pp-icon--primary" picking-mode="Ignore" />
+                        <ui:Label name="storageValue" text="20" class="pp-item-card__value" />
+                        <ui:Label name="storageRate" text="置き場" class="pp-item-card__rate" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="itemGrid" class="pp-shelf" />
+                <ui:VisualElement class="pp-bottom-space" />
+            </ui:ScrollView>
+            <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

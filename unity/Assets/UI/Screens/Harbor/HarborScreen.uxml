@@ -1,0 +1,28 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="HarborScreen.uss" />
+    <!-- 港。舟の注文を大きなカードで並べ、そろったものだけ丸いボタンで届ける (HarborScreenPresenter) -->
+    <ui:VisualElement name="root" class="pp-game-page">
+        <ui:VisualElement class="pp-game-page__safe pp-safe-area">
+            <ui:VisualElement class="pp-game-header">
+                <ui:Label text="港" class="pp-title-chip" />
+                <ui:VisualElement class="pp-game-header__spacer" />
+                <ui:Button name="closeButton" class="pp-round-close">
+                    <ui:VisualElement class="pp-icon pp-icon--close pp-icon--primary" picking-mode="Ignore" />
+                </ui:Button>
+            </ui:VisualElement>
+            <ui:ScrollView class="harbor__scroll">
+                <ui:VisualElement class="pp-tile harbor__summary">
+                    <ui:VisualElement name="harborArt" class="pp-tile__art pp-thumb harbor__art" picking-mode="Ignore" />
+                    <ui:VisualElement class="pp-tile__body">
+                        <ui:Label name="harborStage" text="港 Lv 1" class="pp-tile__big" />
+                        <ui:ProgressBar name="harborProgress" value="0" high-value="1" class="pp-progress pp-progress--point harbor__progress" />
+                        <ui:Label name="harborNext" text="あと 3 回" class="pp-tile__small" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="orderList" />
+                <ui:VisualElement class="pp-bottom-space" />
+            </ui:ScrollView>
+            <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

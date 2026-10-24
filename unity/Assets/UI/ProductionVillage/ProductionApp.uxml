@@ -1,0 +1,53 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="../DesignSystem/Tokens.uss" />
+    <ui:Style src="../DesignSystem/Components.uss" />
+    <ui:Style src="ProductionApp.uss" />
+    <ui:VisualElement name="villageApp" class="village-app safe-area" picking-mode="Ignore">
+        <ui:VisualElement name="villageHeader" class="village-header">
+            <ui:Label text="PENGUIN VILLAGE" class="village-eyebrow" />
+            <ui:VisualElement class="village-heading-row">
+                <ui:Label text="ペンギンの村" class="village-title" />
+                <ui:Label name="villageProfile" class="village-profile" />
+            </ui:VisualElement>
+            <ui:VisualElement class="village-resources">
+                <ui:Label name="villageGas" class="village-resource village-gas" />
+                <ui:Label name="villageElectricity" class="village-resource village-electricity" />
+                <ui:Label name="villageWater" class="village-resource village-water" />
+                <ui:Label name="villageFish" class="village-resource village-fish" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="villageTools" class="village-tools">
+            <ui:Label name="villageNotice" class="village-notice" />
+            <ui:VisualElement class="village-row">
+                <ui:Button name="villagePlacement" text="配置" class="village-button village-primary" />
+                <ui:Button name="villageProduction" text="生産量" class="village-button" />
+                <ui:Button name="villageHarbor" text="港" class="village-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="villagePlacementTray" class="village-tray village-hidden">
+            <ui:Label name="villagePlacementReason" class="village-body" />
+            <ui:VisualElement class="village-row">
+                <ui:Button name="villageConfirm" text="ここに移す" class="village-button village-primary" />
+                <ui:Button name="villageCancel" text="取消" class="village-button" />
+                <ui:Button name="villageDone" text="完了" class="village-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="villageSheet" class="village-sheet village-hidden">
+            <ui:VisualElement class="village-heading-row">
+                <ui:Label name="villageSheetTitle" class="village-title" />
+                <ui:Button name="villageClose" text="閉じる" class="village-button" />
+            </ui:VisualElement>
+            <ui:ScrollView name="villageSheetContent" class="village-content" />
+        </ui:VisualElement>
+        <ui:VisualElement name="villageNavigation" class="village-navigation">
+            <ui:VisualElement class="village-row">
+                <ui:Button name="villageHomeTab" text="ホーム" class="village-nav-button" />
+                <ui:Button name="villageRecordTab" text="記録" class="village-nav-button" />
+                <ui:Button name="villageScanTab" text="スキャン" class="village-nav-button village-primary" />
+                <ui:Button name="villageManageTab" text="村管理" class="village-nav-button" />
+                <ui:Button name="villageMenuTab" text="メニュー" class="village-nav-button" />
+            </ui:VisualElement>
+            <ui:VisualElement class="safe-area-bottom" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

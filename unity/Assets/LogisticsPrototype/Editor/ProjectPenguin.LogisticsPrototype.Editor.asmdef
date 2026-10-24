@@ -1,0 +1,6 @@
+{
+  "name": "ProjectPenguin.LogisticsPrototype.Editor",
+  "references": ["ProjectPenguin.LogisticsPrototype", "Unity.ugui", "Unity.InputSystem"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": false
+}

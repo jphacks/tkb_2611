@@ -1,0 +1,113 @@
+using System;
+using ProjectPenguin.Data;
+using ProjectPenguin.Domain.Island;
+using ProjectPenguin.Domain.Village;
+
+namespace ProjectPenguin.Systems
+{
+    /// <summary>Only owner of the published village. All commands commit a detached candidate first.</summary>
+    public sealed class ProductionVillageSessionCore
+    {
+        private VillageGame _game;
+        private readonly IProductionVillageStore _productionStore,_debugStore;
+        private IProductionVillageStore _store;
+        private readonly Func<VillageGame> _initial;
+        private readonly bool _developmentAllowed;
+        private long _utc;
+        public bool Development {get;private set;}
+        public bool Running {get;private set;}=true;
+        public double TimeScale {get;private set;}=1;
+        public string Error {get;private set;}="";
+        public string Notice {get;private set;}="配置から建てる・動かすを選べます";
+        public VillageView View=>_game?.CreateView();
+        public HealthRecordLedger Records=>_game?.Records;
+        public event Action Changed;
+        public ProductionVillageSessionCore(IProductionVillageStore production,IProductionVillageStore debug,Func<VillageGame> initial,bool developmentAllowed)
+        {_productionStore=production;_debugStore=debug;_store=production;_initial=initial;_developmentAllowed=developmentAllowed;}
+        public void Open(long utc)
+        {
+            try
+            {
+                var s=_store.Load();
+                if(s==null){var candidate=_initial();_store.Save(Snapshot(candidate,utc));_game=candidate;_utc=utc;}
+                else{s.Validate("production");var g=VillageGame.Restore(s.State);g.AdvanceTo(checked(g.RequestedMs+Math.Max(0,utc-s.UtcMs)));_utc=Math.Max(utc,s.UtcMs);_store.Save(Snapshot(g,_utc));_game=g;}
+                Error="";
+            }
+            catch(Exception){Error="村を読み込めませんでした。保存データを保護しています。メニューから再試行してください";_game=null;}
+            Changed?.Invoke();
+        }
+        private ProductionVillageSave Snapshot(VillageGame g,long utc)=>new ProductionVillageSave{State=g.Export(),UtcMs=utc,Profile=Development?"development":"production",Running=Running,TimeScale=TimeScale};
+        private bool Command(Func<VillageGame,VillageResult> command,long utc)
+        {
+            if(_game==null)return false;
+            try
+            {
+                var candidate=VillageGame.Restore(_game.Export());var result=command(candidate);Notice=result.Reason;
+                if(!result.Success){Changed?.Invoke();return false;}
+                _store.Save(Snapshot(candidate,Math.Max(_utc,utc)));_game=candidate;_utc=Math.Max(_utc,utc);Error="";Changed?.Invoke();return true;
+            }
+            catch(Exception){Error="保存できませんでした。操作を反映せず、直前の村を維持しています";Changed?.Invoke();return false;}
+        }
+        private static VillageResult Ok()=>VillageCommands.Accepted();
+        public bool Place(FacilityKind kind,int x,int y,long utc)=>Command(g=>g.Place(kind,x,y),utc);
+        public bool Move(int id,int x,int y,long utc)=>Command(g=>g.Move(id,x,y),utc);
+        public bool Remove(int id,long utc)=>Command(g=>g.Remove(id),utc);
+        public string CanPlace(FacilityKind kind,int x,int y)=>_game?.CanPlace(kind,x,y)??"村を読み込めません";
+        public string CanMove(int id,int x,int y)=>_game?.CanMove(id,x,y)??"村を読み込めません";
+        public bool AcceptSteps(int day,int steps,int today,long utc)=>Command(g=>g.AcceptSteps(day,steps,today),utc);
+        public bool AcceptWater(string id,int day,int today,bool confirmed,long utc)=>Command(g=>g.AcceptWater(id,day,today,confirmed),utc);
+        public bool AcceptScreen(string id,int day,int used,int today,bool full,bool confirmed,long utc)=>Command(g=>g.AcceptScreen(id,day,used,today,full,confirmed),utc);
+        public void Tick(long elapsedMs)
+        {
+            if(_game==null||!Running||elapsedMs<=0)return;
+            try{_game.AdvanceTo(checked(_game.RequestedMs+elapsedMs));}catch(Exception){Error="時間の範囲を超えたため進行を停止しました";Running=false;}
+        }
+        public bool Save(long utc)
+        {
+            if(_game==null)return false;
+            try{_store.Save(Snapshot(_game,Math.Max(_utc,utc)));_utc=Math.Max(_utc,utc);Error="";return true;}
+            catch(Exception){Error="保存できません。空き容量と保存先を確認して再試行してください";Changed?.Invoke();return false;}
+        }
+        public bool Resume(long utc,long suspendedUtc)
+        {
+            if(_game==null)return false;
+            return Command(g=>{if(Running)g.AdvanceTo(checked(g.RequestedMs+(long)(Math.Max(0,utc-suspendedUtc)*TimeScale)));return Ok();},utc);
+        }
+        public bool BeginDevelopment(long utc)
+        {
+            if(!_developmentAllowed||_game==null||Development)return false;
+            try
+            {
+                var save=Snapshot(_game,Math.Max(utc,_utc));save.Profile="development";_debugStore.Save(save);
+                Development=true;_store=_debugStore;Notice="開発プロフィールへ切替済み。製品用DBへは保存しません";Changed?.Invoke();return true;
+            }
+            catch(Exception){Error="開発用保存を開始できませんでした";Changed?.Invoke();return false;}
+        }
+        private bool CanDevelop()=>_developmentAllowed&&Development&&_game!=null;
+        public bool Resources(double gas,double electricity,double water,bool add,long utc)
+        {
+            if(!CanDevelop())return false;
+            if(!VillageGame.Finite(gas)||!VillageGame.Finite(electricity)||!VillageGame.Finite(water)||gas<0||electricity<0||water<0){Notice="有限の0以上の値を入力してください";return false;}
+            return Command(g=>{var v=g.CreateView();g.SetResources(gas+(add?v.Gas:0),electricity+(add?v.Electricity:0),water+(add?v.Water:0));return Ok();},utc);
+        }
+        public bool Inject(int id,Item item,int count,long utc)=>CanDevelop()&&Command(g=>g.Inject(id,item,count),utc);
+        public bool Configure(bool infinite,double speed,int deliveryMs,double timeScale,bool running,long utc)
+        {
+            if(!CanDevelop()||!VillageGame.Finite(timeScale)||timeScale<0||timeScale>100)return false;
+            var oldRunning=Running;var oldScale=TimeScale;Running=running;TimeScale=timeScale;
+            var ok=Command(g=>{g.Configure(infinite,speed,deliveryMs);return Ok();},utc);
+            if(!ok){Running=oldRunning;TimeScale=oldScale;}return ok;
+        }
+        public bool Forward(double seconds,long utc)
+        {
+            if(!CanDevelop()||!VillageGame.Finite(seconds)||seconds<0||seconds>3600)return false;
+            return Command(g=>{g.AdvanceTo(checked(g.RequestedMs+(long)(seconds*1000)));return Ok();},utc);
+        }
+        public bool ResetDevelopment(long utc)
+        {
+            if(!CanDevelop())return false;
+            try{var candidate=_initial();_store.Save(Snapshot(candidate,Math.Max(_utc,utc)));_game=candidate;Notice="開発用村を初期化しました";Changed?.Invoke();return true;}
+            catch(Exception){Error="開発用村を初期化できませんでした。直前の状態を保持します";return false;}
+        }
+    }
+}

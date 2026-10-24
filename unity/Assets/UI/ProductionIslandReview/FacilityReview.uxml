@@ -1,0 +1,28 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="FacilityReview.uss" />
+    <ui:VisualElement class="review-root" picking-mode="Ignore">
+        <ui:VisualElement class="review-panel">
+            <ui:Label name="FacilityTitle" class="title" text="施設デザイン" />
+            <ui:Label name="FacilityRecipe" class="recipe" text="工程を確認" />
+            <ui:Label name="FacilityAction" class="action" text="" />
+            <ui:VisualElement class="controls">
+                <ui:Button name="PickerButton" text="施設を選ぶ" />
+                <ui:Button name="PreviousButton" text="前へ" />
+                <ui:Button name="NextButton" text="次へ" />
+                <ui:Button name="OverviewButton" text="全体表示" />
+                <ui:Button name="RunningButton" text="停止" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="FacilityPicker" class="picker-overlay">
+            <ui:VisualElement class="picker-card">
+                <ui:VisualElement class="picker-heading">
+                    <ui:Label text="見たい施設を選ぶ" class="title" />
+                    <ui:Button name="ClosePickerButton" text="閉じる" />
+                </ui:VisualElement>
+                <ui:ScrollView class="picker-scroll">
+                    <ui:VisualElement name="FacilityChoices" class="facility-choices" />
+                </ui:ScrollView>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

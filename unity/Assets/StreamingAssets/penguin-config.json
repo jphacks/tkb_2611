@@ -1,0 +1,7 @@
+{
+  "api_base_url": "",
+  "judge": "mock",
+  "community": false,
+  "quests": false,
+  "demo_mode": false
+}

@@ -1,0 +1,90 @@
+.review-root {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    -unity-font-definition: url("../Fonts/MPLUSRounded1c-Regular.ttf");
+    color: rgb(32, 62, 86);
+}
+.review-panel {
+    margin: 18px;
+    padding: 16px;
+    background-color: rgba(255, 255, 255, 0.96);
+    border-radius: 18px;
+}
+.title {
+    font-size: 32px;
+    -unity-font-style: bold;
+    margin-bottom: 6px;
+}
+.recipe {
+    font-size: 23px;
+    white-space: normal;
+    margin-bottom: 12px;
+}
+.action { font-size: 21px; color: rgb(35, 112, 160); margin-bottom: 12px; white-space: normal; }
+.controls {
+    flex-direction: row;
+}
+.controls > Button {
+    flex-grow: 1;
+    flex-basis: 0;
+    min-width: 0;
+    height: 62px;
+    margin: 0 5px;
+    border-width: 0;
+    border-radius: 12px;
+    background-color: rgb(35, 112, 160);
+    color: white;
+    font-size: 24px;
+    -unity-text-align: middle-center;
+    transition-property: background-color;
+    transition-duration: 0.12s;
+}
+.controls > Button:hover { background-color: rgb(49, 139, 185); }
+.controls > Button:active { background-color: rgb(22, 83, 126); }
+.picker-overlay {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    padding: 40px;
+    background-color: rgba(25, 52, 72, 0.48);
+}
+.picker-card {
+    flex-grow: 1;
+    padding: 24px;
+    border-radius: 20px;
+    background-color: white;
+}
+.picker-heading { flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.picker-heading > Button {
+    height: 58px;
+    padding: 0 24px;
+    font-size: 24px;
+    border-radius: 12px;
+    border-width: 0;
+    color: white;
+    background-color: rgb(35, 112, 160);
+}
+.picker-scroll { flex-grow: 1; }
+.facility-choices { flex-direction: row; flex-wrap: wrap; }
+.facility-choice {
+    flex-basis: 260px;
+    flex-grow: 1;
+    min-width: 240px;
+    height: 92px;
+    margin: 6px;
+    padding: 12px;
+    white-space: normal;
+    font-size: 24px;
+    border-width: 0;
+    border-radius: 12px;
+    background-color: rgb(232, 243, 250);
+    color: rgb(32, 62, 86);
+}
+.facility-choice:hover { background-color: rgb(193, 225, 242); }
+.facility-choice.selected { background-color: rgb(35, 112, 160); color: white; }

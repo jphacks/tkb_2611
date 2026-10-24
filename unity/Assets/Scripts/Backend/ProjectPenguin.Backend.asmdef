@@ -1,0 +1,14 @@
+{
+    "name": "ProjectPenguin.Backend",
+    "rootNamespace": "ProjectPenguin.Backend",
+    "references": ["ProjectPenguin.Domain"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
