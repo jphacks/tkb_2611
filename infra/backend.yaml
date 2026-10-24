@@ -1,8 +1,9 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  Project Penguin backend foundation. DynamoDB tables for the community goal (prod and dev),
-  least-privilege managed policies for Nova 2 Lite photo judging and table access, and an IAM role
-  that the Vercel Functions assume through Vercel OIDC (no long-lived access keys).
+  Project Penguin backend foundation. DynamoDB tables for the community goal (prod and dev) with
+  maximum on-demand throughput, least-privilege managed policies for Nova 2 Lite photo judging and
+  table access, IAM roles that the Vercel Functions assume through Vercel OIDC (production and
+  preview are separate, no long-lived access keys), and alarms that email the owner on unusual usage.
   Decisions: project-penguin docs/adr/0001, 0002, 0003. Deployed only by the account owner.
 
 Metadata:
@@ -16,10 +17,19 @@ Metadata:
       - アカウント ID・Vercel のチーム名を文字で書かない (このリポジトリは public)。チーム名はパラメータで渡す
       - Bedrock は Nova 2 Lite の jp. 推論プロファイルだけを許す (写真を国内で処理し、高いモデルを呼ばせない)
       - 長く使えるアクセスキーを作らない。Vercel からは OIDC でロールを借りる
+      - preview (PR ごとの公開) から本番のテーブルに触れさせない。ロールを環境ごとに分ける
+      - 通知先のメールアドレスを文字で書かない。パラメータで渡す
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label: { default: Vercel }
         Parameters: [VercelTeamSlug, VercelProject]
+      - Label: { default: 費用の天井と見張り }
+        Parameters:
+          - AlertEmail
+          - ProdMaxReadRequestUnits
+          - ProdMaxWriteRequestUnits
+          - DevMaxRequestUnits
+          - JudgeInvocationsPerHourAlarm
 
 Parameters:
   VercelTeamSlug:
@@ -31,6 +41,33 @@ Parameters:
     Description: Vercel のプロジェクト名 (OIDC の sub に入る)
     Default: project-penguin
     AllowedPattern: "^[a-z0-9][a-z0-9._-]{0,99}$"
+  AlertEmail:
+    Type: String
+    Description: 使いすぎ・絞り込みのアラームを受け取るメールアドレス (リポジトリに書かず、infra/backend.local.json で渡す)
+    AllowedPattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+  # 本番のテーブルの読み書きの上限 (1 秒あたりの要求単位)。超えた分は絞られ、費用の天井になる。
+  # 読み: 1000 人が 10 秒ごとに 10 分割のカウンタを BatchGetItem (結果整合で 1 項目 0.5) すると約 500 (docs/adr/0002)
+  # 書き: 1 枚あたり条件付き Put と ADD の 2 単位。検証では最大 380 枚/秒
+  ProdMaxReadRequestUnits:
+    Type: Number
+    Description: 本番のテーブルの読み込みの上限 (1 秒あたりの読み込み要求単位)
+    Default: 1000
+    MinValue: 1
+  ProdMaxWriteRequestUnits:
+    Type: Number
+    Description: 本番のテーブルの書き込みの上限 (1 秒あたりの書き込み要求単位)
+    Default: 1000
+    MinValue: 1
+  DevMaxRequestUnits:
+    Type: Number
+    Description: 開発用のテーブルの読み書きの上限 (手元の確認と preview だけなので小さく)
+    Default: 100
+    MinValue: 1
+  JudgeInvocationsPerHourAlarm:
+    Type: Number
+    Description: Nova 2 Lite の 1 時間の呼び出しがこれを超えたら知らせる (1 回 約 $0.0008、docs/adr/0001)
+    Default: 1000
+    MinValue: 1
 
 Resources:
   CommunityTable:
@@ -50,6 +87,10 @@ Resources:
     Properties:
       TableName: !Sub "${AWS::StackName}-community"
       BillingMode: PAY_PER_REQUEST
+      # 公開の口が叩き続けられたときの費用の天井。上限は目安で、バースト分は超えることがある
+      OnDemandThroughput:
+        MaxReadRequestUnits: !Ref ProdMaxReadRequestUnits
+        MaxWriteRequestUnits: !Ref ProdMaxWriteRequestUnits
       AttributeDefinitions:
         - { AttributeName: pk, AttributeType: S }
       KeySchema:
@@ -74,6 +115,9 @@ Resources:
     Properties:
       TableName: !Sub "${AWS::StackName}-community-dev"
       BillingMode: PAY_PER_REQUEST
+      OnDemandThroughput:
+        MaxReadRequestUnits: !Ref DevMaxRequestUnits
+        MaxWriteRequestUnits: !Ref DevMaxRequestUnits
       AttributeDefinitions:
         - { AttributeName: pk, AttributeType: S }
       KeySchema:
@@ -144,21 +188,37 @@ Resources:
     Metadata:
       com.aws.cloudformation.Context:
         why: >-
-          Vercel のロールが、提出の記録の条件付き Put と分割カウンタの ADD・読み出しをする (docs/adr/0002)。
+          production のロールが、本番のテーブルで提出の記録の条件付き Put と分割カウンタの ADD・読み出しをする (docs/adr/0002)。
           インラインにせず管理ポリシーにする (cfn-guard の IAM_NO_INLINE_POLICY_CHECK)
         must:
           - 消す・Scan する権限を足さない
+          - 開発用のテーブルを足さない (preview 用は CommunityCountDevPolicy)
     Properties:
-      Description: Count community goal submissions in the prod and dev tables
+      Description: Count community goal submissions in the production table
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
           - Sid: CountSubmissions
             Effect: Allow
             Action: [dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:BatchGetItem, dynamodb:GetItem]
-            Resource:
-              - !GetAtt CommunityTable.Arn
-              - !GetAtt CommunityDevTable.Arn
+            Resource: !GetAtt CommunityTable.Arn
+
+  CommunityCountDevPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: preview のロールが、開発用のテーブルで本番と同じ数え方をする
+        must:
+          - 本番のテーブルを足さない (preview は PR ごとに公開され、誰のコードでも動く)
+    Properties:
+      Description: Count community goal submissions in the development table
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: CountSubmissions
+            Effect: Allow
+            Action: [dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:BatchGetItem, dynamodb:GetItem]
+            Resource: !GetAtt CommunityDevTable.Arn
 
   VercelOidcProvider:
     Type: AWS::IAM::OIDCProvider
@@ -180,13 +240,13 @@ Resources:
     Metadata:
       com.aws.cloudformation.Context:
         why: >-
-          backend が x-vercel-oidc-token の値で AssumeRoleWithWebIdentity して使う。
-          production は本番のテーブル、preview は開発用のテーブルを、Vercel の環境変数で選ぶ
+          production の backend が x-vercel-oidc-token の値で AssumeRoleWithWebIdentity して使う。
+          preview は VercelPreviewRole を使う (Vercel の PENGUIN_AWS_ROLE_ARN を環境ごとに分けて入れる)
         must:
-          - sub は完全一致で、このプロジェクトの production と preview だけに限る
-          - 付ける権限は Nova の呼び出しとテーブルの読み書きだけ
+          - sub は完全一致で、このプロジェクトの production だけに限る
+          - 付ける権限は Nova の呼び出しと本番のテーブルの数え上げだけ
     Properties:
-      Description: Assumed by the Vercel Functions of the Project Penguin backend via OIDC
+      Description: Assumed by the production Vercel Functions of the Project Penguin backend via OIDC
       MaxSessionDuration: 3600
       # Condition のキーにチーム名が入り、YAML のキーには !Sub を使えないので、JSON の文字列で組む
       AssumeRolePolicyDocument: !Sub
@@ -201,10 +261,7 @@ Resources:
                 "Condition": {
                   "StringEquals": {
                     "oidc.vercel.com/${VercelTeamSlug}:aud": "https://vercel.com/${VercelTeamSlug}",
-                    "oidc.vercel.com/${VercelTeamSlug}:sub": [
-                      "owner:${VercelTeamSlug}:project:${VercelProject}:environment:production",
-                      "owner:${VercelTeamSlug}:project:${VercelProject}:environment:preview"
-                    ]
+                    "oidc.vercel.com/${VercelTeamSlug}:sub": "owner:${VercelTeamSlug}:project:${VercelProject}:environment:production"
                   }
                 }
               }
@@ -217,6 +274,146 @@ Resources:
       Tags:
         - { Key: project, Value: penguin }
         - { Key: managed-by, Value: cloudformation }
+        - { Key: environment, Value: production }
+
+  VercelPreviewRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: >-
+          preview (PR ごとの公開) の backend が借りる。本番のロールと分け、開発用のテーブルだけに触れる。
+          Nova の呼び出しは判定を preview で確かめるために許す (費用はアラームで見張る)
+        must:
+          - sub は完全一致で、このプロジェクトの preview だけに限る
+          - 本番のテーブルの権限を付けない
+    Properties:
+      Description: Assumed by the preview Vercel Functions of the Project Penguin backend via OIDC
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument: !Sub
+        - |
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Principal": { "Federated": "${ProviderArn}" },
+                "Action": "sts:AssumeRoleWithWebIdentity",
+                "Condition": {
+                  "StringEquals": {
+                    "oidc.vercel.com/${VercelTeamSlug}:aud": "https://vercel.com/${VercelTeamSlug}",
+                    "oidc.vercel.com/${VercelTeamSlug}:sub": "owner:${VercelTeamSlug}:project:${VercelProject}:environment:preview"
+                  }
+                }
+              }
+            ]
+          }
+        - ProviderArn: !GetAtt VercelOidcProvider.Arn
+      ManagedPolicyArns:
+        - !Ref NovaInvokePolicy
+        - !Ref CommunityCountDevPolicy
+      Tags:
+        - { Key: project, Value: penguin }
+        - { Key: managed-by, Value: cloudformation }
+        - { Key: environment, Value: preview }
+
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: >-
+          下のアラームをオーナーのメールに届ける。予算の通知 (infra/account.yaml) は請求に載るまで遅れるので、
+          呼び出しの急増と絞り込みは数分で分かるこちらで見る。中身は指標の名前と値だけなので、KMS では暗号化しない
+          (CloudWatch から暗号化した SNS に送るには、AWS 管理のキーでは足りず、カスタマー管理のキーが要る)
+        must:
+          - 購読の確認メールのリンクを開くまで届かない
+    Properties:
+      DisplayName: Project Penguin backend alerts
+      Tags:
+        - { Key: project, Value: penguin }
+        - { Key: managed-by, Value: cloudformation }
+
+  AlertEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref AlertTopic
+      Protocol: email
+      Endpoint: !Ref AlertEmail
+
+  JudgeInvocationsHighAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: >-
+          判定の口は認証が無く、呼ばれた分だけ Nova の料金がかかる (project-penguin #136 の 3)。
+          ModelId の次元を付けない全体の値で見る (Bedrock の文書の勧め。モデルが決まる前に落ちた要求も入る)。
+          開発者グループの手元からの呼び出しも数える
+    Properties:
+      AlarmDescription: Bedrock invocations in the last hour exceeded the expected demo volume
+      Namespace: AWS/Bedrock
+      MetricName: Invocations
+      Statistic: Sum
+      Period: 3600
+      EvaluationPeriods: 1
+      Threshold: !Ref JudgeInvocationsPerHourAlarm
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+      OKActions: [!Ref AlertTopic]
+
+  JudgeThrottledAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Nova の割り当て (1 分 2,000 回) に当たり始めたら、判定が固定判定に落ちているので知らせる
+    Properties:
+      AlarmDescription: Bedrock throttled invocations in the last 5 minutes
+      Namespace: AWS/Bedrock
+      MetricName: InvocationThrottles
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  CommunityReadCappedAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: 本番のテーブルの読み込みが上限 (ProdMaxReadRequestUnits) で絞られ始めた。ゲージの取得が止まっている
+    Properties:
+      AlarmDescription: Reads on the production community table are throttled by the maximum on-demand throughput
+      Namespace: AWS/DynamoDB
+      MetricName: ReadMaxOnDemandThroughputThrottleEvents
+      Dimensions:
+        - { Name: TableName, Value: !Ref CommunityTable }
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  CommunityWriteCappedAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: 本番のテーブルの書き込みが上限 (ProdMaxWriteRequestUnits) で絞られ始めた。写真が氷山に数えられていない
+    Properties:
+      AlarmDescription: Writes on the production community table are throttled by the maximum on-demand throughput
+      Namespace: AWS/DynamoDB
+      MetricName: WriteMaxOnDemandThroughputThrottleEvents
+      Dimensions:
+        - { Name: TableName, Value: !Ref CommunityTable }
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
 
 Outputs:
   CommunityTableName:
@@ -226,8 +423,11 @@ Outputs:
     Description: 開発用のテーブル (手元と Vercel の preview の PENGUIN_COMMUNITY_TABLE)
     Value: !Ref CommunityDevTable
   VercelBackendRoleArn:
-    Description: Vercel の PENGUIN_AWS_ROLE_ARN に入れるロール
+    Description: Vercel の production の PENGUIN_AWS_ROLE_ARN に入れるロール
     Value: !GetAtt VercelBackendRole.Arn
+  VercelPreviewRoleArn:
+    Description: Vercel の preview の PENGUIN_AWS_ROLE_ARN に入れるロール
+    Value: !GetAtt VercelPreviewRole.Arn
   NovaInvokePolicyArn:
     Description: Nova 2 Lite の呼び出しだけを許す管理ポリシー (infra/account.yaml の開発者グループが使う)
     Value: !Ref NovaInvokePolicy
