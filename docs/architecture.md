@@ -27,7 +27,7 @@ Vercel (1 つのプロジェクト、東京 hnd1)
 | | パス | Unity 側 | 当日 backend が作るもの |
 |---|---|---|---|
 | 起動の確認・時計 | `GET /v1/health` | 時刻合わせ | (事前にある) |
-| 写真判定 | `POST /v1/eco-photo/judge` | `HttpEcoPhotoJudge` | AI の呼び出し、検証層 (`decision`・`checks`)、CO₂e |
+| 写真判定 | `POST /v1/eco-photo/judge` | `HttpEcoPhotoJudge` | AI の呼び出し、検証層 (`decision`・`checks`) |
 | みんなの氷山 | `GET /v1/community/goal` | `HttpCommunityGoalSource` | 集計・節目の判定・ずる対策 |
 | お題 | `GET /v1/quests`、`POST /v1/quests/{id}/redeem` | `HttpQuestSource` | お題の配信、QR・合言葉の照合 |
 
