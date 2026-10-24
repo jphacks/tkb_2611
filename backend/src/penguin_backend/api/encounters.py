@@ -51,7 +51,6 @@ async def report_encounter(request: Request) -> JSONResponse:
     store = EncounterStore(
         clients.dynamodb,
         settings.encounter_table_name,
-        daily_limit=settings.encounter_daily_limit,
         clock=clock,
     )
     matched = await run_in_threadpool(store.report, day, report.self_token, report.peer_token)

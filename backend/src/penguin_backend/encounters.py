@@ -1,9 +1,11 @@
 """すれ違いの相互確認 (DynamoDB)。
 
-両方の端末が互いのトークンを報告したときだけ成立にする。記録は 2 種類で、どちらも 2 日で消える:
+両方の端末が互いのトークンを報告したときだけ成立にする。記録は
+enc#<day>#<小さい方のトークン>#<大きい方> の seen (報告したトークンの集合) だけで、2 日で消える。
+同じ組は何度報告されても 1 件のまま。
 
-- enc#<day>#<小さい方のトークン>#<大きい方>: seen (報告したトークンの集合)。2 つそろえば成立
-- encrate#<day>#<自分のトークン>: n (その日の新しい報告の数)。上限を超えたら 429
+トークンごとの報告の数には上限を設けない (docs/decisions.md)。トークンは誰でも名乗れるので、
+上限は攻撃する人を止められず、他人のトークンを拾った人が持ち主を止められてしまうため。
 
 近道: 記録はみんなの氷山のテーブルに接頭辞で同居させる (docs/decisions.md)。テーブル名は
 Settings.encounter_table_name から受け取るので、専用のテーブルに移すときにコードは変えない。
@@ -13,7 +15,7 @@ Settings.encounter_table_name から受け取るので、専用のテーブル�
 import hashlib
 import logging
 from collections.abc import Callable
-from datetime import UTC, date, datetime, time, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import NoReturn
 
 from botocore.exceptions import BotoCoreError, ClientError
@@ -43,11 +45,6 @@ def app_day(now: datetime) -> date:
     return (now.astimezone(JST) - DAY_STARTS_AT).date()
 
 
-def next_app_day_starts(now: datetime) -> datetime:
-    start = datetime.combine(app_day(now) + timedelta(days=1), time(), JST) + DAY_STARTS_AT
-    return start.astimezone(UTC)
-
-
 def pair_id(a: str, b: str) -> str:
     """2 つのトークンの組の ID。並べる順によらず、両方の端末で同じ値になる。
 
@@ -62,16 +59,10 @@ def accepts_day(day: date, now: datetime) -> bool:
 
 class EncounterStore:
     def __init__(
-        self,
-        client: DynamoDBClient,
-        table: str,
-        *,
-        daily_limit: int,
-        clock: Callable[[], datetime],
+        self, client: DynamoDBClient, table: str, *, clock: Callable[[], datetime]
     ) -> None:
         self._client = client
         self._table = table
-        self._daily_limit = daily_limit
         self._clock = clock
 
     def report(self, day: date, self_token: str, peer_token: str) -> bool:
@@ -81,12 +72,6 @@ class EncounterStore:
         low, high = sorted((self_token, peer_token))
         key = {"pk": {"S": f"enc#{day.isoformat()}#{low}#{high}"}}
         try:
-            existing = self._client.get_item(
-                TableName=self._table, Key=key, ConsistentRead=True
-            ).get("Item", {})
-            # 送り直し (自分はもう報告済み) は上限に数えない
-            if self_token not in existing.get("seen", {}).get("SS", []):
-                self._count(day, self_token, ttl, now)
             updated = self._client.update_item(
                 TableName=self._table,
                 Key=key,
@@ -102,26 +87,6 @@ class EncounterStore:
             raise ApiError("upstream_unavailable", 503, message=_UNAVAILABLE_MESSAGE) from error
         seen = set(updated["Attributes"]["seen"].get("SS", []))
         return seen == {self_token, peer_token}
-
-    def _count(self, day: date, self_token: str, ttl: str, now: datetime) -> None:
-        try:
-            self._client.update_item(
-                TableName=self._table,
-                Key={"pk": {"S": f"encrate#{day.isoformat()}#{self_token}"}},
-                UpdateExpression="ADD n :one SET #ttl = :ttl",
-                ConditionExpression="attribute_not_exists(n) OR n < :limit",
-                ExpressionAttributeNames={"#ttl": "ttl"},
-                ExpressionAttributeValues={
-                    ":one": {"N": "1"},
-                    ":limit": {"N": str(self._daily_limit)},
-                    ":ttl": {"N": ttl},
-                },
-            )
-        except ClientError as error:
-            if error.response.get("Error", {}).get("Code") == "ConditionalCheckFailedException":
-                wait = int((next_app_day_starts(now) - now).total_seconds())
-                raise ApiError("rate_limited", 429, retry_after=wait) from error
-            raise
 
     def _raise(self, error: ClientError) -> NoReturn:
         code = error.response.get("Error", {}).get("Code", "")

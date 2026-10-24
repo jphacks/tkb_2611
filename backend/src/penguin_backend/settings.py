@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from pydantic import Field, field_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
@@ -31,8 +31,6 @@ class Settings(BaseSettings):
     # すれ違いの記録のテーブル。空ならみんなの氷山と同じテーブルに同居させる
     # (docs/decisions.md の近道)。
     encounter_table: str | None = None
-    # 1 つのトークンがアプリの 1 日に送れる、新しいすれ違いの報告の数。
-    encounter_daily_limit: int = Field(default=50, ge=1)
 
     @field_validator("cors_origins", mode="before")
     @classmethod

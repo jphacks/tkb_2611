@@ -123,31 +123,17 @@ def test_records_expire_after_two_days(
     items = dynamodb.scan(TableName=community_tables["CommunityDevTable"])["Items"]
 
     expected = int((NOON + timedelta(days=2)).timestamp())
-    assert {item["pk"]["S"].split("#")[0] for item in items} == {"enc", "encrate"}
+    assert [item["pk"]["S"].split("#")[0] for item in items] == ["enc"]
     assert {int(item["ttl"]["N"]) for item in items} == {expected}
     # トークン以外の、端末や位置に結び付く値を残さない
-    assert {name for item in items for name in item} <= {"pk", "seen", "n", "ttl"}
+    assert {name for item in items for name in item} == {"pk", "seen", "ttl"}
 
 
-def test_reports_over_the_daily_limit_are_rate_limited(
-    make: Callable[..., TestClient],
-) -> None:
-    client = make(encounter_daily_limit=1)
-    report(client, A, B)
+def test_many_reports_from_one_token_are_not_limited(client: TestClient) -> None:
+    # トークンは誰でも名乗れるので、トークンごとの上限は持ち主だけを止めてしまう (docs/decisions.md)
+    peers = [f"{i:02d}" + "A" * 20 for i in range(60)]
 
-    response = report(client, A, C)
-
-    assert_error(response, "rate_limited")
-    # 次のアプリの 1 日 (2026-10-25 03:00 JST) まで
-    assert int(response.headers["retry-after"]) == 15 * 3600
-
-
-def test_resending_does_not_use_up_the_limit(make: Callable[..., TestClient]) -> None:
-    client = make(encounter_daily_limit=1)
-    report(client, A, B)
-
-    assert report(client, A, B).status_code == 200
-    assert report(client, B, A).json()["matched"] is True
+    assert all(report(client, A, peer).status_code == 200 for peer in peers)
 
 
 def test_dedicated_table_can_be_configured(
@@ -157,7 +143,7 @@ def test_dedicated_table_can_be_configured(
 
     report(client, A, B)
 
-    assert dynamodb.scan(TableName=community_tables["CommunityTable"])["Count"] == 2
+    assert dynamodb.scan(TableName=community_tables["CommunityTable"])["Count"] == 1
     assert dynamodb.scan(TableName=community_tables["CommunityDevTable"])["Count"] == 0
 
 
@@ -208,9 +194,9 @@ def test_store_unavailable_is_reported(
     client: TestClient, dynamodb: DynamoDBClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     def throttled(**_kwargs: Any) -> Any:
-        raise ClientError({"Error": {"Code": "ThrottlingException"}}, "GetItem")
+        raise ClientError({"Error": {"Code": "ThrottlingException"}}, "UpdateItem")
 
-    monkeypatch.setattr(dynamodb, "get_item", throttled)
+    monkeypatch.setattr(dynamodb, "update_item", throttled)
 
     response = report(client, A, B)
 
