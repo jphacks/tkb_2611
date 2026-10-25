@@ -270,9 +270,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         private void UpdateStatusChips(VillageView view)
         {
-            var totalFacilities = view.Nodes.Count;
-            var activeCount = view.Nodes.Count(n => n.Status == "生産中");
-            var stoppedCount = view.Nodes.Count(n => n.Status != "生産中" && n.Kind < FacilityKind.Warehouse);
+            // 工房モードの操作バーと同じ数え方 (VillageInsight.Counts)
+            var (activeCount, totalFacilities, stoppedCount, _) = VillageInsight.Counts(view);
 
             if (_chipActiveNum != null) _chipActiveNum.text = $"{activeCount}";
             if (_chipActiveTotal != null) _chipActiveTotal.text = $"/{Math.Max(1, totalFacilities)}";

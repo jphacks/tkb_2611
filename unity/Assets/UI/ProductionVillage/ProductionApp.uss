@@ -101,6 +101,22 @@
     -unity-font-definition: var(--font-heavy);
 }
 
+.village-tactical-gas--empty {
+    color: var(--color-danger);
+}
+
+/* 稼働・停止・配送中の数 (生産レポートの札と同じ数え方)。止まっている施設があれば赤くする */
+.village-tactical-status {
+    margin-top: var(--space-1);
+    color: var(--color-text-on-primary);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-bold);
+}
+
+.village-tactical-status--bad {
+    color: var(--color-danger-soft);
+}
+
 .village-tactical-btn {
     flex-direction: row;
     align-items: center;
@@ -231,10 +247,13 @@
     margin-bottom: var(--space-2);
 }
 
+/* 分類のタブは 1 行に収める (折り返すと一覧の上にはみ出す) */
 .village-dock-tabs {
     flex-direction: row;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    flex-shrink: 1;
+    overflow: hidden;
 }
 
 .village-dock-tab {
@@ -257,9 +276,15 @@
     height: 196px;
 }
 
+/* 横スクロールの中身を横に並べる (テーマの指定で縦に積まれ、1 枚目しか見えていなかった) */
+.village-dock-scroll .unity-scroll-view__content-container {
+    flex-direction: row;
+}
+
 .village-dock-slot {
     width: 172px;
     height: 184px;
+    flex-shrink: 0;
     margin-right: var(--space-2);
     padding: var(--space-1);
     align-items: center;

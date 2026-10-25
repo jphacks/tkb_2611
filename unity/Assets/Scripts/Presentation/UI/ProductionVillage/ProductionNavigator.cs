@@ -276,10 +276,19 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             if (_rankText != null) _rankText.text = $"{rank}";
             if (_rankProgress != null) _rankProgress.value = progress;
 
-            // 工房の操作バーにガス収支を表示
+            // 工房の操作バー: ガスの残りと消費、施設の稼働・停止・配送の数 (生産レポートと同じ数え方)
             if (_tacticalGas != null)
             {
-                _tacticalGas.text = $"🔥 消費 {view.GasPerMinute:0.#}/分 (理論 {view.TheoreticalGasPerMinute:0.#}/分)";
+                _tacticalGas.text = view.Unlimited ? "ガス ∞ (開発用)" : $"ガス {IslandUi.Number(view.Gas)}・消費 {view.GasPerMinute:0.#}/分";
+                _tacticalGas.EnableInClassList(ProductionUiNames.TacticalGasEmptyClass, !view.Unlimited && view.Gas < 1);
+            }
+
+            var counts = VillageInsight.Counts(view);
+            var status = _root.Q<Label>(ProductionUiNames.TacticalStatus);
+            if (status != null)
+            {
+                status.text = $"稼働 {counts.Active}/{counts.Total}　停止 {counts.Stopped}　配送中 {counts.Delivering} 便";
+                status.EnableInClassList(ProductionUiNames.TacticalStatusBadClass, counts.Stopped > 0);
             }
 
             // 次にやること。ホームの左下と工房モードの操作バーに同じ文を出す (VillageInsight.NextStep)
@@ -491,10 +500,10 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             _dockTabs.Clear();
             var categories = new (string Key, string Label)[]
             {
-                ("all", "すべて(16)"),
-                ("gather", "資源採集"),
-                ("cook", "加工・調理"),
-                ("amp", "⚡増幅・物流")
+                ("all", "すべて"),
+                ("gather", "採集"),
+                ("cook", "加工"),
+                ("amp", "増幅・物流")
             };
             foreach (var cat in categories)
             {

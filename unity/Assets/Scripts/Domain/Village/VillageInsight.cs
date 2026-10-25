@@ -72,6 +72,17 @@ namespace ProjectPenguin.Domain.Village
 
         public const string GasWait = "ガスを待っています", Full = "出力の置き場が満杯", MaterialWait = "材料を待っています";
 
+        /// <summary>
+        /// 生産レポートと工房モードの操作バーに出す数。稼働 = 生産中の施設、全体 = 施設の数、
+        /// 停止 = 作る施設 (倉庫より前の種類) のうち生産中でないもの、配送中 = 運ばれている荷物の数。
+        /// </summary>
+        public static (int Active, int Total, int Stopped, int Delivering) Counts(VillageView view)
+        {
+            if (view?.Nodes == null) return (0, 0, 0, 0);
+            return (view.Nodes.Count(n => n.Status == "生産中"), view.Nodes.Count,
+                view.Nodes.Count(n => n.Status != "生産中" && n.Kind < FacilityKind.Warehouse), view.Cargo?.Count ?? 0);
+        }
+
         /// <summary>止まっている施設か (ガス切れ・満杯・材料待ち)。</summary>
         public static bool IsStopped(string status) => status == GasWait || status == Full || status == MaterialWait;
 
