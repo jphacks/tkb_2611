@@ -18,6 +18,9 @@ namespace ProjectPenguin.Systems
     {
         [SerializeField] private double _initialGas=100,_initialElectricity=100,_initialWater=100;
         [SerializeField] private VillageInitialFacility[] _initialFacilities={new VillageInitialFacility(FacilityKind.Fishery,8,10),new VillageInitialFacility(FacilityKind.Preparation,11,10),new VillageInitialFacility(FacilityKind.Warehouse,14,10)};
+        [SerializeField] private VillageInspectorDebugSettings _inspectorDebugSettings=new VillageInspectorDebugSettings();
+        public VillageInspectorDebugSettings InspectorDebugSettings=>_inspectorDebugSettings;
+        public VillageGame CreateInspectorDebugInitial()=>_inspectorDebugSettings.CreateInitial();
         public ProductionVillageSessionCore Core=>GetComponent<ProductionVillageSession>()?.Core;
         public VillageGame CreateInitial()
         {

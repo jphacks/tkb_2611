@@ -13,6 +13,7 @@
 | Liberation Sans (TextMesh Pro に同梱) | `Assets/TextMesh Pro/Fonts/` | SIL Open Font License 1.1 (`LiberationSans - OFL.txt` 同梱) |
 | Unity のパッケージ | `Packages/manifest.json` で参照 (リポジトリには含まない) | 各パッケージのライセンス (多くは Unity Companion License) |
 | SQLite-net for Unity (`com.gilzoide.sqlite-net` 1.3.3) | `Packages/manifest.json` で参照 (リポジトリには含まない)。端末の保存 (`Assets/Scripts/Data/`) に使う | MIT。同梱の SQLite-net は MIT、SQLite3 Multiple Ciphers は MIT、その元の SQLite はパブリックドメイン |
+| Phosphor Icons v2.1.1 | 原本から書き出した `Assets/UI/DesignSystem/Icons/` のアイコン。原本と `LICENSE` は project-penguin の `tools/icons/vendor/phosphor/` にあり、このリポジトリには取り込んでいない | MIT (Copyright (c) 2023 Phosphor Icons)。全文をアプリ内のライセンス表示 (`Assets/Scripts/Presentation/UI/ThirdPartyNotices.cs`) に載せる |
 | エージェント用の外部スキル | `.agents/skills/`・`.claude/skills/` のうち `skills-lock.json` にあるもの | 提供元のライセンス (Unity-Technologies/skills は Unity Companion License、mattpocock/skills は MIT) |
 
 ## このプロジェクト向けに生成した画像

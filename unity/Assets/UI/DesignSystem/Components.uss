@@ -182,6 +182,29 @@
 
 .pp-btn--block { align-self: stretch; }
 
+/* 厚みのある主ボタン。下縁で厚みを出し、押すと沈む (上面だけが下がり、底の位置は変わらない) */
+.pp-btn--raised {
+    border-bottom-width: var(--raise-depth);
+    border-bottom-color: var(--color-primary-dark);
+}
+
+.pp-btn--raised:hover { background-color: var(--color-primary); }
+
+.pp-btn--raised:active {
+    scale: 1 1;
+    translate: 0 var(--raise-press);
+    border-bottom-width: var(--raise-depth-pressed);
+}
+
+.pp-btn__icon {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    margin-right: var(--space-1);
+    -unity-background-image-tint-color: var(--color-text-on-primary);
+}
+
+.pp-btn--ghost .pp-btn__icon { -unity-background-image-tint-color: var(--color-primary); }
+
 .pp-icon-button {
     margin: 0;
     padding: 0;
@@ -787,6 +810,11 @@
 .pp-icon--warning { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-warning.svg"); }
 .pp-icon--water { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-water.svg"); }
 .pp-icon--worker-shortage { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-worker-shortage.svg"); }
+/* 見下ろし視点・回転・ランク・物流の流れ (2026-10-25 に追加) */
+.pp-icon--rotate { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-rotate.svg"); }
+.pp-icon--crown { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-crown.svg"); }
+.pp-icon--chevrons { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-chevrons.svg"); }
+.pp-icon--topdown { background-image: url("project://database/Assets/UI/DesignSystem/Icons/icon-topdown.svg"); }
 
 /* 資源ごとのアイコンの色 */
 .pp-icon--res-electricity { -unity-background-image-tint-color: var(--color-res-electricity); }
@@ -803,17 +831,19 @@
 .pp-resource-bar {
     flex-direction: row;
     align-items: center;
-    height: 96px;
-    padding: 0 var(--space-3) 0 8px;
-    border-radius: 48px;
-    background-color: var(--color-surface-glass);
+    height: 92px;
+    padding: 0 var(--space-3) 0 var(--space-2);
+    border-radius: 46px;
+    background-color: var(--color-surface-solid);
+    border-bottom-width: 6px;
+    border-bottom-color: var(--color-ice-200);
 }
 
 .pp-resource {
     flex-direction: row;
     flex-shrink: 1;
     align-items: center;
-    margin-right: var(--space-2);
+    margin-right: var(--space-3);
     transition-duration: 0.18s;
 }
 
@@ -822,16 +852,17 @@
 .pp-resource--bump { scale: 1.15 1.15; }
 
 .pp-resource__icon {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     flex-shrink: 0;
     -unity-background-scale-mode: scale-to-fit;
 }
 
 .pp-resource__value {
-    margin-left: 2px;
-    font-size: var(--font-size-caption);
+    margin-left: 6px;
+    font-size: var(--font-size-label);
     -unity-font-definition: var(--font-heavy);
+    color: var(--color-text);
 }
 
 .pp-resource--empty .pp-resource__value { color: var(--color-danger); }
@@ -912,6 +943,96 @@
 .pp-tool--active .pp-tool__circle { background-color: var(--color-primary); }
 .pp-tool--active .pp-icon { -unity-background-image-tint-color: var(--color-text-on-primary); }
 
+/* 厚みのある丸い道具。白い面と淡い氷色の下縁で、世界の上に置いても押せそうに見せる */
+.pp-tool--raised .pp-tool__circle {
+    width: 112px;
+    height: 112px;
+    background-color: var(--color-surface-solid);
+    border-bottom-width: var(--raise-depth);
+    border-bottom-color: var(--color-ice-200);
+}
+
+.pp-tool--raised:active { scale: 1 1; }
+
+.pp-tool--raised:active .pp-tool__circle {
+    translate: 0 var(--raise-press);
+    border-bottom-width: var(--raise-depth-pressed);
+}
+
+.pp-tool--raised .pp-tool__label {
+    margin-top: 6px;
+    padding: 0 var(--space-2);
+    background-color: var(--color-surface-solid);
+    border-radius: var(--radius-sm);
+}
+
+/* ============ 主役の数字 (ホームの左上) ============ */
+
+/* アイコンの丸と大きな数字。白い下敷きに厚みを付け、画面で一番目立たせる */
+.pp-hero {
+    flex-direction: row;
+    align-items: center;
+    align-self: flex-start;
+    padding: var(--space-1) var(--space-4) var(--space-1) var(--space-1);
+    border-radius: 72px;
+    background-color: var(--color-surface-solid);
+    border-bottom-width: var(--raise-depth);
+    border-bottom-color: var(--color-ice-200);
+    transition-duration: 0.18s;
+}
+
+.pp-hero--bump { scale: 1.06 1.06; }
+
+.pp-hero__badge {
+    width: 128px;
+    height: 128px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    background-color: var(--color-ice-100);
+}
+
+.pp-hero__badge > .pp-icon {
+    width: var(--icon-xl);
+    height: var(--icon-xl);
+}
+
+.pp-hero__body {
+    margin-left: var(--space-2);
+}
+
+.pp-hero__value {
+    font-size: var(--font-size-hero);
+    -unity-font-definition: var(--font-heavy);
+    color: var(--color-primary-dark);
+    margin: -10px 0 -8px 0;
+}
+
+.pp-hero__meta {
+    flex-direction: row;
+    align-items: center;
+}
+
+.pp-hero__label {
+    font-size: var(--font-size-micro);
+    -unity-font-definition: var(--font-bold);
+    color: var(--color-text-sub);
+}
+
+/* 直近の増え方 (+12/分)。増えていないときは隠す */
+.pp-hero__rate {
+    margin-left: var(--space-1);
+    height: 40px;
+    padding: 0 var(--space-2);
+    border-radius: 20px;
+    background-color: var(--color-eco-soft);
+    color: var(--color-eco);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-heavy);
+    -unity-text-align: middle-center;
+}
+
 /* ============ 下から出るシート ============ */
 
 .pp-sheet {
@@ -965,6 +1086,7 @@
     flex-grow: 1;
     font-size: var(--font-size-title);
     -unity-font-definition: var(--font-heavy);
+    color: var(--color-primary-dark);
 }
 
 .pp-sheet__body {
@@ -997,10 +1119,12 @@
 
 .pp-row__title {
     font-size: var(--font-size-label);
-    -unity-font-definition: var(--font-bold);
+    -unity-font-definition: var(--font-heavy);
+    color: var(--color-text);
 }
 
 .pp-row__sub {
+    margin-top: 2px;
     font-size: var(--font-size-caption);
     color: var(--color-text-sub);
     white-space: normal;

@@ -17,7 +17,30 @@ namespace ProjectPenguin.Domain.Village
         public int X {get; internal set;} public int Y {get; internal set;} public int Total {get; internal set;}
         public int Size=>IslandCatalog.Get(Kind).Size;
         public double Progress {get; internal set;} public string Status {get; internal set;}
+        public bool Amplified {get; internal set;} public bool InSynergy {get; internal set;}
+        public int CoverageRadius {get; internal set;}
         public IReadOnlyDictionary<Item,int> Stock {get; internal set;}
+    }
+    public sealed class VillageSynergyView
+    {
+        public string Name {get; internal set;} public Item BonusItem {get; internal set;}
+        public int CoreNodeId {get; internal set;} public IReadOnlyList<int> NodeIds {get; internal set;}
+        public int MinX {get; internal set;} public int MinY {get; internal set;}
+        public int Width {get; internal set;} public int Height {get; internal set;}
+        public bool Active {get; internal set;} public double BonusPerMinute {get; internal set;}
+        public string Status {get; internal set;}
+    }
+    public sealed class VillageItemRateView
+    {
+        public Item Item {get; internal set;} public int Stock {get; internal set;}
+        public double ActualMakePerMinute {get; internal set;} public double ActualUsePerMinute {get; internal set;}
+        public double TheoreticalMakePerMinute {get; internal set;} public double TheoreticalUsePerMinute {get; internal set;}
+        public bool IsDeficit=>TheoreticalUsePerMinute>TheoreticalMakePerMinute+0.05;
+    }
+    public sealed class VillageItemTrend
+    {
+        public int[] Made {get; internal set;}
+        public int[] Used {get; internal set;}
     }
     public sealed class VillageCargoView
     {
@@ -35,13 +58,21 @@ namespace ProjectPenguin.Domain.Village
     {
         public IReadOnlyList<VillageNodeView> Nodes {get; internal set;}
         public double Electricity {get; internal set;} public long Produced {get; internal set;}
+        public bool GroupViewActive {get; internal set;}
         public bool Unlimited {get; internal set;} public int BoardSize {get; internal set;}
         public long AtMs {get; internal set;} public double Gas {get; internal set;} public double Water {get; internal set;}
         public double GasPerMinute {get; internal set;} public double GasSpent {get; internal set;}
+        public double TheoreticalGasPerMinute {get; internal set;}
+        public double GasReceivedToday {get; internal set;}
         public long ProducedLastMinute {get; internal set;}
+        public string BottleneckSummary {get; internal set;} public bool HasBottleneck {get; internal set;}
         public IReadOnlyList<VillageCargoView> Cargo {get; internal set;}
         public IReadOnlyList<VillageRouteView> Routes {get; internal set;}
+        public IReadOnlyList<VillageSynergyView> Synergies {get; internal set;}
         public IReadOnlyDictionary<Item,int> Totals {get; internal set;}
+        public IReadOnlyDictionary<Item,VillageItemRateView> ItemRates {get; internal set;}
+        public IReadOnlyDictionary<Item,VillageItemTrend> Trend10 {get; internal set;}
+        public IReadOnlyDictionary<Item,VillageItemTrend> Trend60 {get; internal set;}
     }
     public sealed partial class VillageGame
     {
@@ -56,6 +87,23 @@ namespace ProjectPenguin.Domain.Village
         private readonly List<Node> _nodes=new List<Node>();
         private readonly List<VillageCargoView> _cargo=new List<VillageCargoView>();
         private readonly List<(long At,double Gas,int Made)> _history=new List<(long,double,int)>();
+        internal sealed class TrendBucket
+        {
+            internal long Minute;
+            internal double Gas;
+            internal readonly int[] Made=new int[8];
+            internal readonly int[] Used=new int[8];
+        }
+        internal readonly Dictionary<long,TrendBucket> _trend=new Dictionary<long,TrendBucket>();
+        private TrendBucket GetOrCreateTrendBucket(long at)
+        {
+            var m=at/60000;
+            if(!_trend.TryGetValue(m,out var b)){b=new TrendBucket{Minute=m};_trend[m]=b;}
+            return b;
+        }
+        internal void RecordMade(Item item,int count){if(count>0)GetOrCreateTrendBucket(_at).Made[(int)item]+=count;}
+        internal void RecordUsed(Item item,int count){if(count>0)GetOrCreateTrendBucket(_at).Used[(int)item]+=count;}
+        internal void RecordGas(double gas){if(gas>0)GetOrCreateTrendBucket(_at).Gas+=gas;}
         private long _at,_requested,_nextCargo=1,_produced;
         private int _nextId=1,_deliveryMs=1500;private double _speed=1,_gas,_electricity,_water,_spent;
         private bool _unlimited;
@@ -67,8 +115,25 @@ namespace ProjectPenguin.Domain.Village
             if(!Finite(speed)||speed<.01||speed>100||deliveryMs<100||deliveryMs>3600000)throw new ArgumentOutOfRangeException();
             _unlimited=unlimited;_speed=speed;_deliveryMs=deliveryMs;
         }
-        public static bool Supported(FacilityKind kind)=>Enum.IsDefined(typeof(FacilityKind),kind)&&(kind<=FacilityKind.Warehouse);
-        public string CanPlace(FacilityKind kind,int x,int y)=>!Supported(kind)?"固有効果は準備中です":Placement(kind,x,y,0);
+        public static bool Supported(FacilityKind kind)=>Enum.IsDefined(typeof(FacilityKind),kind);
+        public string CanPlace(FacilityKind kind,int x,int y)=>!Supported(kind)?"未対応の施設です":Placement(kind,x,y,0);
+        internal static int CoverageRadiusOf(FacilityKind kind)=>
+            kind==FacilityKind.ElectricAmplifier||kind==FacilityKind.WaterAmplifier||kind==FacilityKind.GasAmplifier||kind==FacilityKind.IceHouse||kind==FacilityKind.Sorter?6:0;
+        private bool IsAmplified(Node target)=>
+            _nodes.Any(a=>a.Id!=target.Id&&(a.Kind==FacilityKind.ElectricAmplifier||a.Kind==FacilityKind.WaterAmplifier||a.Kind==FacilityKind.GasAmplifier)&&
+                Math.Max(Math.Abs(a.X-target.X),Math.Abs(a.Y-target.Y))<=6);
+        private bool IsCooled(Node target)=>
+            _nodes.Any(a=>a.Id!=target.Id&&a.Kind==FacilityKind.IceHouse&&Math.Max(Math.Abs(a.X-target.X),Math.Abs(a.Y-target.Y))<=6);
+        private int NodeCapacity(Node n)=>(n.Kind==FacilityKind.Warehouse||n.Kind==FacilityKind.Sorter?20:12)*(IsCooled(n)?2:1);
+        private int OutputCap(Node n)=>6*(IsCooled(n)?2:1);
+        private double NodeSpeedMultiplier(Node n)
+        {
+            var mult=1.0;
+            if(IsAmplified(n))mult+=0.25;
+            mult+=0.10*_nodes.Count(a=>a.Kind==FacilityKind.Dormitory);
+            mult+=0.15*_nodes.Count(a=>a.Kind==FacilityKind.Research);
+            return mult;
+        }
         private string Placement(FacilityKind kind,int x,int y,int ignore)
         {
             if(!Enum.IsDefined(typeof(FacilityKind),kind))return "未対応の施設です";
@@ -119,23 +184,27 @@ namespace ProjectPenguin.Domain.Village
                 if(before==_produced&&spent==_spent&&cargo==_nextCargo&&arriving==_cargo.Count)
                 {
                     var next=_nodes.Where(n=>n.Finish>_at).Select(n=>n.Finish).Concat(_cargo.Select(c=>c.End)).DefaultIfEmpty(milliseconds+100).Min();
+                    if(_groupViewActive)next=Math.Min(next,_at+VillageGroupRules.IntervalMs-_groupElapsed);
                     var jump=Math.Min(milliseconds/100*100,((next+99)/100-1)*100);
-                    if(jump>_at)_at=jump;
+                    if(jump>_at){AdvanceGroupClock(jump-_at);_at=jump;}
                 }
             }
             _history.RemoveAll(e=>e.At<=_at-60000);
+            var minMinute=_at/60000-59;var expired=_trend.Keys.Where(m=>m<minMinute).ToArray();foreach(var k in expired)_trend.Remove(k);
         }
         private static Recipe RecipeOf(Node n)=>IslandCatalog.Get(n.Kind).Recipes.FirstOrDefault();
         private List<VillageRouteView> Routes()
         {
             var routes=new List<VillageRouteView>();
+            var hasSorter=_nodes.Any(n=>n.Kind==FacilityKind.Sorter);
             foreach(var a in _nodes)
             {
                 var recipe=RecipeOf(a);if(recipe==null)continue;
                 foreach(var b in _nodes.Where(n=>n.Id!=a.Id).OrderBy(n=>n.Kind==FacilityKind.Warehouse?1:0).ThenBy(n=>Math.Abs(n.X-a.X)+Math.Abs(n.Y-a.Y)))
                 {
-                    var need=RecipeOf(b);var distance=Math.Abs(a.X-b.X)+Math.Abs(a.Y-b.Y);
-                    if(distance<=8&&(b.Kind==FacilityKind.Warehouse||need!=null&&need.Inputs.Any(i=>i.Item==recipe.Output.Item)))
+                    var distance=Math.Abs(a.X-b.X)+Math.Abs(a.Y-b.Y);
+                    var maxDist=hasSorter&&_nodes.Any(s=>s.Kind==FacilityKind.Sorter&&Math.Abs(s.X-a.X)+Math.Abs(s.Y-a.Y)<=6)?12:8;
+                    if(distance<=maxDist&&SendableItems(a).Any(i=>Accepts(b,i)))
                         routes.Add(new VillageRouteView{From=a.Id,To=b.Id});
                 }
             }
@@ -150,27 +219,40 @@ namespace ProjectPenguin.Domain.Village
             foreach(var route in Routes())
             {
                 var a=_nodes.First(n=>n.Id==route.From);var b=_nodes.First(n=>n.Id==route.To);
-                var item=RecipeOf(a).Output.Item;
-                if(_cargo.Any(c=>c.From==a.Id&&c.To==b.Id)||!available[a.Id].TryGetValue(item,out var count)||count<=0)continue;
-                var capacity=b.Kind==FacilityKind.Warehouse?20:12;
-                if(b.Stock.Values.Sum()+reserved[b.Id]+(b.Finish>0?RecipeOf(b).Output.Count:0)>=capacity)continue;
-                available[a.Id][item]--;reserved[b.Id]++;candidates.Add((a,b,item));
+                foreach(var item in SendableItems(a).Distinct().Where(i=>Accepts(b,i)))
+                {
+                    if(_cargo.Any(c=>c.From==a.Id&&c.To==b.Id)||candidates.Any(c=>c.From.Id==a.Id&&c.To.Id==b.Id)||!available[a.Id].TryGetValue(item,out var count)||count<=0)continue;
+                    var capacity=NodeCapacity(b);
+                    if(b.Stock.Values.Sum()+reserved[b.Id]+(b.Finish>0&&RecipeOf(b)!=null?RecipeOf(b).Output.Count:0)>=capacity)continue;
+                    available[a.Id][item]--;reserved[b.Id]++;candidates.Add((a,b,item));
+                }
             }
             var starting=_nodes.Where(n=>n.Finish==0).ToArray();
             foreach(var c in _cargo.Where(c=>c.End<=_at).ToArray())
             {var n=_nodes.First(a=>a.Id==c.To);n.Stock[c.Item]=n.Held(c.Item)+1;_cargo.Remove(c);}
             foreach(var n in _nodes.Where(n=>n.Finish>0&&n.Finish<=_at))
-            {var r=RecipeOf(n);n.Stock[r.Output.Item]=n.Held(r.Output.Item)+r.Output.Count;n.Finish=0;_produced+=r.Output.Count;_history.Add((_at,0,r.Output.Count));}
+            {var r=RecipeOf(n);n.Stock[r.Output.Item]=n.Held(r.Output.Item)+r.Output.Count;n.Finish=0;_produced+=r.Output.Count;_history.Add((_at,0,r.Output.Count));RecordMade(r.Output.Item,r.Output.Count);}
             foreach(var n in starting)
             {
-                var r=RecipeOf(n);if(r==null){n.Status=n.Kind==FacilityKind.Warehouse?"受け取り待ち":"配置効果の確認用";continue;}
+                var r=RecipeOf(n);
+                if(r==null)
+                {
+                    n.Status=n.Kind==FacilityKind.Warehouse?"受け取り待ち"
+                        :n.Kind==FacilityKind.IceHouse?"周囲の保管容量 ×2"
+                        :n.Kind==FacilityKind.Sorter?"周囲の配送距離を拡張中"
+                        :n.Kind==FacilityKind.Dormitory?"島全体の作業速度 +10%"
+                        :n.Kind==FacilityKind.Research?"島全体の研究効率 +15%"
+                        :"周囲の生産速度 +25%";
+                    continue;
+                }
                 var arrivals=reserved[n.Id];
                 var consumed=_unlimited?0:r.Inputs.Sum(i=>i.Count);
-                if(n.Held(r.Output.Item)+r.Output.Count>6||n.Stock.Values.Sum()-consumed+arrivals+r.Output.Count>12){n.Status="出力の置き場が満杯";continue;}
+                if(n.Held(r.Output.Item)+r.Output.Count>OutputCap(n)||n.Stock.Values.Sum()-consumed+arrivals+r.Output.Count>NodeCapacity(n)){n.Status="出力の置き場が満杯";continue;}
                 if(!_unlimited&&r.Inputs.Any(i=>n.Held(i.Item)<i.Count)){n.Status="材料を待っています";continue;}
                 if(!Pay(1)){n.Status="ガスを待っています";continue;}
-                if(!_unlimited)foreach(var input in r.Inputs)n.Stock[input.Item]=n.Held(input.Item)-input.Count;
-                n.Started=_at;n.Finish=_at+(long)Math.Max(100,r.Seconds*1000/_speed);n.Status="生産中";
+                if(!_unlimited)foreach(var input in r.Inputs){n.Stock[input.Item]=n.Held(input.Item)-input.Count;RecordUsed(input.Item,input.Count);}
+                var effectiveSpeed=_speed*NodeSpeedMultiplier(n);
+                n.Started=_at;n.Finish=_at+(long)Math.Max(100,r.Seconds*1000/effectiveSpeed);n.Status="生産中";
             }
             foreach(var d in candidates)
             {
@@ -180,19 +262,90 @@ namespace ProjectPenguin.Domain.Village
                 _cargo.Add(new VillageCargoView{Id=_nextCargo++,From=d.From.Id,To=d.To.Id,Item=d.Item,FromX=d.From.X,FromY=d.From.Y,
                     ToX=d.To.X,ToY=d.To.Y,Start=_at,End=_at+_deliveryMs});
             }
+            AdvanceGroupClock(100);
             _history.RemoveAll(e=>e.At<=_at-60000);
+            var minMinute=_at/60000-59;var expired=_trend.Keys.Where(m=>m<minMinute).ToArray();foreach(var k in expired)_trend.Remove(k);
         }
         private bool Pay(double gas)
-        {if(!_unlimited&&_gas<gas)return false;if(!_unlimited)_gas-=gas;_spent+=gas;_history.Add((_at,gas,0));return true;}
-        public VillageView CreateView()
+        {if(!_unlimited&&_gas<gas)return false;if(!_unlimited){_gas-=gas;RecordGas(gas);}_spent+=gas;_history.Add((_at,gas,0));return true;}
+        public VillageView CreateView(int today=-1)
         {
             var totals=Enum.GetValues(typeof(Item)).Cast<Item>().ToDictionary(i=>i,i=>_nodes.Sum(n=>n.Held(i))+_cargo.Count(c=>c.Item==i));
-            return new VillageView{Unlimited=_unlimited,BoardSize=BoardSize,AtMs=_at,Gas=_gas,Electricity=_electricity,Water=_water,
-                Produced=_produced,GasSpent=_spent,GasPerMinute=_history.Sum(e=>e.Gas),ProducedLastMinute=_history.Sum(e=>(long)e.Made),
+            var synergies=FindSynergies();
+            var synergyNodeIds=new HashSet<int>(synergies.SelectMany(s=>s.NodeIds));
+            var rates=new Dictionary<Item,VillageItemRateView>();
+            var theoGasPerMin=0.0;
+            var curMin=_at/60000;
+            _trend.TryGetValue(curMin,out var curBucket);
+            foreach(var item in Enum.GetValues(typeof(Item)).Cast<Item>())
+            {
+                rates[item]=new VillageItemRateView{
+                    Item=item,Stock=totals[item],
+                    ActualMakePerMinute=curBucket!=null?curBucket.Made[(int)item]:0,
+                    ActualUsePerMinute=curBucket!=null?curBucket.Used[(int)item]:0
+                };
+            }
+            foreach(var n in _nodes)
+            {
+                var r=RecipeOf(n);if(r==null)continue;
+                var cyclesPerMin=60.0/Math.Max(0.1,r.Seconds)*_speed*NodeSpeedMultiplier(n);
+                rates[r.Output.Item].TheoreticalMakePerMinute+=r.Output.Count*cyclesPerMin;
+                theoGasPerMin+=cyclesPerMin;
+                foreach(var inp in r.Inputs)
+                    rates[inp.Item].TheoreticalUsePerMinute+=inp.Count*cyclesPerMin;
+            }
+            foreach(var syn in synergies)
+            {
+                if(_groupViewActive)rates[syn.BonusItem].TheoreticalMakePerMinute+=VillageGroupRules.ItemsPerMinute;
+            }
+            var trend10=new Dictionary<Item,VillageItemTrend>();
+            var trend60=new Dictionary<Item,VillageItemTrend>();
+            foreach(var item in Enum.GetValues(typeof(Item)).Cast<Item>())
+            {
+                var m10=new int[10];var u10=new int[10];
+                for(var i=0;i<10;i++)
+                {
+                    var mIdx=curMin-(9-i);
+                    if(_trend.TryGetValue(mIdx,out var b)){m10[i]=b.Made[(int)item];u10[i]=b.Used[(int)item];}
+                }
+                trend10[item]=new VillageItemTrend{Made=m10,Used=u10};
+
+                var m60=new int[60];var u60=new int[60];
+                for(var i=0;i<60;i++)
+                {
+                    var mIdx=curMin-(59-i);
+                    if(_trend.TryGetValue(mIdx,out var b)){m60[i]=b.Made[(int)item];u60[i]=b.Used[(int)item];}
+                }
+                trend60[item]=new VillageItemTrend{Made=m60,Used=u60};
+            }
+            var targetDay=today<0?_ledger.LastStepDay:today;
+            var gasReceivedToday=_ledger.Entries.Where(e=>e.Day==targetDay&&e.Kind=="歩数 → ガス").Sum(e=>e.Amount);
+            var gasWait=_nodes.Count(n=>n.Status=="ガスを待っています");
+            var matWait=_nodes.Count(n=>n.Status=="材料を待っています");
+            var fullWait=_nodes.Count(n=>n.Status=="出力の置き場が満杯");
+            var deficitItem=rates.Values.FirstOrDefault(v=>v.IsDeficit);
+            var hasBottleneck=gasWait>0||matWait>0||fullWait>0||deficitItem!=null;
+            var bottleneckSummary=!_nodes.Any()?"施設を配置して生産ラインを作りましょう"
+                :gasWait>0?$"ガス不足で {gasWait} 施設が待機中です（歩数記録またはガス補充が必要）"
+                :deficitItem!=null?$"「{IslandCatalog.NameOf(deficitItem.Item)}」の理論消費（{deficitItem.TheoreticalUsePerMinute:0.#}/分）に対し供給（{deficitItem.TheoreticalMakePerMinute:0.#}/分）が不足しています"
+                :matWait>0?$"材料待ちの施設が {matWait} 棟あります（上流施設または仕分け機を近くに配置）"
+                :fullWait>0?$"出力満杯の施設が {fullWait} 棟あります（倉庫または氷室を近くに配置）"
+                :"すべての生産・物流ラインが順調に稼働しています";
+            return new VillageView{GroupViewActive=_groupViewActive,Unlimited=_unlimited,BoardSize=BoardSize,AtMs=_at,Gas=_gas,Electricity=_electricity,Water=_water,
+                Produced=_produced,GasSpent=_spent,GasPerMinute=_history.Sum(e=>e.Gas),TheoreticalGasPerMinute=theoGasPerMin,
+                GasReceivedToday=gasReceivedToday,
+                ProducedLastMinute=_history.Sum(e=>(long)e.Made),
+                BottleneckSummary=bottleneckSummary,HasBottleneck=hasBottleneck,
                 Nodes=Array.AsReadOnly(_nodes.Select(n=>new VillageNodeView{Id=n.Id,Kind=n.Kind,X=n.X,Y=n.Y,Total=n.Stock.Values.Sum(),
-                    Status=n.Status,Progress=n.Finish>0?Math.Min(1,(_at-n.Started)/(double)(n.Finish-n.Started)):0,
+                    Status=n.Status,Amplified=IsAmplified(n),InSynergy=synergyNodeIds.Contains(n.Id),CoverageRadius=CoverageRadiusOf(n.Kind),
+                    Progress=n.Finish>0?Math.Min(1,(_at-n.Started)/(double)(n.Finish-n.Started)):0,
                     Stock=new ReadOnlyDictionary<Item,int>(new Dictionary<Item,int>(n.Stock))}).ToArray()),
-                Routes=Array.AsReadOnly(Routes().ToArray()),Cargo=Array.AsReadOnly(_cargo.ToArray()),Totals=new ReadOnlyDictionary<Item,int>(totals)};
+                Routes=Array.AsReadOnly(Routes().ToArray()),Cargo=Array.AsReadOnly(_cargo.ToArray()),
+                Synergies=Array.AsReadOnly(synergies.ToArray()),
+                Totals=new ReadOnlyDictionary<Item,int>(totals),
+                ItemRates=new ReadOnlyDictionary<Item,VillageItemRateView>(rates),
+                Trend10=new ReadOnlyDictionary<Item,VillageItemTrend>(trend10),
+                Trend60=new ReadOnlyDictionary<Item,VillageItemTrend>(trend60)};
         }
     }
 }

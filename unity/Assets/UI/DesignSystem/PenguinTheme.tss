@@ -2,3 +2,5 @@
 @import url("project://database/Assets/UI/DesignSystem/Components.uss");
 @import url("project://database/Assets/UI/DesignSystem/Game.uss");
 @import url("project://database/Assets/UI/DesignSystem/Thumbnails.uss");
+@import url("project://database/Assets/UI/DesignSystem/Industrial.uss");
+@import url("project://database/Assets/UI/ProductionVillage/Report/ProductionReport.uss");

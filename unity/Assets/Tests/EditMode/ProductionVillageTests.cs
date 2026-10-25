@@ -11,7 +11,18 @@ namespace ProjectPenguin.Tests.EditMode
         private static VillageGame Game()
         { var g=new VillageGame(false); g.SetResources(100,1000,1000); return g; }
         [Test] public void UnsupportedEffectCannotConsumeConstructionResources()
-        { var g=Game(); Assert.That(g.Place(FacilityKind.Research,0,0).Success,Is.False); Assert.That(g.CreateView().Electricity,Is.EqualTo(1000)); }
+        { var g=Game(); Assert.That(g.Place((FacilityKind)999,0,0).Success,Is.False); Assert.That(g.CreateView().Electricity,Is.EqualTo(1000)); }
+        [Test] public void SynergyLineAndTheoreticalRatesAreComputed()
+        {
+            var g=Game();
+            g.Place(FacilityKind.Fishery,2,2);
+            g.Place(FacilityKind.Saltworks,4,2);
+            g.Place(FacilityKind.Fishery,6,2);
+            var view=g.CreateView();
+            Assert.That(view.Synergies.Count,Is.EqualTo(1));
+            Assert.That(view.Synergies[0].BonusItem,Is.EqualTo(Item.Kamaboko));
+            Assert.That(view.ItemRates[Item.Fish].TheoreticalMakePerMinute,Is.GreaterThan(0));
+        }
         [Test] public void PaidProductionFinishesWithoutGasAndMovePreservesProgress()
         {
             var g=Game();var id=g.Place(FacilityKind.Fishery,2,2).Id;g.AdvanceTo(100);

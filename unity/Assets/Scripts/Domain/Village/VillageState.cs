@@ -11,10 +11,24 @@ namespace ProjectPenguin.Domain.Village
         public int NextId = 1, DeliveryMs = 1500;
         public double Speed = 1, Gas, Electricity, Water, Spent;
         public bool Unlimited;
+        public VillageGroupProgressState GroupProgress = new VillageGroupProgressState();
         public List<VillageNodeState> Nodes = new List<VillageNodeState>();
         public List<VillageCargoState> Cargo = new List<VillageCargoState>();
         public List<VillageHistoryState> History = new List<VillageHistoryState>();
+        public List<VillageTrendState> Trend = new List<VillageTrendState>();
         public HealthRecordLedger Ledger = new HealthRecordLedger();
+    }
+    [Serializable] public sealed class VillageTrendState
+    {
+        public long Minute;
+        public double Gas;
+        public int[] Made = new int[8];
+        public int[] Used = new int[8];
+    }
+    [Serializable] public sealed class VillageGroupProgressState
+    {
+        public long ElapsedMs, Tick;
+        public int Chikuwa, Kamaboko, DriedFish;
     }
     [Serializable] public sealed class VillageNodeState
     {

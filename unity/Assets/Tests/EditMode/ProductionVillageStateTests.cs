@@ -34,8 +34,10 @@ namespace ProjectPenguin.Tests.EditMode
         [Test] public void InvalidCoordinatesAndUnsupportedEffectsDoNotSpend()
         {
             var g=Game();var balance=g.CreateView().Electricity;
-            foreach(var kind in new[]{FacilityKind.Dormitory,FacilityKind.Research,FacilityKind.IceHouse,FacilityKind.Sorter,FacilityKind.GasAmplifier})Assert.That(g.Place(kind,20,20).Success,Is.False);
+            Assert.That(g.Place((FacilityKind)999,20,20).Success,Is.False);
             Assert.That(g.Move(1,int.MaxValue,0).Success,Is.False);Assert.That(g.CreateView().Electricity,Is.EqualTo(balance));
+            Assert.That(g.Place(FacilityKind.ElectricAmplifier,2,5).Success,Is.True);
+            Assert.That(g.CreateView().Nodes.First(n=>n.Id==1).Amplified,Is.True);
         }
         [Test] public void SnapshotAndExportCannotMutateGame()
         {var g=Game();var s=g.Export();s.Nodes[0].Stock[0]=20;s.Ledger.MaxSteps=9000;Assert.That(g.CreateView().Nodes[0].Total,Is.Zero);Assert.That(g.Records.MaxSteps,Is.Zero);}
