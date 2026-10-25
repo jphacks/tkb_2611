@@ -1208,3 +1208,13 @@
     height: 160px;
     margin-bottom: var(--space-2);
 }
+
+.village-effort { background-color: var(--color-ice-50); border-width: 2px; border-color: var(--color-ice-200); }
+.village-effort__header { flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+.village-effort__value, .village-facility__effort { color: var(--color-tactical-cyan); -unity-font-style: bold; font-size: var(--font-size-body); }
+.village-effort__effect { white-space: normal; font-size: var(--font-size-body); margin-top: var(--space-2); }
+.village-effort__hint { white-space: normal; color: var(--color-text-sub); margin-top: var(--space-2); }
+.village-effort__actions { flex-direction: row; align-items: center; flex-wrap: wrap; margin-top: var(--space-2); }
+.village-effort__actions > .pp-btn { margin-right: var(--space-2); margin-bottom: var(--space-2); }
+
+.village-effort__flame { width: 36px; height: 42px; margin-right: var(--space-1); background-image: url("project://database/Assets/UI/ProductionVillage/EffortFlame.svg"); -unity-background-scale-mode: scale-to-fit; }

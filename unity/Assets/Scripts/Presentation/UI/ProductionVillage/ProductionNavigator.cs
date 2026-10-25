@@ -1093,10 +1093,12 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             var body = new VisualElement();
             body.AddToClassList(ProductionUiNames.FacilityBody);
             var status = new VisualElement();
+            var effortLabel = IslandUi.Text("", ProductionUiNames.FacilityEffort);
             var progress = new ProgressBar { lowValue = 0, highValue = 1 };
             progress.AddToClassList(UiClasses.Progress.Root);
             progress.AddToClassList(UiClasses.Progress.Eco);
             progress.AddToClassList(ProductionUiNames.FacilityProgress);
+            body.Add(effortLabel);
             body.Add(status);
             body.Add(progress);
             header.Add(body);
@@ -1111,7 +1113,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 top.Add(recipeLine);
                 var bonusText = node.InSynergy ? "施設群が成立しているよ。全体表示の間は追加生産が動く。" : "";
                 if (node.Amplified) bonusText += "増幅器の近くなので、速さが +25%。";
-                top.Add(IslandUi.Text(bonusText + "つくるたびにガスを 1 つかう。近くの施設へ自動でとどけるよ", ProductionUiNames.Subtle));
+                top.Add(IslandUi.Text(bonusText + "エフォートに応じて加工時にガスを消費。近くの施設へ自動でとどけるよ", ProductionUiNames.Subtle));
             }
             else
             {
@@ -1137,7 +1139,35 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 }
             }, UiClasses.Icon.Demolish, primary: false);
 
+            VillageWarehousePanel warehousePanel = null;
+            VillageEffortPanel effortPanel = null;
+            if (node.Kind == FacilityKind.Warehouse)
+            {
+                warehousePanel = new VillageWarehousePanel(Card(), (nodeId, value) =>
+                {
+                    var ok = _session.Core.SetWarehouseCapacity(nodeId, value, ProductionVillageSession.UtcNow);
+                    ShowToast(ok ? _session.Core.Notice : string.IsNullOrEmpty(_session.Core.Error) ? _session.Core.Notice : _session.Core.Error);
+                    if (ok) ShowFacility(nodeId);
+                    return ok;
+                });
+            }
+            else
+            {
+                effortPanel = new VillageEffortPanel(Card(), (nodeId, effort) =>
+                {
+                    if (_session.Core.SetEffort(nodeId, effort, ProductionVillageSession.UtcNow))
+                    {
+                        ShowToast(_session.Core.Notice);
+                        ShowFacility(nodeId);
+                        return true;
+                    }
+                    ShowToast(string.IsNullOrEmpty(_session.Core.Error) ? _session.Core.Notice : _session.Core.Error);
+                    return false;
+                });
+            }
             var stockCard = Card("置いてある品物");
+            var capacity = IslandUi.Text("", ProductionUiNames.Subtle);
+            stockCard.Add(capacity);
             var items = new VisualElement();
             items.AddToClassList(ProductionUiNames.Items);
             stockCard.Add(items);
@@ -1153,12 +1183,16 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 }
 
                 status.Clear();
+                effortLabel.text = $"エフォート {n.Effort}" + (n.ProductionSeconds > 0 ? $"  ·  次回 {n.ProductionSeconds:0.##}秒" : "");
                 status.Add(StatusPill(n.Status));
                 progress.value = (float)n.Progress;
                 IslandUi.SetVisible(progress, n.Progress > 0);
                 items.Clear();
                 var stock = n.Stock.Where(p => p.Value > 0).ToList();
                 var incoming = view.Cargo.Count(c => c.To == id);
+                capacity.text = $"保管 {n.Total} / {n.Capacity}個  ·  配送待ち {incoming}個";
+                effortPanel?.Render(n, view.Gas);
+                warehousePanel?.Render(n, incoming);
                 if (stock.Count == 0)
                 {
                     Empty(items, UiClasses.Icon.StorageFull, incoming > 0 ? $"とどく途中の品物が {incoming} 個あるよ" : "まだ何も置いていないよ");
@@ -1253,7 +1287,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 stats.Add(IslandUi.Row(
                     IslandUi.IconBadge(UiClasses.Icon.Boat, UiClasses.Tint.Point),
                     "出荷港の倉庫連携",
-                    warehouses > 0 ? $"倉庫 {warehouses} 棟が稼働中（保管枠 +{warehouses * 20}）" : "倉庫を建てると大量の品物を備蓄できるよ",
+                    warehouses > 0 ? $"倉庫 {warehouses} 棟が稼働中（合計容量 {view.Nodes.Where(n => n.Kind == FacilityKind.Warehouse).Sum(n => n.Capacity):N0}個）" : "倉庫を建てると大量の品物を備蓄できるよ",
                     Badge(warehouses > 0 ? $"Lv.{warehouses}" : "未設置", UiClasses.Badge.Accent)));
                 stats.Children().Last().AddToClassList(UiClasses.Row.Last);
                 items.Clear();
@@ -1532,14 +1566,14 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             synCard.Children().Last().AddToClassList(UiClasses.Row.Last);
 
             var infraCard = Card("稼働中の設備と増幅", UiClasses.Icon.Research);
-            var dorms = view?.Nodes.Count(n => n.Kind == FacilityKind.Dormitory) ?? 0;
-            var labs = view?.Nodes.Count(n => n.Kind == FacilityKind.Research) ?? 0;
+            var dormBonus = (view?.Nodes.Count(n => n.Kind == FacilityKind.Dormitory) ?? 0) * .10;
+            var labBonus = (view?.Nodes.Count(n => n.Kind == FacilityKind.Research) ?? 0) * .15;
             var amps = view?.Nodes.Count(n => n.Kind == FacilityKind.ElectricAmplifier || n.Kind == FacilityKind.WaterAmplifier || n.Kind == FacilityKind.GasAmplifier) ?? 0;
             var ices = view?.Nodes.Count(n => n.Kind == FacilityKind.IceHouse) ?? 0;
-            infraCard.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Penguin, UiClasses.Tint.Original), "ペンギン宿舎", "1棟ごとに島全体の作業速度 +10%", Stat($"+{dorms * 10}%")));
-            infraCard.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Research, UiClasses.Tint.Pearl), "研究所", "1棟ごとに島全体の研究・加工速度 +15%", Stat($"+{labs * 15}%")));
-            infraCard.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Electricity, UiClasses.Tint.Electricity), "増幅器 (電・水・ガス)", "周囲6×6マスの生産速度 +25%", Stat($"{amps} 棟")));
-            infraCard.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Snowflake, UiClasses.Tint.Water), "氷室", "周囲6×6マスの保管容量 ×2", Stat($"{ices} 棟")));
+            infraCard.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Penguin, UiClasses.Tint.Original), "ペンギン宿舎", "1棟ごとに村全体の生産速度を上げる", Stat($"+{dormBonus * 100:0.#}%")));
+            infraCard.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Research, UiClasses.Tint.Pearl), "研究所", "1棟ごとに村全体の生産速度を上げる", Stat($"+{labBonus * 100:0.#}%")));
+            infraCard.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Electricity, UiClasses.Tint.Electricity), "増幅器 (電・水・ガス)", "縦横6マス以内の速度を上げる。重なる場合は最も高い効果を適用", Stat($"{amps} 棟")));
+            infraCard.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Snowflake, UiClasses.Tint.Water), "氷室", "縦横6マス以内の保管容量を増加。効果は施設詳細で確認", Stat($"{ices} 棟")));
             infraCard.Children().Last().AddToClassList(UiClasses.Row.Last);
         }
 

@@ -14,6 +14,7 @@ namespace ProjectPenguin.Presentation.UI
         /// <summary>要素を隠す (display: none)。</summary>
         public const string Hidden = "pp-hidden";
 
+        public const string TextField = "pp-text-field";
         public const string Card = "pp-card";
         public const string Elevated = "pp-elevated";
         public const string QuickEcoList = "home__quick-eco-list";
