@@ -61,6 +61,7 @@ namespace ProjectPenguin.Systems
         public string CanMove(int id,int x,int y)=>_game?.CanMove(id,x,y)??"村を読み込めません";
         public bool AcceptSteps(int day,int steps,int today,long utc)=>Command(g=>g.AcceptSteps(day,steps,today),utc);
         public bool AcceptWater(string id,int day,int today,bool confirmed,long utc)=>Command(g=>g.AcceptWater(id,day,today,confirmed),utc);
+        public bool AcceptEcoPhoto(string id,int day,int today,EcoPhotoVerdict verdict,long utc)=>Command(g=>g.AcceptEcoPhoto(id,day,today,verdict),utc);
         public bool AcceptScreen(string id,int day,int used,int today,bool full,bool confirmed,long utc)=>Command(g=>g.AcceptScreen(id,day,used,today,full,confirmed),utc);
         public void Tick(long elapsedMs)
         {

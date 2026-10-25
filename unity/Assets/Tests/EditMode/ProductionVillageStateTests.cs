@@ -50,6 +50,23 @@ namespace ProjectPenguin.Tests.EditMode
             Assert.That(g.AcceptScreen("screen",5,120,6,true,true).Success,Is.True);Assert.That(g.AcceptScreen("water",5,120,6,true,true).Success,Is.False);
             Assert.That(g.AcceptWater("late",5,6,true).Success,Is.False);
         }
+        [Test] public void EcoPhotosGrantOnlyUtilityResourcesAndAreLimitedToOnePerDay()
+        {
+            static EcoPhotoVerdict Photo(EcoSubject subject,EcoPhotoDecision decision=EcoPhotoDecision.Accept)=>
+                new EcoPhotoVerdict(subject,"",0.9,new EcoPhotoReview(decision,null,null));
+            var g=Game();var before=g.CreateView();
+            Assert.That(g.AcceptEcoPhoto("eco:5:first",5,5,Photo(EcoSubject.ShortShower)).Success,Is.True);
+            Assert.That(g.CreateView().Water,Is.EqualTo(before.Water+15));
+            Assert.That(g.CreateView().Gas,Is.EqualTo(before.Gas+10));
+            Assert.That(g.AcceptEcoPhoto("eco:5:second",5,5,Photo(EcoSubject.LightsOff)).Success,Is.False);
+            Assert.That(VillageGame.Restore(g.Export()).AcceptEcoPhoto("eco:5:third",5,5,Photo(EcoSubject.LightsOff)).Success,Is.False);
+            Assert.That(g.AcceptEcoPhoto("eco:6:reduced",6,6,Photo(EcoSubject.LidCooking,EcoPhotoDecision.Reduce)).Success,Is.True);
+            Assert.That(g.CreateView().Gas,Is.EqualTo(before.Gas+20));
+            Assert.That(g.AcceptEcoPhoto("eco:7:all-mighty-only",7,7,Photo(EcoSubject.EcoBag)).Success,Is.False);
+            Assert.That(g.AcceptEcoPhoto("eco:7:reject",7,7,Photo(EcoSubject.LightsOff,EcoPhotoDecision.Reject)).Success,Is.False);
+            Assert.That(g.AcceptEcoPhoto("eco:7:electricity",7,7,Photo(EcoSubject.LightsOff)).Success,Is.True);
+            Assert.That(g.CreateView().Electricity,Is.EqualTo(before.Electricity+20));
+        }
         [Test,Timeout(3000)] public void LongOfflineAndSplitTimeProduceSameResult()
         {
             var a=Game();var b=Game();a.AdvanceTo(2592000000L);

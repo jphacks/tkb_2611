@@ -184,5 +184,9 @@
         <!-- 工房の全画面生産レポート -->
         <ui:Template name="ProductionReport" src="Report/ProductionReport.uxml" />
         <ui:Instance template="ProductionReport" name="villageProductionReport" class="village-production-report" picking-mode="Ignore" />
+
+        <!-- 水分補給とエコ活動の写真を撮る全画面カメラ。開くまでは隠しておく -->
+        <ui:Template name="VillageWaterCamera" src="VillageWaterCamera.uxml" />
+        <ui:Instance template="VillageWaterCamera" name="villageWaterCamera" class="village-water-camera pp-hidden" />
     </ui:VisualElement>
 </ui:UXML>

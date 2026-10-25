@@ -342,7 +342,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: becf5ae8582fcfa47b5eb779c2ab5457, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: ProjectPenguin.Presentation::ProjectPenguin.Presentation.World.ProductionVillage.VillageIslandView
   _material: {fileID: 2100000, guid: 2e6b54e86d5e96648b225b109b2650e8, type: 2}
 --- !u!23 &28683149
@@ -720,7 +720,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c0ce979141ef3498797500d1e8a5e640, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: ProjectPenguin.Presentation::ProjectPenguin.Presentation.World.AnimatorPhaseOffset
   _maxOffsetSeconds: 2
 --- !u!1 &215501215
@@ -1578,6 +1578,8 @@ GameObject:
   - component: {fileID: 820363849}
   - component: {fileID: 820363848}
   - component: {fileID: 820363847}
+  - component: {fileID: 820363851}
+  - component: {fileID: 820363852}
   m_Layer: 0
   m_Name: AppUI
   m_TagString: Untagged
@@ -1599,6 +1601,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: ProjectPenguin.Presentation::ProjectPenguin.Presentation.UI.ProductionVillage.ProductionNavigator
   _session: {fileID: 456161913}
   _world: {fileID: 456161912}
+--- !u!114 &820363851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 820363846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a02e423e05c1f4f3f82b3099564de846, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ProjectPenguin.Presentation::ProjectPenguin.Presentation.UI.ReceiptCameraPreview
+--- !u!114 &820363852
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 820363846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1fab7d51aad4d8f82c9013d6f51772d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ProjectPenguin.Presentation::ProjectPenguin.Presentation.UI.ProductionVillage.VillageWaterScanPresenter
+  _session: {fileID: 456161913}
+  _camera: {fileID: 820363851}
 --- !u!114 &820363848
 MonoBehaviour:
   m_ObjectHideFlags: 0

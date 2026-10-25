@@ -17,7 +17,9 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             ToastLayer="villageToastLayer",
             Sheet="villageSheet",Scrim="villageSheetScrim",Title="villageSheetTitle",Close="villageClose",Content="villageSheetContent",
             Navigation="villageNavigation",HomeTab="villageHomeTab",RecordTab="villageRecordTab",ScanTab="villageScanTab",ManageTab="villageManageTab",MenuTab="villageMenuTab",
-            VillageProductionReport="villageProductionReport";
+            VillageProductionReport="villageProductionReport",
+            WaterCamera="villageWaterCamera",WaterGuide="waterGuide",WaterCameraClose="waterCameraClose",WaterShutter="waterShutter",
+            WaterResult="waterResult",WaterTitle="waterTitle",WaterAmount="waterAmount",WaterComment="waterComment";
 
         /// <summary>ProductionApp.uss のクラス。</summary>
         public const string Hint="village-hint",HintBad="village-hint--bad",Card="village-card",CardTitle="village-card__title",CardActions="village-card__actions",

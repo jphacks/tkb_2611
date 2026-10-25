@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using NUnit.Framework;
 using ProjectPenguin.Data;
+using ProjectPenguin.Domain.Island;
 using ProjectPenguin.Domain.Village;
 using ProjectPenguin.Systems;
 using UnityEngine;
@@ -20,7 +21,10 @@ namespace ProjectPenguin.Tests.EditMode
         [Test] public void FailedSaveDoesNotPublishConstructionOrReward()
         {
             var store=new MemoryStore();var core=new ProductionVillageSessionCore(store,new MemoryStore(),ProductionVillageStateTests.Game,true);core.Open(10000);
-            var balance=core.View.Gas;store.Fail=true;Assert.That(core.AcceptSteps(1,500,1,10000),Is.False);Assert.That(core.View.Gas,Is.EqualTo(balance));Assert.That(core.Records.Entries.Count,Is.Zero);
+            var balance=core.View.Gas;var electricity=core.View.Electricity;store.Fail=true;Assert.That(core.AcceptSteps(1,500,1,10000),Is.False);Assert.That(core.View.Gas,Is.EqualTo(balance));Assert.That(core.Records.Entries.Count,Is.Zero);
+            var verdict=new EcoPhotoVerdict(EcoSubject.LightsOff,"",0.9,new EcoPhotoReview(EcoPhotoDecision.Accept,null,null));
+            Assert.That(core.AcceptEcoPhoto("eco:1:test",1,1,verdict,10000),Is.False);
+            Assert.That(core.View.Electricity,Is.EqualTo(electricity));Assert.That(core.Records.Entries.Count,Is.Zero);
             Assert.That(core.Place(ProjectPenguin.Domain.Island.FacilityKind.Fishery,20,20,10000),Is.False);Assert.That(core.View.Nodes.Count,Is.EqualTo(3));
         }
         [Test] public void ExplicitDevelopmentSwitchKeepsProductSaveUntouched()

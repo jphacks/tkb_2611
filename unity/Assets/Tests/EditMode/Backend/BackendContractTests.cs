@@ -678,6 +678,11 @@ namespace ProjectPenguin.Tests.EditMode.Backend
         [Test]
         public void ConfigTurnsOnWaterAndEncounters()
         {
+            var inBuild = File.ReadAllText(Path.Combine(Application.streamingAssetsPath, BackendRuntime.ConfigFileName));
+            var shipped = BackendConfig.Parse(inBuild, null);
+            Assert.That(shipped.Judge, Is.EqualTo(JudgeMode.Http));
+            Assert.That(shipped.Water, Is.EqualTo(JudgeMode.Http));
+
             var config = BackendConfig.Parse("{\"api_base_url\":\"https://x.example/api\",\"water\":\"http\",\"encounters\":true}", null);
             Assert.That(config.Water, Is.EqualTo(JudgeMode.Http));
             Assert.That(config.EncountersEnabled, Is.True);

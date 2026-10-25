@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using ProjectPenguin.Domain.Island;
 
@@ -36,6 +38,42 @@ namespace ProjectPenguin.Domain.Village
         {
             if(!confirmed||day<0||day!=today||string.IsNullOrWhiteSpace(id)||id.Length>128)return Result(false,"確認済みの本日の記録が必要です");
             return Grant(id,day,"水分補給 → 水",3,true);
+        }
+        public VillageResult AcceptEcoPhoto(string id,int day,int today,EcoPhotoVerdict verdict)
+        {
+            const string kindPrefix="エコ写真";
+            if(day<0||day!=today||string.IsNullOrWhiteSpace(id)||id.Length>126||verdict==null)return Result(false,"確認済みの本日の写真判定が必要です");
+            if(!verdict.Review.Counts)return Result(false,"この写真は資源にできません。案内に沿って撮り直してください");
+            if(_ledger.Entries.Any(e=>e.Id==id||e.Day==day&&e.Kind.StartsWith(kindPrefix,StringComparison.Ordinal)))return Result(false,"今日のエコ写真の資源は受領済みです");
+
+            var grants=EcoGrant.ForPhoto(verdict,IslandParameters.Default);
+            var electricity=grants[Resource.Electricity];
+            var water=grants[Resource.Water];
+            var gas=grants[Resource.Gas];
+            var total=electricity+water+gas;
+            if(!Finite(electricity)||!Finite(water)||!Finite(gas)||!Finite(total)||electricity<0||water<0||gas<0||total<=0)return Result(false,"この行動では村の電気・水・ガスは増えません");
+            if(!Finite(_electricity+electricity)||!Finite(_water+water)||!Finite(_gas+gas)||_electricity+electricity>int.MaxValue||_water+water>int.MaxValue||_gas+gas>int.MaxValue)return Result(false,"資源の上限です");
+
+            // Production Village has no AllMighty balance, so only utility-specific photo grants apply.
+            _electricity+=electricity;_water+=water;_gas+=gas;
+            var label=string.IsNullOrEmpty(verdict.Label)?EcoCategories.NameOf(verdict.Category):verdict.Label;
+            var gains=new List<string>();
+            if(electricity>0)
+            {
+                _ledger.Entries.Add(new HealthRecordEntry{Id=id+":e",Kind=$"エコ写真 ({label}) → 電気",Day=day,Amount=electricity});
+                gains.Add("電気 +"+electricity.ToString("0.#",CultureInfo.InvariantCulture));
+            }
+            if(water>0)
+            {
+                _ledger.Entries.Add(new HealthRecordEntry{Id=id+":w",Kind=$"エコ写真 ({label}) → 水",Day=day,Amount=water});
+                gains.Add("水 +"+water.ToString("0.#",CultureInfo.InvariantCulture));
+            }
+            if(gas>0)
+            {
+                _ledger.Entries.Add(new HealthRecordEntry{Id=id+":g",Kind=$"エコ写真 ({label}) → ガス",Day=day,Amount=gas});
+                gains.Add("ガス +"+gas.ToString("0.#",CultureInfo.InvariantCulture));
+            }
+            return Result(true,kindPrefix+" ("+label+") ("+string.Join(" / ",gains)+")");
         }
         public VillageResult AcceptScreen(string id,int day,int used,int today,bool fullDay,bool confirmed)
         {

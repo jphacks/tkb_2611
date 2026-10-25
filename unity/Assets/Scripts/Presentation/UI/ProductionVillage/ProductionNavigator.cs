@@ -16,6 +16,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
     [RequireComponent(typeof(UIDocument))]
     public sealed class ProductionNavigator : MonoBehaviour
     {
+        private const string EcoPhotoActionName = "villageEcoPhotoAction";
+        private const string WaterActionName = "villageWaterAction";
         private const float RefreshSeconds = .1f;
         private const float SheetRefreshSeconds = .5f;
         private const float CountUpSeconds = .4f;
@@ -32,6 +34,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         private Label _industrialSwitchLabel, _tacticalGas, _topDownLabel, _insightText;
         private Button _confirm, _activeTab, _topDownToggle, _insightBanner;
         private ProductionReportPresenter _report;
+        private VillageWaterScanPresenter _waterScan;
         private Action _refreshSheet;
         private bool _sheetOpen;
         private bool _industrialMode;
@@ -44,13 +47,15 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         private readonly Dictionary<int, Button> _spatialBadges = new Dictionary<int, Button>();
         private readonly Dictionary<string, VisualElement> _groupMarks = new Dictionary<string, VisualElement>();
 
-        public bool WorldInputEnabled => !_sheetOpen && (_report == null || !_report.IsOpen) && !_session.IsSuspended && _session.Core.View != null;
+        public bool WorldInputEnabled => !_sheetOpen && (_report == null || !_report.IsOpen)
+            && !(_waterScan != null && _waterScan.IsOpen) && !_session.IsSuspended && _session.Core.View != null;
         public VillagePlacementController Placement => _world.Placement;
         public VillageWorldPresenter World => _world;
 
         private void Start()
         {
             _root = GetComponent<UIDocument>().rootVisualElement;
+            _waterScan = GetComponent<VillageWaterScanPresenter>();
             _app = _root.Q(ProductionUiNames.Root);
             _sheet = _root.Q(ProductionUiNames.Sheet);
             _content = _root.Q<ScrollView>(ProductionUiNames.Content);
@@ -1117,11 +1122,30 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         private void ShowScan()
         {
             Open("スキャン", ProductionUiNames.ScanTab);
-            var card = Card("記録して資源をためる");
-            card.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Water, UiClasses.Tint.Water), "水分補給", "水が 3 たまるよ", Badge("準備中", UiClasses.Badge.Accent)));
-            card.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Electricity, UiClasses.Tint.Electricity), "きのうのスクリーンタイム", "使わなかった時間ぶん電気がたまるよ", Badge("準備中", UiClasses.Badge.Accent)));
-            card.Children().Last().AddToClassList(UiClasses.Row.Last);
-            card.Add(IslandUi.Text("写真の読み取りがつながると使えるようになるよ。写真は村に保存しないよ", ProductionUiNames.Subtle));
+            var scanner = _waterScan;
+            var eco = Card("節電・節水・ガス節約");
+            eco.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Production, UiClasses.Tint.Primary),
+                "エコ活動の写真", "電気・水・ガスに関係する行動の写真を判定するよ (資源の受け取りは 1 日 1 回)", null));
+            eco.Children().Last().AddToClassList(UiClasses.Row.Last);
+            var ecoAction = Action(eco, "エコ活動を撮る", () =>
+            {
+                Close();
+                scanner.OpenEcoPhoto();
+            }, UiClasses.Icon.Camera, enabled: scanner != null && scanner.enabled);
+            ecoAction.name = EcoPhotoActionName;
+            eco.Add(IslandUi.Text("写真は判定後に破棄し、村には保存しないよ", ProductionUiNames.Subtle));
+
+            var water = Card("水分補給");
+            water.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Water, UiClasses.Tint.Water),
+                "ペットボトルの水", "写真から水の量を見積もり、受け付けられると水が 3 たまるよ (1 日 1 回)", null));
+            water.Children().Last().AddToClassList(UiClasses.Row.Last);
+            var waterAction = Action(water, "水を撮る", () =>
+            {
+                Close();
+                scanner.Open();
+            }, UiClasses.Icon.Camera, enabled: scanner != null && scanner.enabled);
+            waterAction.name = WaterActionName;
+            water.Add(IslandUi.Text("写真は判定後に破棄し、村には保存しないよ", ProductionUiNames.Subtle));
         }
 
         // ---- 工房・図面管理 (ShowManagement) ----
