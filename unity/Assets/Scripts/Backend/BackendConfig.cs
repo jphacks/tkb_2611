@@ -98,8 +98,10 @@ namespace ProjectPenguin.Backend
     {
         public static readonly BackendConfig Default = new BackendConfig(null, JudgeMode.Mock, false, false, false);
 
+        /// <param name="encountersEnabled">すれ違いの相互確認を backend に任せる (契約 1.2.0)。false なら端末の中で成立にする。</param>
+        /// <param name="water">水の写真の見積もり (契約 1.2.0、ラベルの容量は 1.3.0)。<see cref="JudgeMode.Mock"/> なら端末の中の見本を返す。</param>
         public BackendConfig(string apiBaseUrl, JudgeMode judge, bool communityEnabled, bool questsEnabled, bool demoMode,
-            bool encountersEnabled = false)
+            bool encountersEnabled = false, JudgeMode water = JudgeMode.Mock)
         {
             ApiBaseUrl = string.IsNullOrWhiteSpace(apiBaseUrl) ? null : apiBaseUrl.TrimEnd('/');
             Judge = ApiBaseUrl == null ? JudgeMode.Mock : judge;
@@ -107,6 +109,7 @@ namespace ProjectPenguin.Backend
             QuestsEnabled = ApiBaseUrl != null && questsEnabled;
             DemoMode = demoMode;
             EncountersEnabled = ApiBaseUrl != null && encountersEnabled;
+            Water = ApiBaseUrl == null ? JudgeMode.Mock : water;
         }
 
         /// <summary>backend の根 (「https://…/api」)。無ければ null で、backend を使う機能はすべて切る。</summary>
@@ -124,6 +127,9 @@ namespace ProjectPenguin.Backend
 
         /// <summary>すれ違いの相互確認を backend で行う。切っていれば端末の中だけで確かめる (<see cref="MockEncounterReporter"/>)。</summary>
         public bool EncountersEnabled { get; }
+
+        /// <summary>水の写真を backend で見積もるか (<see cref="JudgeMode.Http"/>)、端末の中の見本を返すか。</summary>
+        public JudgeMode Water { get; }
 
         public bool UsesBackend => ApiBaseUrl != null;
 
@@ -156,9 +162,12 @@ namespace ProjectPenguin.Backend
                 return Default;
             }
 
-            var judge = string.Equals(dto.judge, "http", StringComparison.OrdinalIgnoreCase) ? JudgeMode.Http : JudgeMode.Mock;
-            return new BackendConfig(Resolve(dto.api_base_url, pageUrl), judge, dto.community, dto.quests, dto.demo_mode, dto.encounters);
+            return new BackendConfig(Resolve(dto.api_base_url, pageUrl), ModeOf(dto.judge), dto.community, dto.quests, dto.demo_mode,
+                dto.encounters, ModeOf(dto.water));
         }
+
+        private static JudgeMode ModeOf(string value) =>
+            string.Equals(value, "http", StringComparison.OrdinalIgnoreCase) ? JudgeMode.Http : JudgeMode.Mock;
 #endif
 
         /// <summary>相対の URL を、開いているページの URL から解く。解けなければ null。</summary>
@@ -194,6 +203,7 @@ namespace ProjectPenguin.Backend
             public bool quests;
             public bool demo_mode;
             public bool encounters;
+            public string water;
         }
 #pragma warning restore IDE1006
     }

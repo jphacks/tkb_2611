@@ -11,8 +11,8 @@ namespace ProjectPenguin.FactoryGame
     {
         private readonly FactoryGameDriver _driver;
         private readonly Font _font;
-        private readonly Text _resources, _progress, _message, _selection, _build, _stock, _birds, _telemetry, _stepStatus, _zoom, _pause, _transport;
-        private readonly InputField _quantity, _barcode, _minutes;
+        private readonly Text _resources, _progress, _message, _selection, _build, _stock, _birds, _telemetry, _stepStatus, _waterStatus, _encounterStatus, _zoom, _pause, _transport;
+        private readonly InputField _quantity, _minutes;
         private readonly Toggle _recordConfirmed;
         private readonly RectTransform _safe;
         private readonly string[] _recipeIds = { "fishery", "kelp_farm", "saltworks", "preparation", "drying", "kamaboko", "chikuwa", "warehouse" };
@@ -96,14 +96,14 @@ namespace ProjectPenguin.FactoryGame
 
             Label(content, "日常の入力", 29, 45);
             _stepStatus = Label(content, "", 24, 76); Button(content, "実歩数を取得する（iOS）", driver.RequestSteps);
-            Label(content, "水：商品コードの記録。飲んだ量の測定ではありません", 24, 65);
-            Button(content, "バーコードをカメラで読み取る（iOS）", driver.ScanBarcode);
-            var waterRow = Row(content); _barcode = Input(waterRow, "商品バーコード", InputField.ContentType.IntegerNumber);
-            _barcode.readOnly = !driver.DevelopmentInputs;
-            Button(waterRow, "記録を確認", () =>
+            Label(content, $"水：飲みきった空のペットボトルを撮ると、AIがラベルの容量と残りを見積もります。{rules.waterMlPerUnit}mlごとに水1、1日{rules.waterDailyMaxMl:N0}mlまで", 24, 76);
+            _waterStatus = Label(content, "", 24, 120);
+            var waterRow = Row(content);
+            Button(waterRow, "空のボトルを撮る", driver.CaptureWater);
+            Button(waterRow, "見積もりを受け取る", () =>
             {
-                if (!FactorySession.ValidBarcode(_barcode.text)) { driver.Notify("チェックディジットを含む商品コードを確認してください"); return; }
-                var code = _barcode.text; Confirm("今日の商品記録として受領します。同じ商品は暦日1回の試作値です", () => driver.ConfirmBarcode(code));
+                if (!driver.HasWaterCandidate) { driver.Notify("先に飲みきった空のペットボトルを撮ってください"); return; }
+                Confirm("見積もった飲んだ量から水を受け取ります。写真は見積もりに使ったあと捨てています", driver.ConfirmWater);
             });
             Label(content, "電気：前日のスクリーンタイム画像を端末内で読み取り、対象日と時間を確認", 24, 76);
             Button(content, "スクリーンタイム画像を選択（iOS・端末内）", driver.ReadScreenImage);
@@ -119,7 +119,8 @@ namespace ProjectPenguin.FactoryGame
             Label(content, "ペンギン図鑑と所持効果", 29, 45);
             Label(content, "同種の率は羽数分を合計。加算枠と倍率枠を掛け合わせ、資源の付与・生産に1回だけ適用", 24, 76);
             _birds = Label(content, "", 24, 730);
-            Label(content, "新工場のすれ違い通信は未接続。所持・保証・日次台帳は端末に保存します", 24, 70);
+            _encounterStatus = Label(content, "", 24, 90);
+            Label(content, "アプリを開いている人と近くですれ違うと、両方の確認がそろったときにペンギンが来ます。交換するのは毎日変わる番号だけです", 24, 76);
             if (driver.DevelopmentInputs)
             {
                 var dev = Row(content);
@@ -151,7 +152,6 @@ namespace ProjectPenguin.FactoryGame
         }
 
         private readonly Text _confirmationText;
-        internal void SetBarcode(string value) { _barcode.text = value; _driver.Notify("商品コードを読み取りました。内容を確認して受領してください"); }
         internal void SetScreenMinutes(int minutes) { _minutes.text = minutes.ToString(); _driver.Notify("画像から使用時間の候補を読み取りました。前日の記録と時間を確認し、必要なら訂正してください"); }
         private void Confirm(string text, Action action)
         { _pending = action; _confirmationText.text = text; _recordConfirmed.isOn = false; _confirmation.SetActive(true); }
@@ -202,7 +202,7 @@ namespace ProjectPenguin.FactoryGame
                 "配送中（先頭5便）\n" + string.Join("\n", s.cargo.Take(5).Select(c =>
                     $"施設{c.from}→{c.to}：{catalog.Resource(c.resource).label}{c.amount:N0}個 · あと{(c.arrivesAt - s.atMs) / 1000}秒"));
             _deliveryItem.text = catalog.Resource(_resourceIds[_resourceIndex]).label;
-            _stepStatus.text = _driver.StepStatus;
+            _stepStatus.text = _driver.StepStatus; _waterStatus.text = _driver.WaterStatus; _encounterStatus.text = _driver.EncounterStatus;
             _birds.text = $"今日の獲得{s.dailyBirds}/{catalog.dailyBirds}羽 · 新種なし{s.pityMisses}/{catalog.pityAfter}回\n" + string.Join("\n", catalog.penguins.Select(p =>
                 $"{p.label}：{(p.stage <= s.stage ? $"{FactoryState.Amount(s.penguins, p.id)}羽 / 通常{_driver.Session.SpeciesProbability(p.id):P1}" : $"S{p.stage}で種類解放")} · "
                 + $"{(catalog.Resource(p.target)?.label ?? (p.target == "gas" ? "ガス" : p.target == "electric" ? "電気" : "水"))}{(p.multiplicative ? "倍率枠" : "加算枠")}+{p.percent}%/羽"));

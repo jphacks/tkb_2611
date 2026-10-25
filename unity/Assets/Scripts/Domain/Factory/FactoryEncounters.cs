@@ -27,7 +27,23 @@ namespace ProjectPenguin.Domain.Factory
             return Ok("相手を台帳に保存しました");
         });
 
-        // The transport adapter is intentionally separate; no backend request is made by the new factory.
+        /// <summary>報告が通信の失敗で届かなかった相手を、<paramref name="retryAtMs"/> まで送り直さない。</summary>
+        public FactoryResult DeferPeer(string peer, long retryAtMs) => Change(s =>
+        {
+            var p = s.peers.FirstOrDefault(item => item.token == peer);
+            if (p == null || p.matched || p.dropped || retryAtMs < 0) return Fail("今日の確認待ちの相手ではありません");
+            p.retryAt = retryAtMs; return Ok("相手の確認を送り直します");
+        });
+
+        /// <summary>backend が受け付けなかった相手 (壊れたトークンなど) を、今日の確認から外す。</summary>
+        public FactoryResult DropPeer(string peer) => Change(s =>
+        {
+            var p = s.peers.FirstOrDefault(item => item.token == peer);
+            if (p == null || p.matched || p.dropped) return Fail("今日の確認待ちの相手ではありません");
+            p.dropped = true; return Ok("受け付けられなかった相手を除きました");
+        });
+
+        // The transport adapter (FactoryGameEncounters) is separate; this ledger never sends requests itself.
         public FactoryResult ConfirmEncounter(int day, string peer, string pairId, bool matched, long nowMs) => Change(s =>
         {
             var p = s.peers.FirstOrDefault(item => item.token == peer);

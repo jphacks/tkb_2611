@@ -75,15 +75,26 @@ namespace ProjectPenguin.Domain.Factory
             return Ok("確認した前日の記録を保存しました", amount);
         });
 
-        public FactoryResult AcceptWaterBarcode(string barcode, int day, int today, bool confirmed) => Change(s =>
+        /// <summary>
+        /// 飲みきった空のペットボトルの写真 1 枚から決めた飲んだ量 (ml) を受け取る。量は backend の見積もり (ラベルの容量 − 残り)。
+        /// 同じ写真 (<paramref name="photo"/> は画像のハッシュ) は 1 回だけ。1 日の合計は <see cref="FactoryRules.waterDailyMaxMl"/> まで数える。
+        /// </summary>
+        public FactoryResult AcceptWaterPhoto(string photo, int day, int ml, int today, bool confirmed) => Change(s =>
         {
-            if (!confirmed || day < 0 || day != today || !ValidBarcode(barcode)) return Fail("今日の商品バーコードを確認してください");
-            var key = "water:" + day + ":" + barcode;
-            if (s.receipts.Contains(key)) return Fail("この商品は今日受領済みです（試作の回数制限）");
-            var amount = Boost(s, "water", _rules.waterPerRecord);
-            s.water = checked(s.water + amount); s.receipts.Add(key);
-            return Ok("商品の記録を保存しました。飲んだ量の測定ではありません", amount);
+            if (!confirmed || !ValidId(photo) || day < 0 || day != today || day < s.waterDay || ml < 1 || ml > MaxWaterMlPerPhoto)
+                return Fail("今日の空のペットボトルの写真を確認してください");
+            var key = "water-photo:" + photo;
+            if (s.receipts.Contains(key)) return Fail("この写真は受領済みです");
+            var old = day == s.waterDay ? s.waterMl : 0;
+            if (old >= _rules.waterDailyMaxMl) return Fail($"今日の水は{_rules.waterDailyMaxMl:N0}mlまで受け取り済みです");
+            var total = Math.Min(_rules.waterDailyMaxMl, old + ml);
+            var amount = Boost(s, "water", total / _rules.waterMlPerUnit - old / _rules.waterMlPerUnit);
+            s.water = checked(s.water + amount); s.waterDay = day; s.waterMl = total; s.receipts.Add(key);
+            return Ok($"飲んだ水{ml:N0}mlを保存しました", amount);
         });
+
+        /// <summary>写真 1 枚で受け取る量の上限 (契約の <c>amount_ml</c> の上限と同じ)。</summary>
+        public const int MaxWaterMlPerPhoto = 2000;
 
         public long NextBuildCost => checked(_rules.buildBase + _state.builtCount * _rules.buildIncrement);
         public FactoryResult Build(string recipe, int x, int y) => Change(s =>
@@ -185,14 +196,6 @@ namespace ProjectPenguin.Domain.Factory
         }
 
         private static bool ValidId(string id) => !string.IsNullOrWhiteSpace(id) && id.Length <= 128;
-        public static bool ValidBarcode(string code)
-        {
-            if (code == null || !(code.Length == 8 || code.Length == 12 || code.Length == 13 || code.Length == 14)
-                || code.Any(c => c < '0' || c > '9')) return false;
-            var sum = 0;
-            for (var i = code.Length - 2; i >= 0; i--) sum += (code[i] - '0') * ((code.Length - 2 - i) % 2 == 0 ? 3 : 1);
-            return (10 - sum % 10) % 10 == code[code.Length - 1] - '0';
-        }
 
         private static int Block(int coordinate) => (int)Math.Floor(coordinate / 2.0);
         private static bool Fits(FactoryState s, int x, int y, int ignore) =>

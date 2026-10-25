@@ -3,13 +3,13 @@ using System.Threading.Tasks;
 namespace ProjectPenguin.Backend
 {
     /// <summary>
-    /// 設定 (<see cref="BackendConfig"/>) から、判定・みんなの氷山・お題の口を組み立てる。画面の側はここから受け取るだけにして、
+    /// 設定 (<see cref="BackendConfig"/>) から、判定・みんなの氷山・お題・水・すれ違いの口を組み立てる。画面の側はここから受け取るだけにして、
     /// どの口が backend を使うかを知らなくて済むようにする。
     /// </summary>
     public sealed class BackendServices
     {
         private BackendServices(BackendConfig config, PenguinApiClient client, IEcoPhotoJudge judge, ICommunityGoalSource community,
-            IQuestSource quests, IEncounterReporter encounters)
+            IQuestSource quests, IEncounterReporter encounters, IWaterEstimator water)
         {
             Config = config;
             Client = client;
@@ -17,6 +17,7 @@ namespace ProjectPenguin.Backend
             Community = community;
             Quests = quests;
             Encounters = encounters;
+            Water = water;
         }
 
         public BackendConfig Config { get; }
@@ -35,13 +36,16 @@ namespace ProjectPenguin.Backend
         /// <summary>すれ違いの相互確認。切っているときは端末の中だけで確かめる口 (null にはしない)。</summary>
         public IEncounterReporter Encounters { get; }
 
+        /// <summary>水の写真の見積もり。backend を使わない設定なら見本 (<see cref="MockWaterEstimator"/>)。null にはしない。</summary>
+        public IWaterEstimator Water { get; }
+
         public static BackendServices Create(BackendConfig config, IHttpTransport transport)
         {
             config ??= BackendConfig.Default;
             var mock = new MockEcoPhotoJudge();
             if (!config.UsesBackend)
             {
-                return new BackendServices(config, null, mock, null, null, new MockEncounterReporter());
+                return new BackendServices(config, null, mock, null, null, new MockEncounterReporter(), new MockWaterEstimator());
             }
 
             var client = new PenguinApiClient(config.ApiBaseUrl, transport);
@@ -55,7 +59,8 @@ namespace ProjectPenguin.Backend
             return new BackendServices(config, client, judge,
                 config.CommunityEnabled ? new HttpCommunityGoalSource(client) : null,
                 config.QuestsEnabled ? new HttpQuestSource(client) : null,
-                config.EncountersEnabled ? new HttpEncounterReporter(client) : new MockEncounterReporter());
+                config.EncountersEnabled ? new HttpEncounterReporter(client) : new MockEncounterReporter(),
+                config.Water == JudgeMode.Http ? new HttpWaterEstimator(client) : new MockWaterEstimator());
         }
 
         private static Task<BackendServices> _shared;

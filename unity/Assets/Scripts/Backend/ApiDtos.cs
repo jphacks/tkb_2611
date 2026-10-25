@@ -132,6 +132,23 @@ namespace ProjectPenguin.Backend
     }
 
     [Serializable]
+    internal sealed class WaterEstimateDto
+    {
+        public string schema_version;
+        public string container;
+
+        /// <summary>ラベルから読んだ容量 (契約 1.3.0)。1.2.0 のサーバーは返さないので 0 になる。</summary>
+        public int capacity_ml;
+        public double fill_ratio;
+        public int amount_ml;
+        public double confidence;
+        public string decision;
+        public CheckDto[] checks;
+        public string retake_hint;
+        public string comment;
+    }
+
+    [Serializable]
     internal sealed class EncounterReportDto
     {
         public string day;

@@ -11,7 +11,7 @@ namespace ProjectPenguin.Backend
 {
     /// <summary>
     /// backend への通り道 (gateway)。契約 (api/openapi.yaml) のパス・本文の形・エラーの形・再試行をここに集め、
-    /// 判定・みんなの氷山・お題の口 (Http*) はこれだけを使う。
+    /// 判定・みんなの氷山・お題・水・すれ違いの口 (Http*) はこれだけを使う。
     /// 写真と応答の本文はログにも例外の文にも入れない (.claude/rules/privacy.md)。
     /// </summary>
     public sealed class PenguinApiClient
@@ -21,6 +21,7 @@ namespace ProjectPenguin.Backend
         public const string CommunityGoalPath = "/v1/community/goal";
         public const string QuestsPath = "/v1/quests";
         public const string EncountersPath = "/v1/encounters";
+        public const string WaterEstimatePath = "/v1/water/estimate";
 
         private readonly string _baseUrl;
         private readonly IHttpTransport _transport;
@@ -49,6 +50,16 @@ namespace ProjectPenguin.Backend
             // 端末や人とは結び付かない (api/openapi.yaml のプライバシー)。
             var idempotencyKey = Guid.NewGuid().ToString("N");
             return SendAsync<JudgeResultDto>(UnityWebRequest.kHttpVerbPOST, JudgePath, body, "multipart/form-data; boundary=" + boundary,
+                cancellationToken, idempotencyKey);
+        }
+
+        internal Task<WaterEstimateDto> WaterEstimateAsync(byte[] jpeg, CancellationToken cancellationToken)
+        {
+            var boundary = "penguin-" + Guid.NewGuid().ToString("N");
+            var body = Multipart(boundary, "image", "water.jpg", "image/jpeg", jpeg);
+            // 判定と同じく写真 1 枚ごとの乱数。送り直し (下の SendAsync の再試行) の見分けに使う。
+            var idempotencyKey = Guid.NewGuid().ToString("N");
+            return SendAsync<WaterEstimateDto>(UnityWebRequest.kHttpVerbPOST, WaterEstimatePath, body, "multipart/form-data; boundary=" + boundary,
                 cancellationToken, idempotencyKey);
         }
 

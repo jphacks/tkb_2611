@@ -110,7 +110,8 @@ namespace ProjectPenguin.Domain.Factory
         public int zoomUnlockStage = 2;
         public long[] stagePoints = { 0, 1000, 10000, 100000 };
         public int stepsPerGas = 500, screenMinutesPerElectric = 120;
-        public long waterPerRecord = 3;
+        // 飲んだ水 waterMlPerUnit ml ごとに水 1。500ml を飲みきると水 3。1 日に数えるのは waterDailyMaxMl まで。
+        public int waterMlPerUnit = 150, waterDailyMaxMl = 3000;
         public long tickMs = 1000, maxAdvanceMs = 120000;
         public bool offlineProduction;
 
@@ -122,7 +123,7 @@ namespace ProjectPenguin.Domain.Factory
                 || zoomUnlockStage < 1 || zoomUnlockStage > 4
                 || stagePoints == null || stagePoints.Length != 4 || stagePoints[0] != 0
                 || stagePoints.Where((n, i) => n < 0 || i > 0 && n <= stagePoints[i - 1]).Any()
-                || stepsPerGas <= 0 || screenMinutesPerElectric <= 0 || waterPerRecord <= 0
+                || stepsPerGas <= 0 || screenMinutesPerElectric <= 0 || waterMlPerUnit <= 0 || waterDailyMaxMl <= 0 || waterDailyMaxMl > 100000
                 || tickMs != 1000 || maxAdvanceMs < tickMs || maxAdvanceMs > 120000 || offlineProduction)
                 throw new ArgumentException("Invalid prototype rules; offline production is not enabled");
         }
