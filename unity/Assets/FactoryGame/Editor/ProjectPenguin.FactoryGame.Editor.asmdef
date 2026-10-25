@@ -1,0 +1,6 @@
+{
+  "name": "ProjectPenguin.FactoryGame.Editor",
+  "references": ["ProjectPenguin.FactoryGame", "ProjectPenguin.Domain", "ProjectPenguin.Data", "Unity.InputSystem", "Unity.ugui"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": false
+}

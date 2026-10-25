@@ -42,11 +42,16 @@ namespace ProjectPenguin.Systems
             if(_game==null)return false;
             try
             {
-                var candidate=VillageGame.Restore(_game.Export());var result=command(candidate);Notice=result.Reason;
+                var candidate=VillageGame.Restore(_game.Export());candidate.SetGroupViewActive(_game.GroupViewActive);var result=command(candidate);Notice=result.Reason;
                 if(!result.Success){Changed?.Invoke();return false;}
                 _store.Save(Snapshot(candidate,Math.Max(_utc,utc)));_game=candidate;_utc=Math.Max(_utc,utc);Error="";Changed?.Invoke();return true;
             }
             catch(Exception){Error="保存できませんでした。操作を反映せず、直前の村を維持しています";Changed?.Invoke();return false;}
+        }
+        public void SetGroupViewActive(bool active)
+        {
+            if(_game==null||_game.GroupViewActive==active)return;
+            _game.SetGroupViewActive(active);Changed?.Invoke();
         }
         private static VillageResult Ok()=>VillageCommands.Accepted();
         public bool Place(FacilityKind kind,int x,int y,long utc)=>Command(g=>g.Place(kind,x,y),utc);
@@ -71,7 +76,7 @@ namespace ProjectPenguin.Systems
         public bool Resume(long utc,long suspendedUtc)
         {
             if(_game==null)return false;
-            return Command(g=>{if(Running)g.AdvanceTo(checked(g.RequestedMs+(long)(Math.Max(0,utc-suspendedUtc)*TimeScale)));return Ok();},utc);
+            return Command(g=>{g.SetGroupViewActive(false);if(Running)g.AdvanceTo(checked(g.RequestedMs+(long)(Math.Max(0,utc-suspendedUtc)*TimeScale)));return Ok();},utc);
         }
         public bool BeginDevelopment(long utc)
         {

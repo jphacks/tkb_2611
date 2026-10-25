@@ -49,6 +49,13 @@ namespace ProjectPenguin.Editor.ProductionIsland
 
             entries.Add((UiClasses.Thumb.Expand, "Thumb_Expand.png", HomeIslandSetup.Model("Tile_Ice_Expanded_v001")));
 
+            foreach (ProjectPenguin.Domain.Island.Item item in Enum.GetValues(typeof(ProjectPenguin.Domain.Island.Item)))
+            {
+                var itemName = item.ToString();
+                var itemModel = HomeIslandSetup.Model($"Item_{itemName}_v001");
+                entries.Add((UiClasses.Thumb.OfItem(item), $"Thumb_Item_{item}.png", itemModel));
+            }
+
             var uss = new StringBuilder();
             uss.AppendLine("/* 建物の絵。Production Island > Render Facility Thumbnails が描き出した PNG を指す (このファイルもメニューが書き直す) */");
             uss.AppendLine($".{UiClasses.Thumb.Root} {{");

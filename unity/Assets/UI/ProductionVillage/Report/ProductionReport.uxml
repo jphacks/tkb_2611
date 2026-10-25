@@ -1,0 +1,117 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:ind="ProjectPenguin.Presentation.UI.Industrial">
+    <ui:Style src="project://database/Assets/UI/DesignSystem/Industrial.uss" />
+    <ui:Style src="project://database/Assets/UI/ProductionVillage/Report/ProductionReport.uss" />
+
+    <ui:VisualElement name="pp-report-root" class="pp-industrial pp-safe-area pp-report-root pp-hidden">
+        <ui:VisualElement class="pp-ind-page">
+            <!-- Header -->
+            <ui:VisualElement name="pp-report-header" class="pp-ind-header">
+                <ui:VisualElement class="pp-ind-title">
+                    <ui:Label name="pp-report-micro" class="pp-ind-micro" text="PRODUCTION REPORT" />
+                    <ui:VisualElement class="pp-ind-h1">
+                        <ind:HexMark class="pp-ind-hex-mark" />
+                        <ui:Label name="pp-report-title-text" class="pp-ind-h1__text" text="生産レポート" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="pp-ind-seg">
+                    <ui:Button name="pp-report-tab-power" class="pp-ind-seg__item pp-ind-seg__item--active" text="動力" />
+                    <ui:Button name="pp-report-tab-items" class="pp-ind-seg__item" text="品目" />
+                </ui:VisualElement>
+                <ui:Button name="pp-report-close" class="pp-ind-close">
+                    <ui:Label class="pp-ind-close__text" text="✕" />
+                </ui:Button>
+            </ui:VisualElement>
+
+            <!-- Hatch Stripes -->
+            <ui:VisualElement class="pp-ind-hatch" />
+
+            <!-- Power / Tank Section -->
+            <ui:VisualElement name="pp-report-power" class="pp-ind-power">
+                <ind:TankGauge name="pp-report-tank" class="pp-ind-tank-gauge" />
+                <ui:VisualElement class="pp-ind-flow pp-ind-flow--in">
+                    <ui:Label class="pp-ind-flow__label" text="供給" />
+                    <ui:VisualElement class="pp-ind-flow__num-row">
+                        <ui:Label name="pp-report-supply-num" class="pp-ind-flow__num" text="0" />
+                        <ui:Label class="pp-ind-flow__unit" text="/分" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="pp-ind-flow pp-ind-flow--out">
+                    <ui:Label class="pp-ind-flow__label" text="消費" />
+                    <ui:VisualElement class="pp-ind-flow__num-row">
+                        <ui:Label name="pp-report-consume-num" class="pp-ind-flow__num" text="0" />
+                        <ui:Label class="pp-ind-flow__unit" text="/分" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="pp-ind-readout">
+                    <ui:Label class="pp-ind-readout__label" text="ガスのタンク" />
+                    <ui:Label name="pp-report-gas-stock" class="pp-ind-readout__big" text="0" />
+                    <ui:Label name="pp-report-gas-cap" class="pp-ind-readout__cap" text="/ 0" />
+                </ui:VisualElement>
+                <ui:VisualElement name="pp-report-net-pill" class="pp-ind-net-pill">
+                    <ui:Label name="pp-report-net-text" class="pp-ind-net-pill__text" text="収支" />
+                    <ui:Label name="pp-report-net-num" class="pp-ind-net-pill__num" text="±0" />
+                    <ui:Label class="pp-ind-net-pill__text" text="/分" />
+                    <ui:VisualElement class="pp-ind-net-pill__sep" />
+                    <ui:Label name="pp-report-empty-estimate" class="pp-ind-net-pill__text" text="いまは減っていない" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Status Chips -->
+            <ui:VisualElement class="pp-ind-chips">
+                <ui:VisualElement class="pp-ind-chip">
+                    <ui:Label class="pp-ind-chip__label" text="稼働" />
+                    <ui:Label name="pp-report-chip-active-num" class="pp-ind-chip__num" text="0" />
+                    <ui:Label name="pp-report-chip-active-total" class="pp-ind-chip__label" text="/0" />
+                </ui:VisualElement>
+                <ui:VisualElement class="pp-ind-chip pp-ind-chip--bad">
+                    <ui:Label class="pp-ind-chip__label" text="停止" />
+                    <ui:Label name="pp-report-chip-stopped-num" class="pp-ind-chip__num" text="0" />
+                    <ui:Label name="pp-report-chip-stopped-reason" class="pp-ind-chip__label" text="順調" />
+                </ui:VisualElement>
+                <ui:VisualElement class="pp-ind-chip pp-ind-chip--last">
+                    <ui:Label class="pp-ind-chip__label" text="配送中" />
+                    <ui:Label name="pp-report-chip-cargo-num" class="pp-ind-chip__num" text="0" />
+                    <ui:Label class="pp-ind-chip__label" text="便" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Table Header & Legend -->
+            <ui:VisualElement class="pp-ind-section">
+                <ui:Label name="pp-report-section-title" class="pp-ind-section__title" text="品目ごと (直近 10 分)" />
+                <ui:VisualElement class="pp-ind-section__rule" />
+                <ui:VisualElement class="pp-ind-legend">
+                    <ui:VisualElement class="pp-ind-legend__item">
+                        <ui:VisualElement class="pp-ind-legend__dot pp-ind-legend__dot--yellow" />
+                        <ui:Label class="pp-ind-legend__label" text="生産" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="pp-ind-legend__item">
+                        <ui:VisualElement class="pp-ind-legend__dot pp-ind-legend__dot--cyan" />
+                        <ui:Label class="pp-ind-legend__label" text="消費" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="pp-ind-legend__item">
+                        <ui:VisualElement class="pp-ind-legend__dot pp-ind-legend__dot--bad" />
+                        <ui:Label class="pp-ind-legend__label" text="不足" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="pp-report-thead" class="pp-ind-thead">
+                <ui:Label class="pp-ind-thead__col pp-ind-thead__col--item" text="品物 / 在庫" />
+                <ui:Label class="pp-ind-thead__col pp-ind-thead__col--trend" text="生産と消費 (1分ごと)" />
+                <ui:Label class="pp-ind-thead__col pp-ind-thead__col--rates" text="現状 / 理論値" />
+            </ui:VisualElement>
+
+            <!-- Scrollable Table -->
+            <ui:ScrollView name="pp-report-scroll" class="pp-ind-scroll">
+                <ui:Label name="pp-report-empty-notice" class="pp-report-empty" text="施設を建てると、ここに生産の流れが出るよ" />
+            </ui:ScrollView>
+
+            <!-- Footer Toolbar -->
+            <ui:VisualElement name="pp-report-footer" class="pp-ind-footer">
+                <ui:Button name="pp-report-btn-sort" class="pp-ind-btn-select" text="並び順: 標準 ▼" />
+                <ui:Button name="pp-report-btn-filter" class="pp-ind-btn-select" text="絞り込み: すべて ▼" />
+                <ui:Button name="pp-report-btn-span" class="pp-ind-btn-select pp-ind-btn-select--grow" text="期間: 10 分 ▼" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

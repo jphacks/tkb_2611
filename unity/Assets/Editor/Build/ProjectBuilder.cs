@@ -27,7 +27,7 @@ namespace ProjectPenguin.Editor.Build
                 throw new ArgumentNullException(nameof(request));
             }
 
-            var scenes = EnabledScenes();
+            var scenes = ScenesFor(request);
             if (scenes.Length == 0)
             {
                 throw new BuildRequestException(
@@ -69,6 +69,7 @@ namespace ProjectPenguin.Editor.Build
                 }
                 else
                 {
+                    PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
                     if (!string.IsNullOrWhiteSpace(request.IosBuildNumber))
                     {
                         PlayerSettings.iOS.buildNumber = request.IosBuildNumber;
@@ -137,6 +138,16 @@ namespace ProjectPenguin.Editor.Build
                 .Where(scene => scene.enabled && !string.IsNullOrEmpty(scene.path))
                 .Select(scene => scene.path)
                 .ToArray();
+
+        /// <summary>The iOS factory has its own entry scene. Existing Web/Android scene selection is retained.</summary>
+        public static string[] ScenesFor(BuildRequest request)
+        {
+            if (request == null) throw new ArgumentNullException(nameof(request));
+            if (!request.IsIos) return EnabledScenes();
+            const string factory = "Assets/Scenes/FactoryGame.unity";
+            if (!File.Exists(factory)) throw new BuildRequestException("新工場のシーンがありません。");
+            return new[] { factory };
+        }
 
         /// <summary>成果物の出力先。Android はファイル、iOS は Xcode プロジェクト、Web は公開するディレクトリ。</summary>
         public static string ResolveLocation(BuildRequest request)

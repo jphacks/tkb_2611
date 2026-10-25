@@ -94,6 +94,18 @@ namespace ProjectPenguin.Presentation.UI
             /// <summary>氷・氷室 (雪の結晶)。</summary>
             public const string Snowflake = "pp-icon--snowflake";
 
+            // 村のホーム (ProductionApp.uxml) のシート・工業モード
+            public const string Move = "pp-icon--move";
+            public const string Help = "pp-icon--help";
+            public const string Connect = "pp-icon--connect";
+            public const string Book = "pp-icon--book";
+            public const string Demolish = "pp-icon--demolish";
+            public const string Undo = "pp-icon--undo";
+            public const string Rotate = "pp-icon--rotate";
+            public const string Crown = "pp-icon--crown";
+            public const string Chevrons = "pp-icon--chevrons";
+            public const string TopDown = "pp-icon--topdown";
+
             public const string Large = "pp-icon--lg";
             public const string ExtraLarge = "pp-icon--xl";
         }
@@ -104,6 +116,8 @@ namespace ProjectPenguin.Presentation.UI
             public const string Primary = "pp-icon--primary";
             public const string Eco = "pp-icon--eco";
             public const string Point = "pp-icon--point";
+            public const string Danger = "pp-icon--danger";
+            public const string Sub = "pp-icon--sub";
 
             /// <summary>SVG の色のまま (白で掛ける)。</summary>
             public const string Original = "pp-icon--original";
@@ -126,6 +140,16 @@ namespace ProjectPenguin.Presentation.UI
         {
             public const string Root = "pp-badge";
             public const string Eco = "pp-badge--eco";
+            public const string Accent = "pp-badge--accent";
+        }
+
+        /// <summary>ボタンの変種 (<see cref="Button"/> と組み合わせる)。</summary>
+        public static class Btn
+        {
+            /// <summary>下縁で厚みを出し、押すと沈む主ボタン。</summary>
+            public const string Raised = "pp-btn--raised";
+            public const string Ghost = "pp-btn--ghost";
+            public const string Icon = "pp-btn__icon";
         }
 
         /// <summary>シートの 1 行。</summary>
@@ -355,6 +379,7 @@ namespace ProjectPenguin.Presentation.UI
 
         public static class Recipe
         {
+            public const string Root = "pp-recipe";
             public const string Arrow = "pp-recipe__arrow";
         }
 
@@ -467,6 +492,28 @@ namespace ProjectPenguin.Presentation.UI
 
             /// <summary>港の段階 (0〜5) の絵。</summary>
             public static string OfHarbor(int stage) => Harbors[Math.Max(0, Math.Min(Harbors.Length - 1, stage))];
+
+            public const string ItemFish = "pp-thumb--item-fish";
+            public const string ItemSurimi = "pp-thumb--item-surimi";
+            public const string ItemSalt = "pp-thumb--item-salt";
+            public const string ItemKelp = "pp-thumb--item-kelp";
+            public const string ItemKamaboko = "pp-thumb--item-kamaboko";
+            public const string ItemChikuwa = "pp-thumb--item-chikuwa";
+            public const string ItemDriedFish = "pp-thumb--item-dried-fish";
+            public const string ItemOden = "pp-thumb--item-oden";
+
+            public static string OfItem(Item item) => item switch
+            {
+                Item.Fish => ItemFish,
+                Item.Surimi => ItemSurimi,
+                Item.Salt => ItemSalt,
+                Item.Kelp => ItemKelp,
+                Item.Kamaboko => ItemKamaboko,
+                Item.Chikuwa => ItemChikuwa,
+                Item.DriedFish => ItemDriedFish,
+                Item.Oden => ItemOden,
+                _ => ItemFish,
+            };
         }
     }
 }

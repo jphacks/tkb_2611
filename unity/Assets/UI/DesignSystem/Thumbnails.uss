@@ -94,3 +94,35 @@
 .pp-thumb--expand {
     background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Expand.png");
 }
+
+.pp-thumb--item-fish {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Item_Fish.png");
+}
+
+.pp-thumb--item-surimi {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Item_Surimi.png");
+}
+
+.pp-thumb--item-salt {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Item_Salt.png");
+}
+
+.pp-thumb--item-kelp {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Item_Kelp.png");
+}
+
+.pp-thumb--item-kamaboko {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Item_Kamaboko.png");
+}
+
+.pp-thumb--item-chikuwa {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Item_Chikuwa.png");
+}
+
+.pp-thumb--item-dried-fish {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Item_DriedFish.png");
+}
+
+.pp-thumb--item-oden {
+    background-image: url("project://database/Assets/UI/Thumbnails/Thumb_Item_Oden.png");
+}

@@ -116,8 +116,9 @@
 
 .pp-shelf-card__name {
     margin-top: var(--space-1);
-    font-size: var(--font-size-caption);
-    -unity-font-definition: var(--font-bold);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-heavy);
+    color: var(--color-text);
     -unity-text-align: middle-center;
     white-space: nowrap;
     overflow: hidden;
@@ -502,14 +503,15 @@
 
 .pp-item-card__value {
     margin-top: var(--space-1);
-    font-size: var(--font-size-title);
+    font-size: var(--font-size-headline);
     -unity-font-definition: var(--font-heavy);
+    color: var(--color-primary-dark);
 }
 
 .pp-item-card__rate {
     font-size: var(--font-size-caption);
     -unity-font-definition: var(--font-bold);
-    color: var(--color-eco);
+    color: var(--color-text-sub);
 }
 
 .pp-item-card--short .pp-item-card__rate {

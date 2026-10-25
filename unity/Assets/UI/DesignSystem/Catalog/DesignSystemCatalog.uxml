@@ -45,6 +45,10 @@
             <ui:VisualElement class="pp-icon pp-icon--lg pp-icon--book pp-icon--primary catalog__item" />
             <ui:VisualElement class="pp-icon pp-icon--lg pp-icon--bell pp-icon--point catalog__item" />
             <ui:VisualElement class="pp-icon pp-icon--lg pp-icon--help pp-icon--sub catalog__item" />
+            <ui:VisualElement class="pp-icon pp-icon--lg pp-icon--rotate pp-icon--primary catalog__item" />
+            <ui:VisualElement class="pp-icon pp-icon--lg pp-icon--crown pp-icon--point catalog__item" />
+            <ui:VisualElement class="pp-icon pp-icon--lg pp-icon--chevrons pp-icon--point catalog__item" />
+            <ui:VisualElement class="pp-icon pp-icon--lg pp-icon--topdown pp-icon--primary catalog__item" />
         </ui:VisualElement>
 
         <ui:Label text="Button" class="catalog__section pp-text-title pp-text-bold" />

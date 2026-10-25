@@ -38,14 +38,20 @@ namespace ProjectPenguin.Editor.ProductionIsland
                 }
                 if(root.name=="World")
                 {
+                    // 盤面の周りの海に浮き氷を散らし、元の氷山は背景へ下げる。箱形の氷山と小屋は使わない
+                    var floes=new[]{new Vector3(11.2f,-.3f,-3f),new Vector3(-11.5f,-.3f,-6.5f),new Vector3(10.5f,-.3f,6f),new Vector3(-3f,-.3f,-12f),new Vector3(5.5f,-.3f,-11.5f),new Vector3(-10.8f,-.3f,1.5f)};
+                    var floeScales=new[]{new Vector3(2.2f,.25f,1.8f),new Vector3(1.8f,.2f,1.5f),new Vector3(1.4f,.2f,1.2f),new Vector3(1.6f,.2f,1.3f),new Vector3(1.1f,.2f,1f),new Vector3(1.2f,.2f,1f)};
                     foreach(Transform t in root.transform)
                     {
-                        if(t.name=="IceFloes"||t.name=="House")t.gameObject.SetActive(false);
-                        if(t.name=="HomeIceberg")t.position=new Vector3(-5,-.35f,11);
+                        if(t.name=="Icebergs"||t.name=="House")t.gameObject.SetActive(false);
+                        if(t.name=="HomeIceberg")t.position=new Vector3(7.5f,-.35f,16.5f);
+                        if(t.name!="IceFloes")continue;
+                        t.gameObject.SetActive(true);var i=0;
+                        foreach(Transform floe in t){if(i>=floes.Length)break;floe.position=floes[i];floe.localScale=floeScales[i];floe.rotation=Quaternion.Euler(0,i*37f,0);i++;}
                     }
                 }
             }
-            camera.orthographic=true;camera.orthographicSize=14;camera.transform.position=new Vector3(0,24,-22);camera.transform.LookAt(new Vector3(0,0,1));
+            // 寄りと角度は VillageCameraController が画面の縦横比から決める
             var cameraController=camera.gameObject.AddComponent<VillageCameraController>();
             var runtime=new GameObject("VillageRuntime");runtime.AddComponent<ProductionVillageControl>();var session=runtime.AddComponent<ProductionVillageSession>();runtime.AddComponent<VillageHealthInput>();
             var world=runtime.AddComponent<VillageWorldPresenter>();
@@ -58,15 +64,14 @@ namespace ProjectPenguin.Editor.ProductionIsland
                 entry.FindPropertyRelative("_kind").enumValueIndex=i;entry.FindPropertyRelative("_prefab").objectReferenceValue=Load<GameObject>($"Assets/3Dmodel/{name}/{name}.prefab");
             }
             w.ApplyModifiedPropertiesWithoutUndo();
-            var plot=(GameObject)PrefabUtility.InstantiatePrefab(Load<GameObject>("Assets/3Dmodel/Tile_Ice_Core_v001/Tile_Ice_Core_v001.prefab"),scene);plot.name="VillageIcePlot";
-            foreach(var b in plot.GetComponentsInChildren<MonoBehaviour>(true))UnityEngine.Object.DestroyImmediate(b);
-            NormalizePlot(plot);
+            var island=new GameObject("VillageIsland",typeof(MeshFilter),typeof(MeshRenderer));SceneManager.MoveGameObjectToScene(island,scene);
+            var islandView=island.AddComponent<VillageIslandView>();var iv=new SerializedObject(islandView);Set(iv,"_material",Load<Material>("Assets/3Dmodel/ProductionIsland_v002/Running.mat"));iv.ApplyModifiedPropertiesWithoutUndo();
+            var penguins=runtime.AddComponent<VillagePenguinsView>();var pv=new SerializedObject(penguins);Set(pv,"_session",session);
+            Set(pv,"_template",roots.Where(g=>g!=null&&g.name=="Penguin_Waddle_1p3m").First(g=>g.GetComponent<Animator>()!=null));pv.ApplyModifiedPropertiesWithoutUndo();
             var app=new GameObject("AppUI");var doc=app.AddComponent<UIDocument>();
             const string panel="Assets/UI/ProductionVillage/PanelSettings.asset";if(AssetDatabase.LoadAssetAtPath<PanelSettings>(panel)==null&&!AssetDatabase.CopyAsset("Assets/UI/PanelSettings.asset",panel))throw new InvalidOperationException("PanelSettingsを複製できませんでした");
             doc.panelSettings=Load<PanelSettings>(panel);doc.visualTreeAsset=Load<VisualTreeAsset>("Assets/UI/ProductionVillage/ProductionApp.uxml");app.AddComponent<SafeAreaApplier>();
             var nav=app.AddComponent<ProductionNavigator>();var n=new SerializedObject(nav);Set(n,"_session",session);Set(n,"_world",world);
-            var thumbnails=n.FindProperty("_thumbnails");thumbnails.arraySize=ids.Length;
-            for(var i=0;i<ids.Length;i++){var e=thumbnails.GetArrayElementAtIndex(i);e.FindPropertyRelative("_kind").enumValueIndex=i;e.FindPropertyRelative("_texture").objectReferenceValue=AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/UI/Thumbnails/Thumb_"+((FacilityKind)i)+".png");}
             n.ApplyModifiedPropertiesWithoutUndo();
             var input=runtime.AddComponent<VillagePointerInput>();var p=new SerializedObject(input);Set(p,"_session",session);Set(p,"_navigator",nav);Set(p,"_camera",cameraController);p.ApplyModifiedPropertiesWithoutUndo();
             EditorSceneManager.MarkSceneDirty(scene);if(!EditorSceneManager.SaveScene(scene))throw new InvalidOperationException("統合シーンを保存できませんでした");
@@ -76,14 +81,5 @@ namespace ProjectPenguin.Editor.ProductionIsland
         }
         private static T Load<T>(string path) where T:UnityEngine.Object=>AssetDatabase.LoadAssetAtPath<T>(path)??throw new InvalidOperationException("参照がありません: "+path);
         private static void Set(SerializedObject o,string name,UnityEngine.Object value)=>o.FindProperty(name).objectReferenceValue=value;
-        public static void NormalizePlot(GameObject plot)
-        {
-            var source=PrefabUtility.GetCorrespondingObjectFromSource(plot);
-            plot.transform.SetLocalPositionAndRotation(Vector3.zero,source.transform.localRotation);plot.transform.localScale=source.transform.localScale;
-            var holder=new GameObject("VillageIceSurface");SceneManager.MoveGameObjectToScene(holder,plot.scene);plot.transform.SetParent(holder.transform,false);
-            var renderers=plot.GetComponentsInChildren<Renderer>();var bounds=renderers[0].bounds;foreach(var r in renderers.Skip(1))bounds.Encapsulate(r.bounds);
-            holder.transform.localScale=new Vector3(16.2f/bounds.size.x,.3f/Mathf.Max(.001f,bounds.size.y),16.2f/bounds.size.z);
-            bounds=renderers[0].bounds;foreach(var r in renderers.Skip(1))bounds.Encapsulate(r.bounds);holder.transform.position-=new Vector3(bounds.center.x,bounds.max.y,bounds.center.z);
-        }
     }
 }

@@ -12,6 +12,9 @@
     --font-regular: url("project://database/Assets/UI/Fonts/MPLUSRounded1c-Regular.ttf");
     --font-bold: url("project://database/Assets/UI/Fonts/MPLUSRounded1c-Bold.ttf");
     --font-heavy: url("project://database/Assets/UI/Fonts/MPLUSRounded1c-ExtraBold.ttf");
+    --font-num-bold: url("project://database/Assets/UI/Fonts/Oxanium-Bold.ttf");
+    --font-num-heavy: url("project://database/Assets/UI/Fonts/Oxanium-ExtraBold.ttf");
+    --font-num: url("project://database/Assets/UI/Fonts/Oxanium-Bold.ttf");
 
     /* ---- Color: brand ---- */
     --color-primary: #1F8BEA;
@@ -41,9 +44,11 @@
     /* ---- Color: text & surface ---- */
     --color-text: #17385F;
     --color-text-sub: #6B8199;
+    --color-text-muted: #8FA3B8;
+    --color-text-rank: #6E4700;
     --color-text-on-primary: #FFFFFF;
     --color-surface: rgba(255, 255, 255, 0.95);
-    --color-surface-glass: rgba(255, 255, 255, 0.8);
+    --color-surface-glass: rgba(255, 255, 255, 0.85);
     --color-surface-solid: #FFFFFF;
     --color-divider: #E3EEF7;
     --color-elevation: rgba(23, 56, 95, 0.12);
@@ -53,6 +58,28 @@
     --color-on-dark-button: rgba(255, 255, 255, 0.18);
     --color-on-dark-button-hover: rgba(255, 255, 255, 0.3);
     --color-scrim: rgba(14, 26, 38, 0.55);
+
+    /* ---- Color: Endfield Tactical Industrial HUD ---- */
+    --color-tactical-bg: rgba(13, 34, 50, 0.92);
+    --color-tactical-surface: rgba(20, 48, 70, 0.94);
+    --color-tactical-lip: #081520;
+    --color-tactical-cyan: #2FD3EA;
+    --color-tactical-cyan-soft: rgba(47, 211, 234, 0.22);
+    --color-tactical-amber: #FFD13B;
+    --color-tactical-amber-lip: #C88A00;
+
+    /* ---- Color: 生産レポート (Industrial Report) ---- */
+    --ind-base: #E9EFF5;
+    --ind-base-2: #DCE5EE;
+    --ind-navy: #17385F;
+    --ind-navy-2: #21466F;
+    --ind-deep: #0F2742;
+    --ind-sub: #6B8199;
+    --ind-on: #F4F8FC;
+    --ind-on-sub: #9FB4CB;
+    --ind-yellow: #FFC928;
+    --ind-cyan: #5CC8F0;
+    --ind-bad: #FF5A5F;
 
     /* ---- Spacing ---- */
     --space-1: 8px;
@@ -81,13 +108,24 @@
     --radius-pill-md: 36px;
     --radius-pill-lg: 56px;
 
-    /* ---- Type scale ---- */
-    --font-size-caption: 28px;
-    --font-size-body: 34px;
-    --font-size-label: 38px;
-    --font-size-title: 46px;
-    --font-size-headline: 60px;
-    --font-size-display: 96px;
+    /* ---- Type scale (小ラベル・本文・見出し・主役数字のメリハリを強める) ---- */
+    --font-size-micro: 22px;
+    --font-size-caption: 26px;
+    --font-size-body: 32px;
+    --font-size-label: 40px;
+    --font-size-title: 52px;
+    --font-size-headline: 68px;
+    --font-size-display: 100px;
+    --font-size-hero: 92px;
+
+    /* ---- 押せるものの厚み (下縁の太さ) と、押したときに沈む量 ---- */
+    --raise-depth: 10px;
+    --raise-depth-pressed: 3px;
+    --raise-press: 7px;
+
+    /* ---- 世界の上に直接置く文字の白フチ ---- */
+    --text-outline-width: 5px;
+    --color-text-outline: #FFFFFF;
 
     /* ---- Icon size ---- */
     --icon-sm: 40px;
@@ -128,3 +166,9 @@
 .pp-text-danger { color: var(--color-danger); }
 .pp-text-inverse { color: var(--color-text-on-primary); }
 .pp-text-center { -unity-text-align: middle-center; }
+
+/* 3D の世界の上に下敷きなしで置く数字やラベル。背景が明るくても暗くても読めるよう白フチを付ける */
+.pp-text-outlined {
+    -unity-text-outline-width: var(--text-outline-width);
+    -unity-text-outline-color: var(--color-text-outline);
+}
