@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using ProjectPenguin.Data;
 using ProjectPenguin.Domain.Island;
 using ProjectPenguin.Domain.Village;
@@ -60,6 +61,10 @@ namespace ProjectPenguin.Systems
         public bool Upgrade(int id,int expectedLevel,long utc)=>Command(g=>g.Upgrade(id,expectedLevel),utc);
         public string CanPlace(FacilityKind kind,int x,int y)=>_game?.CanPlace(kind,x,y)??"村を読み込めません";
         public string CanMove(int id,int x,int y)=>_game?.CanMove(id,x,y)??"村を読み込めません";
+        /// <summary>置いたらどこにつながるか (状態は変えない)。動かしている施設は <paramref name="ignoreId"/> で除く。</summary>
+        public VillageLinkPreview PreviewLinks(FacilityKind kind,int x,int y,int ignoreId=0)=>_game?.PreviewLinks(kind,x,y,ignoreId);
+        public int ReachOfNode(int id)=>_game?.ReachOfNode(id)??0;
+        public IReadOnlyList<VillageGroupHint> GroupHints()=>_game?.GroupHints()??Array.Empty<VillageGroupHint>();
         public bool AcceptSteps(int day,int steps,int today,long utc)=>Command(g=>g.AcceptSteps(day,steps,today),utc);
         public bool AcceptWater(string id,int day,int today,bool confirmed,long utc)=>Command(g=>g.AcceptWater(id,day,today,confirmed),utc);
         public bool AcceptScreen(string id,int day,int used,int today,bool full,bool confirmed,long utc)=>Command(g=>g.AcceptScreen(id,day,used,today,full,confirmed),utc);

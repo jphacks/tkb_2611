@@ -1144,6 +1144,32 @@ MonoBehaviour:
       _prefab: {fileID: 9081674693941152021, guid: 92f6b6991912aca4faa1dd5dc7d6f011, type: 3}
     - _kind: 15
       _prefab: {fileID: 3390954605109503999, guid: ec64efd62b12e436f953ffadb3b83b3a, type: 3}
+    _items:
+    - _item: 0
+      _prefab: {fileID: 8710545398507223006, guid: a803da6c55f7ef94193c9cce1a4c9f69, type: 3}
+    - _item: 1
+      _prefab: {fileID: 5921938780978583522, guid: ba1e345d3edc3144db1332f5343e4443, type: 3}
+    - _item: 2
+      _prefab: {fileID: 3270218950319295474, guid: 9ed27523495ac9e4e8e364911f758b1c, type: 3}
+    - _item: 3
+      _prefab: {fileID: 3534510804085310988, guid: 32eea5ec95eab244c955389ad5447e6e, type: 3}
+    - _item: 4
+      _prefab: {fileID: 3983123062559663357, guid: dd09751ee11a54f42bd5107e191c381e, type: 3}
+    - _item: 5
+      _prefab: {fileID: 4794290231682421150, guid: c11c1228b419f234691faf14d17fb713, type: 3}
+    - _item: 6
+      _prefab: {fileID: 6357243742932058365, guid: 907bd46b0ae799a4999d26c9c6212436, type: 3}
+    - _item: 7
+      _prefab: {fileID: 944054318262393688, guid: 1f74ebd6a4cb1d14eb37445641973618, type: 3}
+    _links:
+      _arrow: {fileID: 8180530105614682692, guid: a1e2f7f9cdb0c7b419112e811652737b, type: 3}
+      _arrowBlocked: {fileID: 689386865354563973, guid: e8155288d8f94134ca470018bcbcfe5d, type: 3}
+      _inputFree: {fileID: 6508963292476149582, guid: ef35242a7232535499486d4af2361580, type: 3}
+      _inputConnected: {fileID: 7521447229068952462, guid: e87d9ddc4b4116847ba399515824e0a7, type: 3}
+      _inputSelectable: {fileID: 1738857575119948, guid: 8d2555c53cc10f34a8854e6915a1b96b, type: 3}
+      _outputFree: {fileID: 3073688313233714996, guid: 31ed52ce36ca27d4a826f60a1bc83d6b, type: 3}
+      _outputConnected: {fileID: 2995968288211543815, guid: 7b61a413479791e47957f8efa8faea4f, type: 3}
+      _outputSelectable: {fileID: 2132813910690801223, guid: c73d371e097ccc445b43276d6a494169, type: 3}
   _harbor: {fileID: 3192012139894406431, guid: 5c184d05d0b96644e9450ec594391804, type: 3}
 --- !u!114 &456161913
 MonoBehaviour:
@@ -2307,8 +2333,7 @@ MonoBehaviour:
   _pitch: 55
   _fill: 1
   _viewportShift: -0.04
-  _groupEnterRatio: 0.9
-  _groupExitRatio: 0.8
+  _switchSeconds: 0.2
 --- !u!1001 &1168128766
 PrefabInstance:
   m_ObjectHideFlags: 0

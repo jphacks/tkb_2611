@@ -82,9 +82,6 @@ namespace ProjectPenguin.Domain.Village
         private double CoolingMultiplier(Node target) => _nodes
             .Where(n => n.Id != target.Id && n.Kind == FacilityKind.IceHouse && Math.Max(Math.Abs(n.X - target.X), Math.Abs(n.Y - target.Y)) <= 6)
             .Select(n => VillageUpgradeRules.Cooling(n.Level)).DefaultIfEmpty(1).Max();
-        private int DeliveryRange(Node source) => _nodes
-            .Where(n => n.Kind == FacilityKind.Sorter && Math.Abs(n.X - source.X) + Math.Abs(n.Y - source.Y) <= 6)
-            .Select(n => VillageUpgradeRules.DeliveryRange(n.Level)).DefaultIfEmpty(8).Max();
         private static string SupportStatus(Node node) => VillageUpgradeRules.Effect(node.Kind, node.Level);
     }
 }

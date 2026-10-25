@@ -51,18 +51,19 @@
             <ui:VisualElement name="villageTacticalBar" class="village-tactical-bar pp-hidden">
                 <ui:VisualElement class="village-tactical-row">
                     <ui:Label text="⚡ ペンギン工房" class="village-tactical-title" picking-mode="Ignore" />
-                    <ui:Label name="villageTacticalGas" text="ガス 0/分" class="village-tactical-gas" picking-mode="Ignore" />
+                    <ui:Label name="villageTacticalGas" text="ガス 0" class="village-tactical-gas" picking-mode="Ignore" />
                 </ui:VisualElement>
+                <ui:Label name="villageTacticalStatus" text="稼働 0/0　停止 0　配送中 0 便" class="village-tactical-status" picking-mode="Ignore" />
                 <ui:VisualElement class="village-tactical-row">
                     <ui:Button name="villageTopDownToggle" class="village-tactical-btn">
                         <ui:Label name="villageTopDownLabel" text="見下ろし OFF" picking-mode="Ignore" />
                     </ui:Button>
                     <ui:Button name="villageRotateCamera" text="90°回転" class="village-tactical-btn" />
-                    <ui:Button name="villageZoomIn" text="拡大" class="village-tactical-btn" />
-                    <ui:Button name="villageZoomOut" text="縮小" class="village-tactical-btn" />
-                    <ui:Button name="villageFrameCamera" text="全体" class="village-tactical-btn" />
+                    <ui:Button name="villageZoomOverview" text="全体" class="village-tactical-btn village-tactical-btn--active" />
+                    <ui:Button name="villageZoomDetail" text="詳細" class="village-tactical-btn" />
                 </ui:VisualElement>
-                <ui:Label name="villageGroupState" text="施設群・2本指で拡大・縮小" class="village-group-state" picking-mode="Ignore" />
+                <ui:Label name="villageNextStep" text="▶ 村を読み込んでいるよ" class="village-next-step" picking-mode="Ignore" />
+                <ui:Label name="villageGroupState" text="全体表示・2本指で詳細へ" class="village-group-state" picking-mode="Ignore" />
             </ui:VisualElement>
 
             <!-- 読み込みや保存に失敗している間だけ出す。解消するまで消さない -->
