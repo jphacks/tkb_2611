@@ -1,6 +1,6 @@
 {
   "name": "ProjectPenguin.FactoryGame",
   "rootNamespace": "ProjectPenguin.FactoryGame",
-  "references": ["ProjectPenguin.Domain", "ProjectPenguin.Data", "ProjectPenguin.Systems", "Unity.ugui", "Unity.InputSystem"],
+  "references": ["ProjectPenguin.Domain", "ProjectPenguin.Data", "ProjectPenguin.Systems", "ProjectPenguin.Backend", "Unity.ugui", "Unity.InputSystem"],
   "autoReferenced": false
 }

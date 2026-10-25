@@ -10,7 +10,7 @@ namespace ProjectPenguin.Domain.Factory
         public const int CurrentVersion = 1;
         public int version = CurrentVersion, catalogVersion = 2, nextId = 1, stage = 1;
         public long atMs, requestedMs, gas, electric, water, points, builtCount;
-        public int stepDay = -1, maxSteps, encounterDay = -1, dailyBirds, pityMisses;
+        public int stepDay = -1, maxSteps, waterDay = -1, waterMl, encounterDay = -1, dailyBirds, pityMisses;
         public string selfToken;
         public List<FactoryCell> blocks = new List<FactoryCell> { new FactoryCell(0, 0) };
         public List<FactoryFacility> facilities = new List<FactoryFacility>();

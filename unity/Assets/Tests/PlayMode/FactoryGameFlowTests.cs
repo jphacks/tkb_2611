@@ -24,7 +24,7 @@ namespace ProjectPenguin.Tests.PlayMode
         {
             public bool Supported => true;
             public int Cancelled;
-            public void Open(string target, int serial, string date, bool barcode) { }
+            public void Open(string target, int serial, string date) { }
             public void Cancel(int serial) { Cancelled++; }
         }
 
@@ -32,13 +32,13 @@ namespace ProjectPenguin.Tests.PlayMode
         public void CancelDeniedTimeoutAndDateChangeNeverPublishARecord()
         {
             var reader = new FakeReader(); var day = 297; float now = 0; var records = 0;
-            var input = new FactoryRecordInput("test", _ => { }, _ => records++, _ => records++, reader, () => day, () => now);
-            input.Open(true); input.Receive("{\"status\":\"denied\",\"requestId\":1}");
-            input.Open(false); input.Receive("{\"status\":\"cancelled\",\"requestId\":2}");
-            input.Open(false); now = 121; input.Poll();
+            var input = new FactoryRecordInput("test", _ => { }, _ => records++, reader, () => day, () => now);
+            input.Open(); input.Receive("{\"status\":\"invalid\",\"requestId\":1}");
+            input.Open(); input.Receive("{\"status\":\"cancelled\",\"requestId\":2}");
+            input.Open(); now = 121; input.Poll();
             Assert.That(reader.Cancelled, Is.EqualTo(1));
             input.Receive("{\"status\":\"ok\",\"requestId\":3,\"minutes\":240}");
-            input.Open(false); day++; input.Receive("{\"status\":\"ok\",\"requestId\":4,\"minutes\":240}");
+            input.Open(); day++; input.Receive("{\"status\":\"ok\",\"requestId\":4,\"minutes\":240}");
             Assert.That(records, Is.Zero);
         }
 
@@ -46,12 +46,12 @@ namespace ProjectPenguin.Tests.PlayMode
         public void RecordReaderPublishesAValidatedCandidateOnceForTheMatchingRequest()
         {
             var records = 0;
-            var input = new FactoryRecordInput("test", _ => { }, _ => records++, _ => records++, new FakeReader(), () => 297, () => 0);
-            input.Open(true);
-            input.Receive("{\"status\":\"ok\",\"requestId\":99,\"barcode\":\"4901234567894\"}");
+            var input = new FactoryRecordInput("test", _ => { }, _ => records++, new FakeReader(), () => 297, () => 0);
+            input.Open();
+            input.Receive("{\"status\":\"ok\",\"requestId\":99,\"minutes\":240}");
             Assert.That(records, Is.Zero);
-            input.Receive("{\"status\":\"ok\",\"requestId\":1,\"barcode\":\"4901234567894\"}");
-            input.Receive("{\"status\":\"ok\",\"requestId\":1,\"barcode\":\"4901234567894\"}");
+            input.Receive("{\"status\":\"ok\",\"requestId\":1,\"minutes\":240}");
+            input.Receive("{\"status\":\"ok\",\"requestId\":1,\"minutes\":240}");
             Assert.That(records, Is.EqualTo(1));
         }
 
@@ -59,13 +59,13 @@ namespace ProjectPenguin.Tests.PlayMode
         public void MissingScreenMinutesAndMalformedResultsDoNotBecomeZeroMinuteRecords()
         {
             var records = 0; var reader = new FakeReader();
-            var input = new FactoryRecordInput("test", _ => { }, _ => records++, _ => records++, reader, () => 297, () => 0);
-            input.Open(false);
+            var input = new FactoryRecordInput("test", _ => { }, _ => records++, reader, () => 297, () => 0);
+            input.Open();
             input.Receive("{\"status\":\"ok\",\"requestId\":1}");
             Assert.That(records, Is.Zero);
-            input.Open(false); input.Receive("invalid-json");
+            input.Open(); input.Receive("invalid-json");
             Assert.That(reader.Cancelled, Is.EqualTo(1), "Malformed callbacks must release the active native reader");
-            input.Open(false); input.Receive("{\"status\":\"ok\",\"requestId\":3,\"minutes\":0}");
+            input.Open(); input.Receive("{\"status\":\"ok\",\"requestId\":3,\"minutes\":0}");
             Assert.That(records, Is.EqualTo(1), "An explicit zero is a valid candidate requiring confirmation");
         }
 
@@ -134,7 +134,7 @@ namespace ProjectPenguin.Tests.PlayMode
             Assert.That(driver.GetComponentsInChildren<Text>(true).Any(t => t.text.Contains("基本出力") && t.text.Contains("消費")), Is.True);
             Assert.That(driver.GetComponentsInChildren<Text>(true).Any(t => t.text.Contains("2×2区画") && t.text.Contains("不足")), Is.True);
             Assert.That(driver.GetComponentsInChildren<MeshRenderer>().Any(r => r.name == "BlockBoundaries"), Is.True, "Fixed-block boundaries are visible before construction");
-            driver.FakeSteps(); driver.ConfirmScreen(0); driver.ConfirmBarcode("4901234567894");
+            driver.FakeSteps(); driver.ConfirmScreen(0);
             Assert.That(driver.Session.Snapshot.gas, Is.EqualTo(10));
             driver.SelectCell(0, 0); Click(driver, "を建設");
             driver.SelectCell(1, 0);

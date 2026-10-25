@@ -5,7 +5,6 @@ using System.Linq;
 using ProjectPenguin.Data.Persistence;
 using ProjectPenguin.Domain.Factory;
 using ProjectPenguin.Domain.Game;
-using ProjectPenguin.Domain.Encounter;
 using ProjectPenguin.Systems;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -23,8 +22,10 @@ namespace ProjectPenguin.FactoryGame
         private FactoryGameHud _hud;
         private FactoryGameWorld _world;
         private FactoryRecordInput _records;
-        private bool _barcodeRead, _screenRead;
-        private int _barcodeDay, _screenDay;
+        private FactoryGameWater _water;
+        private FactoryGameEncounters _encounters;
+        private bool _screenRead;
+        private int _screenDay;
         private IStepSource _steps;
         private bool _suspended, _stepPending, _pointerDown, _dragged;
         private int _stepDay;
@@ -74,8 +75,11 @@ namespace ProjectPenguin.FactoryGame
                 if (!string.IsNullOrEmpty(EditorSaveDirectoryOverride)) Message = "開発用の独立した保存を使用中。合成の初期状態と実データを区別してください";
 #endif
                 _world = new FactoryGameWorld(transform, _camera, _models);
-                _records = new FactoryRecordInput(gameObject.name, Notify, code => { _barcodeRead = true; _barcodeDay = RecordToday; _hud.SetBarcode(code); },
+                _records = new FactoryRecordInput(gameObject.name, Notify,
                     minutes => { _screenRead = true; _screenDay = RecordToday; _hud.SetScreenMinutes(minutes); });
+                _water = new FactoryGameWater(WaterCameraSources.Create(), () => RecordToday, Notify);
+                _encounters = new FactoryGameEncounters(_session, EncounterRadios.Create(), () => (long)(Time.realtimeSinceStartupAsDouble * 1000),
+                    Apply, Notify);
 #if UNITY_IOS && !UNITY_EDITOR
                 _steps = StepSources.Create();
 #endif
@@ -105,7 +109,7 @@ namespace ProjectPenguin.FactoryGame
                     else { Message = result.Message; Paused = true; }
                 }
             }
-            PollSteps(); _records?.Poll(); HandlePointer();
+            PollSteps(); _records?.Poll(); _water?.Poll(); _encounters?.Poll(AppToday); HandlePointer();
             if (Time.unscaledTime >= _nextRefresh) { Refresh(); _nextRefresh = Time.unscaledTime + .25f; }
         }
 
@@ -187,15 +191,19 @@ namespace ProjectPenguin.FactoryGame
             { _stepPending = false; StepStatus = "実歩数：応答なし・権限なし・取得失敗。設定を確認して再試行してください"; }
         }
 
-        public void ScanBarcode() => _records?.Open(true);
-        public void ReadScreenImage() => _records?.Open(false);
+        public string WaterStatus => _water?.Status ?? "";
+        public bool HasWaterCandidate => _water?.Candidate != null;
+        public bool WaterBusy => _water?.Busy ?? false;
+        public string EncounterStatus => _encounters?.Status ?? "";
+        public void CaptureWater() => _water?.Capture();
+        public void ReadScreenImage() => _records?.Open();
         public void OnFactoryRecordResult(string result) => _records?.Receive(result);
-        public void ConfirmBarcode(string barcode)
+        public void ConfirmWater()
         {
-            if (!_barcodeRead && !DevelopmentInputs) { Notify("先に商品バーコードを読み取ってください"); return; }
-            if (_barcodeRead && _barcodeDay != RecordToday) { _barcodeRead = false; Notify("記録の日付が変わりました。商品を再度読み取ってください"); return; }
-            var result = _session.AcceptWaterBarcode(barcode, RecordToday, RecordToday, true);
-            if (result.Success) _barcodeRead = false;
+            var candidate = _water?.Take();
+            if (candidate == null) { Notify("先に飲みきった空のペットボトルを撮ってください"); return; }
+            var result = _session.AcceptWaterPhoto(candidate.Photo, candidate.Day, candidate.Ml, RecordToday, true);
+            if (result.Success) _water.Received();
             Apply(result);
         }
         public void ConfirmScreen(int minutes)
@@ -209,15 +217,7 @@ namespace ProjectPenguin.FactoryGame
         public void FakeSteps()
         { if (DevelopmentInputs) Apply(_session.AcceptSteps(AppToday, Math.Min(172800, _session.Snapshot.maxSteps + 5000), AppToday)); }
         public void FakeEncounter()
-        {
-            if (!DevelopmentInputs) return;
-            var s = _session.Snapshot;
-            if (s.encounterDay < AppToday)
-            { var begin = _session.BeginEncounterDay(AppToday, EncounterToken.Create()); if (!begin.Success) { Apply(begin); return; } }
-            var peer = EncounterToken.Create(); var now = (long)(Time.realtimeSinceStartupAsDouble * 1000);
-            var observe = _session.ObservePeer(peer, now); if (!observe.Success) { Apply(observe); return; }
-            Apply(_session.ConfirmEncounter(AppToday, peer, EncounterToken.PairId(_session.Snapshot.selfToken, peer), true, now));
-        }
+        { if (DevelopmentInputs && _encounters != null) _ = _encounters.FakeEncounterAsync(AppToday); }
 
         private void HandlePointer()
         {
@@ -273,8 +273,9 @@ namespace ProjectPenguin.FactoryGame
             _hud.Render(state);
         }
 
-        private void OnApplicationPause(bool paused) { _suspended = paused; _pendingMs = 0; if (!paused) _stepPending = false; }
+        private void OnApplicationPause(bool paused)
+        { _suspended = paused; _pendingMs = 0; if (!paused) _stepPending = false; else _encounters?.Suspend(); }
         private void OnApplicationFocus(bool focused) { _suspended = !focused; _pendingMs = 0; }
-        private void OnDestroy() { _records?.Cancel(); _world?.Dispose(); }
+        private void OnDestroy() { _records?.Cancel(); _encounters?.Suspend(); _world?.Dispose(); }
     }
 }

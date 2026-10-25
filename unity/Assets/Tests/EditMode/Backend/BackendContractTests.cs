@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 using ProjectPenguin.Backend;
 using ProjectPenguin.Domain.Island;
+using ProjectPenguin.Domain.Reality;
 using UnityEngine;
 
 namespace ProjectPenguin.Tests.EditMode.Backend
@@ -558,7 +559,137 @@ namespace ProjectPenguin.Tests.EditMode.Backend
         {
             var inBuild = File.ReadAllText(Path.Combine(Application.streamingAssetsPath, BackendRuntime.ConfigFileName));
             Assert.That(BackendConfig.Parse(inBuild, null).Judge, Is.EqualTo(JudgeMode.Mock));
+            Assert.That(BackendConfig.Parse(inBuild, null).Water, Is.EqualTo(JudgeMode.Http), "工場ゲームの水は写真の見積もりを使う");
             // Web 版の公開用の設定 (deploy/vercel/) は凍結した Web 版とともに project-penguin に残し、ここには取り込んでいない。
+        }
+
+        // ------------------------------------------------------------------
+        // 水の写真の見積もり (契約 1.2.0、容量は 1.3.0 からラベルの表示)
+        // ------------------------------------------------------------------
+
+        private static HttpWaterEstimator Water(FakeTransport transport) => new HttpWaterEstimator(new PenguinApiClient(Base, transport));
+
+        [Test]
+        public void WaterSendsTheJpegAsMultipartToTheContractPath()
+        {
+            var transport = new FakeTransport(Respond("water-estimate.200.accept.json"));
+
+            Run(Water(transport).EstimateAsync(Jpeg, default));
+
+            var sent = transport.Sent.Single();
+            Assert.That(sent.Method, Is.EqualTo("POST"));
+            Assert.That(sent.Url, Is.EqualTo(Base + "/v1/water/estimate"));
+            Assert.That(sent.ContentType, Does.StartWith("multipart/form-data; boundary="));
+            Assert.That(Encoding.UTF8.GetString(sent.Body, 0, Math.Min(200, sent.Body.Length)), Does.Contain("name=\"image\""));
+        }
+
+        [TestCaseSource(nameof(WaterExamples))]
+        public void EveryWaterExampleBecomesAnEstimate(string name)
+        {
+            var estimate = Run(Water(new FakeTransport(Respond(name))).EstimateAsync(Jpeg, default));
+
+            Assert.That(estimate.FillRatio, Is.InRange(0.0, 1.0));
+            Assert.That(estimate.AmountMl, Is.InRange(0, WaterIntake.MaxMlPerEntry));
+            Assert.That(estimate.Checks.All(c => !string.IsNullOrEmpty(c.Label)), Is.True);
+        }
+
+        private static IEnumerable<string> WaterExamples => ExampleNames("water-estimate.200.");
+
+        [Test]
+        public void AcceptedWaterCarriesTheAmount()
+        {
+            var estimate = Run(Water(new FakeTransport(Respond("water-estimate.200.accept.json"))).EstimateAsync(Jpeg, default));
+
+            Assert.That(estimate.Container, Is.EqualTo(WaterContainer.PetBottle));
+            Assert.That(estimate.CapacityMl, Is.EqualTo(600), "容量はラベルから読んだ値");
+            Assert.That(estimate.AmountMl, Is.EqualTo(30));
+            Assert.That(estimate.Decision, Is.EqualTo(WaterDecision.Accept));
+            Assert.That(estimate.IsUsable, Is.True);
+        }
+
+        [Test]
+        public void UnreadableCapacityAsksToShowTheLabel()
+        {
+            var estimate = Run(Water(new FakeTransport(Respond("water-estimate.200.retake_capacity.json"))).EstimateAsync(Jpeg, default));
+
+            Assert.That(estimate.Container, Is.EqualTo(WaterContainer.PetBottle));
+            Assert.That(estimate.CapacityMl, Is.EqualTo(0));
+            Assert.That(estimate.Decision, Is.EqualTo(WaterDecision.Retake));
+            Assert.That(estimate.RetakeHint, Does.Contain("ラベルの容量"));
+            Assert.That(WaterEmptyBottle.Judge(estimate.ToPhoto(DateTimeOffset.UnixEpoch)).Failure, Is.EqualTo(WaterBottleFailure.NotAccepted));
+        }
+
+        [TestCase("pet_bottle_500")]
+        [TestCase("pet_bottle_350")]
+        public void OldServerWithoutLabelCapacityIsNotGuessed(string container)
+        {
+            // 1.2.0 のサーバーは容量を容器の値 (350・500) で伝えていた。こちらで容量を決めず、撮り直しにする。
+            var json = "{\"schema_version\":\"1.2.0\",\"container\":\"" + container +
+                       "\",\"fill_ratio\":0,\"amount_ml\":0,\"confidence\":0.9,\"decision\":\"accept\"}";
+            var estimate = Run(Water(new FakeTransport(new HttpResult(200, json))).EstimateAsync(Jpeg, default));
+
+            Assert.That(estimate.CapacityMl, Is.EqualTo(0));
+            Assert.That(estimate.Decision, Is.EqualTo(WaterDecision.Retake));
+            Assert.That(estimate.RetakeHint, Is.EqualTo(HttpWaterEstimator.CapacityRetakeHint));
+            Assert.That(WaterEmptyBottle.Judge(estimate.ToPhoto(DateTimeOffset.UnixEpoch)).Succeeded, Is.False);
+        }
+
+        [Test]
+        public void EmptyBottleWithReadCapacityBecomesTheIntake()
+        {
+            var json = "{\"schema_version\":\"1.3.0\",\"container\":\"pet_bottle\",\"capacity_ml\":2000,\"fill_ratio\":0.02," +
+                       "\"amount_ml\":40,\"confidence\":0.9,\"decision\":\"accept\"}";
+            var estimate = Run(Water(new FakeTransport(new HttpResult(200, json))).EstimateAsync(Jpeg, default));
+
+            var result = WaterEmptyBottle.Judge(estimate.ToPhoto(DateTimeOffset.UnixEpoch));
+            Assert.That(result.Intake.Ml, Is.EqualTo(1960), "2L のボトルなら 2000 − 残り");
+        }
+
+        [TestCase("water-estimate.200.retake.json", WaterDecision.Retake)]
+        [TestCase("water-estimate.200.reject.json", WaterDecision.Reject)]
+        public void RetakeAndRejectAreNotUsable(string name, WaterDecision decision)
+        {
+            var estimate = Run(Water(new FakeTransport(Respond(name))).EstimateAsync(Jpeg, default));
+
+            Assert.That(estimate.Decision, Is.EqualTo(decision));
+            Assert.That(estimate.IsUsable, Is.False);
+        }
+
+        [Test]
+        public void UnknownWaterValuesFallBackToRetakeWithoutAmount()
+        {
+            // 未来の版の容器 (glass_bottle) と結論 (partial)。知らない容器は容量があっても量を使わない。
+            var estimate = Run(Water(new FakeTransport(Respond("compat/water-estimate.200.unknown_values.json"))).EstimateAsync(Jpeg, default));
+
+            Assert.That(estimate.Container, Is.EqualTo(WaterContainer.Unknown));
+            Assert.That(estimate.Decision, Is.EqualTo(WaterDecision.Retake));
+            Assert.That(estimate.AmountMl, Is.EqualTo(0));
+            Assert.That(estimate.IsUsable, Is.False);
+        }
+
+        [Test]
+        public void WaterErrorKeepsTheBackendCode()
+        {
+            var estimator = Water(new FakeTransport(Respond("error.413.image_too_large.json")));
+            var error = Assert.Throws<WaterEstimateException>(() => Run(estimator.EstimateAsync(Jpeg, default)));
+            Assert.That(error.Code, Is.EqualTo(BackendErrorCodes.ImageTooLarge));
+        }
+
+        [Test]
+        public void ConfigTurnsOnWaterAndEncounters()
+        {
+            var config = BackendConfig.Parse("{\"api_base_url\":\"https://x.example/api\",\"water\":\"http\",\"encounters\":true}", null);
+            Assert.That(config.Water, Is.EqualTo(JudgeMode.Http));
+            Assert.That(config.EncountersEnabled, Is.True);
+
+            var services = BackendServices.Create(config, new FakeTransport(Respond("health.200.ok.json")));
+            Assert.That(services.Water, Is.InstanceOf<HttpWaterEstimator>());
+            Assert.That(services.Encounters, Is.InstanceOf<HttpEncounterReporter>());
+
+            var offline = BackendServices.Create(BackendConfig.Parse("{\"water\":\"http\",\"encounters\":true}", null),
+                new FakeTransport(Respond("health.200.ok.json")));
+            Assert.That(offline.Water, Is.InstanceOf<MockWaterEstimator>(), "接続先が無ければ見本");
+            Assert.That(offline.Encounters, Is.InstanceOf<MockEncounterReporter>());
         }
     }
 }

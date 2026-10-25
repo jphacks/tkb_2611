@@ -4,5 +4,6 @@
   "community": false,
   "quests": false,
   "demo_mode": false,
+  "water": "http",
   "encounters": true
 }

@@ -13,6 +13,7 @@ namespace ProjectPenguin.Domain.Factory
                 || s.atMs < 0 || s.atMs % _rules.tickMs != 0 || s.requestedMs < s.atMs || s.requestedMs - s.atMs >= _rules.tickMs
                 || s.gas < 0 || s.electric < 0 || s.water < 0 || s.points < 0 || s.builtCount < 0
                 || s.stage < 1 || s.stage > 4 || s.nextId < 1 || s.stepDay < -1 || s.maxSteps < 0 || s.maxSteps > 172800
+                || s.waterDay < -1 || s.waterMl < 0 || s.waterMl > _rules.waterDailyMaxMl
                 || s.encounterDay < -1 || s.dailyBirds < 0 || s.dailyBirds > _catalog.dailyBirds || s.pityMisses < 0
                 || s.dispatchCursor < 0 || s.blocks == null || s.facilities == null || s.cargo == null
                 || s.penguins == null || s.carries == null || s.receipts == null || s.rewardedPairs == null || s.peers == null)

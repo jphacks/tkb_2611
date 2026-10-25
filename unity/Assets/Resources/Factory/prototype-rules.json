@@ -16,7 +16,8 @@
   "stagePoints": [0, 1000, 10000, 100000],
   "stepsPerGas": 500,
   "screenMinutesPerElectric": 120,
-  "waterPerRecord": 3,
+  "waterMlPerUnit": 150,
+  "waterDailyMaxMl": 3000,
   "tickMs": 1000,
   "maxAdvanceMs": 120000,
   "offlineProduction": false

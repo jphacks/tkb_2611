@@ -47,12 +47,12 @@ namespace ProjectPenguin.Tests.EditMode
             var f = Session();
             Succeeds(f.AcceptSteps(Day, 2500, Day));
             Succeeds(f.AcceptScreen("screen", Day - 1, 240, Day, true));
-            Succeeds(f.AcceptWaterBarcode("4901234567894", Day, Day, true));
+            Succeeds(f.AcceptWaterPhoto("photo-a", Day, 500, Day, true));
             var before = JsonUtility.ToJson(f.Snapshot);
             var again = Session(JsonUtility.FromJson<FactoryState>(before));
             Assert.That(again.AcceptSteps(Day, 2500, Day).Amount, Is.Zero);
             Assert.That(again.AcceptScreen("another-id", Day - 1, 240, Day, true).Success, Is.False);
-            Assert.That(again.AcceptWaterBarcode("4901234567894", Day, Day, true).Success, Is.False);
+            Assert.That(again.AcceptWaterPhoto("photo-a", Day, 500, Day, true).Success, Is.False);
             Assert.That(JsonUtility.ToJson(again.Snapshot), Is.EqualTo(before));
             Assert.That(again.AcceptSteps(Day - 1, 10000, Day - 1).Success, Is.False);
             Assert.That(again.AcceptSteps(Day + 1, 500, Day + 1).Amount, Is.EqualTo(1));
@@ -162,7 +162,7 @@ namespace ProjectPenguin.Tests.EditMode
             Assert.That(f.AcceptSteps(Day, 50000, Day).Amount, Is.EqualTo(143), "100 x 1.30 x 1.10");
             var a = f.Build("fishery", 0, 0); Succeeds(a); Succeeds(f.AdvanceTo(11000));
             Assert.That(Stock(f.Snapshot, "fish"), Is.EqualTo(3000 * 1.92));
-            Assert.That(f.AcceptWaterBarcode("4901234567894", Day, Day, true).Amount, Is.EqualTo(3));
+            Assert.That(f.AcceptWaterPhoto("photo-b", Day, 450, Day, true).Amount, Is.EqualTo(3));
         }
 
         [Test]
@@ -385,6 +385,21 @@ namespace ProjectPenguin.Tests.EditMode
         }
 
         [Test]
+        public void WaterPhotosCountDrunkMillilitersUpToTheDailyLimit()
+        {
+            var f = Session(); var start = f.Snapshot.water;
+            Assert.That(f.AcceptWaterPhoto("bottle-1", Day, 500, Day, true).Amount, Is.EqualTo(3), "150mlごとに水1");
+            Assert.That(f.AcceptWaterPhoto("bottle-2", Day, 100, Day, true).Amount, Is.EqualTo(1), "端数は日の合計で繰り越す (600ml で 4)");
+            Assert.That(f.AcceptWaterPhoto("bottle-2", Day, 100, Day, true).Success, Is.False, "同じ写真は 1 回だけ");
+            Assert.That(f.AcceptWaterPhoto("bottle-3", Day, 2000, Day, true).Amount, Is.EqualTo(13), "2600ml (上限 3000ml の手前)");
+            Assert.That(f.AcceptWaterPhoto("bottle-4", Day, 2000, Day, true).Amount, Is.EqualTo(3), "上限の 3000ml で止まる");
+            Assert.That(f.AcceptWaterPhoto("bottle-5", Day, 500, Day, true).Success, Is.False, "上限に届いた日はもう受け取らない");
+            Assert.That(f.Snapshot.water - start, Is.EqualTo(20));
+            Assert.That(f.AcceptWaterPhoto("bottle-6", Day + 1, 500, Day + 1, true).Amount, Is.EqualTo(3), "次の日は数え直す");
+            Assert.That(f.AcceptWaterPhoto("bottle-7", Day, 500, Day, true).Success, Is.False, "前の日には戻らない");
+        }
+
+        [Test]
         public void MalformedSnapshotAndNegativeOrFutureInputsAreRejected()
         {
             var state = Session().Snapshot; state.gas = -1;
@@ -392,7 +407,10 @@ namespace ProjectPenguin.Tests.EditMode
             var f = Session(); var before = JsonUtility.ToJson(f.Snapshot);
             Assert.That(f.AcceptScreen("s", Day, 240, Day, true).Success, Is.False);
             Assert.That(f.AcceptScreen("s", Day - 1, 1441, Day, true).Success, Is.False);
-            Assert.That(f.AcceptWaterBarcode("4901234567890", Day, Day, true).Success, Is.False);
+            Assert.That(f.AcceptWaterPhoto("p", Day, 0, Day, true).Success, Is.False);
+            Assert.That(f.AcceptWaterPhoto("p", Day, FactorySession.MaxWaterMlPerPhoto + 1, Day, true).Success, Is.False);
+            Assert.That(f.AcceptWaterPhoto("p", Day + 1, 500, Day, true).Success, Is.False);
+            Assert.That(f.AcceptWaterPhoto("p", Day, 500, Day, false).Success, Is.False);
             Assert.That(f.AcceptSteps(Day, -1, Day).Success, Is.False);
             Assert.That(f.AcceptSteps(Day, 172801, Day).Success, Is.False);
             Assert.That(f.AdvanceTo(120001).Success, Is.False);
