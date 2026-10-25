@@ -1089,6 +1089,7 @@ GameObject:
   - component: {fileID: 456161912}
   - component: {fileID: 456161914}
   - component: {fileID: 456161918}
+  - component: {fileID: 456161919}
   m_Layer: 0
   m_Name: VillageRuntime
   m_TagString: Untagged
@@ -1171,6 +1172,18 @@ MonoBehaviour:
       _outputConnected: {fileID: 2995968288211543815, guid: 7b61a413479791e47957f8efa8faea4f, type: 3}
       _outputSelectable: {fileID: 2132813910690801223, guid: c73d371e097ccc445b43276d6a494169, type: 3}
   _harbor: {fileID: 3192012139894406431, guid: 5c184d05d0b96644e9450ec594391804, type: 3}
+--- !u!114 &456161919
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 456161911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 509f8e2cb8ec44c7b5c5284f1fbe6d95, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ProjectPenguin.Systems::ProjectPenguin.Systems.VillageEncounters
 --- !u!114 &456161913
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1604,6 +1617,9 @@ GameObject:
   - component: {fileID: 820363849}
   - component: {fileID: 820363848}
   - component: {fileID: 820363847}
+  - component: {fileID: 820363851}
+  - component: {fileID: 820363852}
+  - component: {fileID: 820363853}
   m_Layer: 0
   m_Name: AppUI
   m_TagString: Untagged
@@ -1625,6 +1641,45 @@ MonoBehaviour:
   m_EditorClassIdentifier: ProjectPenguin.Presentation::ProjectPenguin.Presentation.UI.ProductionVillage.ProductionNavigator
   _session: {fileID: 456161913}
   _world: {fileID: 456161912}
+--- !u!114 &820363851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 820363846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a02e423e05c1f4f3f82b3099564de846, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ProjectPenguin.Presentation::ProjectPenguin.Presentation.UI.ReceiptCameraPreview
+--- !u!114 &820363852
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 820363846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1fab7d51aad4d8f82c9013d6f51772d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ProjectPenguin.Presentation::ProjectPenguin.Presentation.UI.ProductionVillage.VillageWaterScanPresenter
+  _session: {fileID: 456161913}
+  _camera: {fileID: 820363851}
+--- !u!114 &820363853
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 820363846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0ad066d0b614d1ea628c5836af8cfd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ProjectPenguin.Presentation::ProjectPenguin.Presentation.UI.ProductionVillage.VillageScreenTimePresenter
+  _session: {fileID: 456161913}
 --- !u!114 &820363848
 MonoBehaviour:
   m_ObjectHideFlags: 0

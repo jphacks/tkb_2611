@@ -35,14 +35,14 @@ namespace ProjectPenguin.Editor.Build
                     + "File > Build Profiles でシーンを追加してください。");
             }
 
+            // 対象の切り替えはここでしない。切り替えたその回のビルドは切り替え前にコンパイルしたスクリプトで走るので、
+            // #if UNITY_IOS の IosPostprocess などが抜け、CoreBluetooth のリンクで落ちる Xcode プロジェクトができてしまう。
+            // メニューは BuildEntry が切り替えてから再読み込みの後に続け、CLI は -buildTarget で最初から合わせる。
             if (EditorUserBuildSettings.activeBuildTarget != request.Target)
             {
-                if (!EditorUserBuildSettings.SwitchActiveBuildTarget(request.Group, request.Target))
-                {
-                    throw new BuildRequestException(
-                        $"{request.Target} へ切り替えられませんでした。"
-                        + "Unity Hub で該当プラットフォームのビルドモジュールを追加してください。");
-                }
+                throw new BuildRequestException(
+                    $"いまのビルド先は {EditorUserBuildSettings.activeBuildTarget} です。{request.Target} のスクリプトでビルドするため、"
+                    + $"メニューから選び直すか、CLI では -buildTarget {request.Target} を付けてください。");
             }
 
             using (new PlayerSettingsScope())

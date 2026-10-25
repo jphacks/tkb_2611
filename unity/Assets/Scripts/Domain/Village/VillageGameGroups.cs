@@ -16,7 +16,7 @@ namespace ProjectPenguin.Domain.Village
             NodeCapacity(n)-n.Stock.Values.Sum()-_cargo.Count(c=>c.To==n.Id)-(n.Finish>0&&RecipeOf(n)!=null?RecipeOf(n).Output.Count:0));
         private bool GroupRunning(Node n)
         {
-            var r=RecipeOf(n);if(r==null||!_unlimited&&_gas<1)return false;
+            var r=RecipeOf(n);if(r==null||PaysResources&&_gas<1)return false;
             if(n.Finish>_at)return true;
             return (_unlimited||r.Inputs.All(i=>n.Held(i.Item)>=i.Count))&&n.Held(r.Output.Item)+r.Output.Count<=OutputCap(n)&&
                 n.Stock.Values.Sum()-(_unlimited?0:r.Inputs.Sum(i=>i.Count))+_cargo.Count(c=>c.To==n.Id)+r.Output.Count<=NodeCapacity(n);

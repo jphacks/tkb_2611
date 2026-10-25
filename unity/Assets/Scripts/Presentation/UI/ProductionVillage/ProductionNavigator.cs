@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ProjectPenguin.Domain.Encounter;
 using ProjectPenguin.Domain.Island;
 using ProjectPenguin.Domain.Village;
 using ProjectPenguin.Presentation.World.ProductionVillage;
@@ -16,6 +17,12 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
     [RequireComponent(typeof(UIDocument))]
     public sealed class ProductionNavigator : MonoBehaviour
     {
+        private const string WaterActionName = "villageWaterAction";
+        private const string ScreenTimeActionName = "villageScreenTimeAction";
+        private const string FakeEncounterActionName = "villageFakeEncounterAction";
+        private const string DebugActionName = "villageFreeResourcesAction";
+        /// <summary>開発用の歩数のボタン 1 回で足す歩数。</summary>
+        private const int DevelopmentSteps = 1000;
         private const float RefreshSeconds = .1f;
         private const float SheetRefreshSeconds = .5f;
         private const float CountUpSeconds = .4f;
@@ -32,6 +39,9 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         private Label _industrialSwitchLabel, _tacticalGas, _topDownLabel, _insightText;
         private Button _confirm, _activeTab, _topDownToggle, _insightBanner;
         private ProductionReportPresenter _report;
+        private VillageWaterScanPresenter _waterScan;
+        private VillageScreenTimePresenter _screenTime;
+        private VillageEncounters _encounters;
         private Action _refreshSheet;
         private bool _sheetOpen;
         private bool _industrialMode;
@@ -44,13 +54,21 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         private readonly Dictionary<int, Button> _spatialBadges = new Dictionary<int, Button>();
         private readonly Dictionary<string, VisualElement> _groupMarks = new Dictionary<string, VisualElement>();
 
-        public bool WorldInputEnabled => !_sheetOpen && (_report == null || !_report.IsOpen) && !_session.IsSuspended && _session.Core.View != null;
+        public bool WorldInputEnabled => !_sheetOpen && (_report == null || !_report.IsOpen)
+            && !(_waterScan != null && _waterScan.IsOpen) && !_session.IsSuspended && _session.Core.View != null;
         public VillagePlacementController Placement => _world.Placement;
         public VillageWorldPresenter World => _world;
 
         private void Start()
         {
             _root = GetComponent<UIDocument>().rootVisualElement;
+            _waterScan = GetComponent<VillageWaterScanPresenter>();
+            _screenTime = GetComponent<VillageScreenTimePresenter>();
+            _encounters = _session.GetComponent<VillageEncounters>();
+            if (_encounters != null)
+            {
+                _encounters.Granted += ShowToast;
+            }
             _app = _root.Q(ProductionUiNames.Root);
             _sheet = _root.Q(ProductionUiNames.Sheet);
             _content = _root.Q<ScrollView>(ProductionUiNames.Content);
@@ -150,6 +168,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
             _nextRefresh = Time.unscaledTime + RefreshSeconds;
             IslandUi.SetVisible(_profile, core.Development);
+            if (_profile != null) _profile.text = view != null && view.FreeResources ? "資源 ∞" : "開発用";
             ShowResources(view);
             ShowStatus(core);
             ShowPlacementTray();
@@ -279,8 +298,10 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             // 工房の操作バー: ガスの残りと消費、施設の稼働・停止・配送の数 (生産レポートと同じ数え方)
             if (_tacticalGas != null)
             {
-                _tacticalGas.text = view.Unlimited ? "ガス ∞ (開発用)" : $"ガス {IslandUi.Number(view.Gas)}・消費 {view.GasPerMinute:0.#}/分";
-                _tacticalGas.EnableInClassList(ProductionUiNames.TacticalGasEmptyClass, !view.Unlimited && view.Gas < 1);
+                _tacticalGas.text = view.Unlimited ? "ガス ∞ (開発用)"
+                    : view.FreeResources ? $"ガス ∞ (資源無限)・消費 {view.GasPerMinute:0.#}/分"
+                    : $"ガス {IslandUi.Number(view.Gas)}・消費 {view.GasPerMinute:0.#}/分";
+                _tacticalGas.EnableInClassList(ProductionUiNames.TacticalGasEmptyClass, !view.ResourcesUnlimited && view.Gas < 1);
             }
 
             var counts = VillageInsight.Counts(view);
@@ -546,8 +567,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         private VisualElement BuildDockSlot(FacilityDef def, VillageView view)
         {
-            var shortE = view != null && !view.Unlimited && view.Electricity < def.ElectricityCost;
-            var shortW = view != null && !view.Unlimited && view.Water < def.WaterCost;
+            var shortE = view != null && !view.ResourcesUnlimited && view.Electricity < def.ElectricityCost;
+            var shortW = view != null && !view.ResourcesUnlimited && view.Water < def.WaterCost;
             var slot = new Button(() =>
             {
                 if (_session.Core.View == null)
@@ -824,8 +845,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         private VisualElement ShelfCard(FacilityDef def, VillageView view)
         {
             var supported = VillageGame.Supported(def.Kind);
-            var shortElectricity = view != null && !view.Unlimited && view.Electricity < def.ElectricityCost;
-            var shortWater = view != null && !view.Unlimited && view.Water < def.WaterCost;
+            var shortElectricity = view != null && !view.ResourcesUnlimited && view.Electricity < def.ElectricityCost;
+            var shortWater = view != null && !view.ResourcesUnlimited && view.Water < def.WaterCost;
 
             var card = new VisualElement();
             card.AddToClassList(UiClasses.ShelfCard.Root);
@@ -1106,7 +1127,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             var health = _session.GetComponent<VillageHealthInput>();
             Open("記録", ProductionUiNames.RecordTab);
             var steps = Card();
-            steps.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Gas, UiClasses.Tint.Gas), "歩数", "500 歩ごとにガスが 1 たまるよ", null));
+            steps.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Gas, UiClasses.Tint.Gas), "歩数", $"1 歩ごとにガスが {VillageGame.GasPerStep} たまるよ", null));
             var stepStatus = IslandUi.Text(health?.Status ?? "歩数につながっていないよ", ProductionUiNames.Subtle);
             steps.Add(stepStatus);
             Action(steps, "歩数を確かめる", () => health?.Request(), UiClasses.Icon.Check, primary: false, enabled: health != null);
@@ -1153,16 +1174,56 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             return arrow > 0 ? kind.Substring(0, arrow).Trim() : kind;
         }
 
+        private void OnDestroy()
+        {
+            if (_encounters != null)
+            {
+                _encounters.Granted -= ShowToast;
+            }
+        }
+
         // ---- スキャン ----
 
         private void ShowScan()
         {
             Open("スキャン", ProductionUiNames.ScanTab);
-            var card = Card("記録して資源をためる");
-            card.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Water, UiClasses.Tint.Water), "水分補給", "水が 3 たまるよ", Badge("準備中", UiClasses.Badge.Accent)));
-            card.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Electricity, UiClasses.Tint.Electricity), "きのうのスクリーンタイム", "使わなかった時間ぶん電気がたまるよ", Badge("準備中", UiClasses.Badge.Accent)));
-            card.Children().Last().AddToClassList(UiClasses.Row.Last);
-            card.Add(IslandUi.Text("写真の読み取りがつながると使えるようになるよ。写真は村に保存しないよ", ProductionUiNames.Subtle));
+            var scanner = _waterScan;
+            var water = Card("水分補給");
+            water.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Water, UiClasses.Tint.Water),
+                "空のペットボトル", "飲みきったボトルの写真を AI が見て、受け付けられると水がたまるよ (1 日 1 回)", null));
+            water.Children().Last().AddToClassList(UiClasses.Row.Last);
+            var waterAction = Action(water, "水を撮る", () =>
+            {
+                Close();
+                scanner.Open();
+            }, UiClasses.Icon.Camera, enabled: scanner != null && scanner.enabled);
+            waterAction.name = WaterActionName;
+            water.Add(IslandUi.Text("写真は判定後に破棄し、村には保存しないよ", ProductionUiNames.Subtle));
+
+            var screenTime = _screenTime;
+            var screen = Card("きのうのスクリーンタイム");
+            screen.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Electricity, UiClasses.Tint.Electricity), "スクリーンタイム", "使わなかった時間ぶん電気がたまるよ (1 日 1 回)", null));
+            screen.Children().Last().AddToClassList(UiClasses.Row.Last);
+            screen.Add(IslandUi.Text("設定 > スクリーンタイム で上の「日」を選び、きのうの棒を押してからスクショを撮ってね", ProductionUiNames.Subtle));
+            var screenAction = Action(screen, "スクショを選ぶ", () => screenTime.Open(), UiClasses.Icon.Check,
+                enabled: screenTime != null && screenTime.enabled && screenTime.IsSupported);
+            screenAction.name = ScreenTimeActionName;
+            screen.Add(IslandUi.Text("スクショは端末の中で読んで捨て、送らないよ", ProductionUiNames.Subtle));
+
+            var encounters = _encounters;
+            var encounter = Card("すれ違い");
+            encounter.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Penguin, UiClasses.Tint.Original), "近くの人とすれ違う",
+                $"アプリを開いた人どうしが近くにいると、ペンギンが来て資源をくれるよ (1 日 {EncounterLedger.PenguinsPerDay} 回まで)", null));
+            encounter.Children().Last().AddToClassList(UiClasses.Row.Last);
+            var encounterStatus = IslandUi.Text(encounters?.Status ?? "すれ違いにつながっていないよ", ProductionUiNames.Subtle);
+            encounter.Add(encounterStatus);
+            if (encounters != null && encounters.CanFakeEncounter)
+            {
+                var fake = Action(encounter, "合成の相手とすれ違う (開発用)", async () => ShowToast(await encounters.FakeEncounterAsync()), UiClasses.Icon.Penguin, primary: false);
+                fake.name = FakeEncounterActionName;
+            }
+
+            Live(() => encounterStatus.text = encounters?.Status ?? "すれ違いにつながっていないよ");
         }
 
         // ---- 工房・図面管理 (ShowManagement) ----
@@ -1227,6 +1288,40 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             Action(data, "保存をやり直す", () => _session.RetryLoad(), UiClasses.Icon.Undo, primary: false);
             Action(data, "記録を見る", ShowRecord, UiClasses.Icon.Book, primary: false);
             Action(data, "ライセンス", ShowLicenses, UiClasses.Icon.Help, primary: false);
+
+            ShowDebugCard();
+        }
+
+        /// <summary>
+        /// 審査・デバッグ用。ガス・電気・水を減らさないモードの切り替え (全ビルド) と、
+        /// 歩数を測れない環境 (Editor) で合成の歩数を入れる操作。
+        /// </summary>
+        private void ShowDebugCard()
+        {
+            var core = _session.Core;
+            var free = core.FreeResources;
+            var debug = Card("デバッグ (審査用)");
+            debug.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Electricity, UiClasses.Tint.Electricity), "資源無限のモード",
+                free ? "オン: 建設・生産でガス・電気・水が減らないよ" : "オフ: ふだんどおり、歩数・写真で集めた資源を使うよ",
+                Badge(free ? "オン" : "オフ", UiClasses.Badge.Accent)));
+            debug.Children().Last().AddToClassList(UiClasses.Row.Last);
+            debug.Add(IslandUi.Text("材料と物流はふだんどおり動くよ。資源無限の村はふだんの村と別に保存するので、オフにすればもとの村に戻るよ", ProductionUiNames.Subtle));
+            Action(debug, free ? "ふだんの村に戻る" : "資源無限にする", () =>
+            {
+                _session.SetFreeResources(!free);
+                ShowToast(core.Error.Length > 0 ? core.Error : core.Notice);
+                ShowMenu();
+            }, UiClasses.Icon.Electricity, primary: !free).name = DebugActionName;
+
+            var health = _session.GetComponent<VillageHealthInput>();
+            if (health != null && health.CanAddDevelopmentSteps)
+            {
+                Action(debug, $"歩数 +{DevelopmentSteps} (開発用)", () =>
+                {
+                    health.AddDevelopmentSteps(DevelopmentSteps);
+                    ShowToast($"今日の歩数に {DevelopmentSteps} 歩を足したよ");
+                }, UiClasses.Icon.Gas, primary: false);
+            }
         }
 
         /// <summary>同梱している外部の素材 (アイコン・フォント・ライブラリ) の著作権表示と許諾文。</summary>

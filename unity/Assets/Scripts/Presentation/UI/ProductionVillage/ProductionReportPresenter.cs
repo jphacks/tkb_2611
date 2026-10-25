@@ -217,7 +217,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         private void UpdateTankAndGas(VillageView view, ProductionVillageSessionCore core)
         {
-            var isUnlimited = view.Unlimited;
+            var isUnlimited = view.ResourcesUnlimited;
             var minutesSinceMidnight = Math.Max(60.0, (DateTime.Now - DateTime.Today).TotalMinutes);
             var supply = VillageInsight.SupplyPerMinute(view.GasReceivedToday, minutesSinceMidnight);
             var consume = view.GasPerMinute;
@@ -231,7 +231,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 if (_gasStock != null) _gasStock.text = "∞";
                 if (_gasCap != null) _gasCap.text = "";
                 if (_netNum != null) _netNum.text = "無制限";
-                if (_emptyEstimate != null) _emptyEstimate.text = "開発用: 無制限";
+                if (_emptyEstimate != null) _emptyEstimate.text = view.Unlimited ? "開発用: 無制限" : "資源無限のモード";
                 _tankGauge?.SetLevel(1f, true, consume > 0.01);
                 return;
             }

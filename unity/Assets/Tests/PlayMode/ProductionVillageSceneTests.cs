@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using ProjectPenguin.Domain.Island;
 using ProjectPenguin.Presentation.UI.ProductionVillage;
@@ -36,6 +37,14 @@ namespace ProjectPenguin.Tests.PlayMode
             Assert.That(root.Q<Label>(ProductionUiNames.Gas).text,Does.Contain("37"));
             Assert.That(root.Q<Label>(ProductionUiNames.Water).text,Does.Contain("91"));
             Assert.That(world.Renderer,Is.Not.Null);
+            var showScan=typeof(ProductionNavigator).GetMethod("ShowScan",BindingFlags.Instance|BindingFlags.NonPublic);
+            Assert.That(showScan,Is.Not.Null);showScan.Invoke(nav,null);
+            Assert.That(root.Q<Button>("villageWaterAction"),Is.Not.Null);
+            // ビルドに入るシーンに、スクショの読み取りとすれ違いがつながっていること。
+            Assert.That(root.Q<Button>("villageScreenTimeAction")?.enabledSelf,Is.True);
+            Assert.That(root.Q<Button>("villageFakeEncounterAction"),Is.Not.Null);
+            Assert.That(s.GetComponent<VillageEncounters>(),Is.Not.Null);
+            nav.Close();
             nav.ShowPlacement();world.Placement.MoveSelect();world.Placement.Select(1);world.Placement.Preview(18,18);
             var before=s.Core.View.Nodes.Single(n=>n.Id==1);world.Placement.CancelPreview();Assert.That(s.Core.View.Nodes.Single(n=>n.Id==1).X,Is.EqualTo(before.X));
             nav.Close();world.Placement.MoveSelect();world.Placement.Select(1);world.Placement.Preview(18,18);Assert.That(world.Placement.Confirm(),Is.True);
