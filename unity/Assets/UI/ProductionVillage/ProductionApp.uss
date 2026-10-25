@@ -15,6 +15,11 @@
     margin: var(--space-3) var(--space-4) 0 var(--space-4);
 }
 
+.village-header > .pp-hero {
+    padding: var(--space-2);
+    border-radius: var(--radius-lg);
+}
+
 .village-header__spacer {
     flex-grow: 1;
 }
@@ -69,7 +74,7 @@
     margin: var(--space-2) var(--space-4) 0 var(--space-4);
 }
 
-/* エンドフィールド風: 上部タクティカルバー */
+/* 工房モードの操作バー */
 .village-tactical-bar {
     margin: var(--space-2) var(--space-4) 0 var(--space-4);
     padding: var(--space-2) var(--space-3);
@@ -192,10 +197,11 @@
     position: absolute;
     right: var(--space-4);
     bottom: var(--space-4);
-    align-items: center;
+    align-items: flex-end;
 }
 
 .village-tools .pp-tool {
+    min-width: 144px;
     margin-bottom: var(--space-3);
 }
 
@@ -203,7 +209,7 @@
     margin-top: var(--space-1);
 }
 
-/* エンドフィールド風: 盤面を隠さない下部クイック建設ドック */
+/* 盤面を隠さない下部の施設選択欄 */
 .village-quick-dock {
     position: absolute;
     right: var(--space-3);

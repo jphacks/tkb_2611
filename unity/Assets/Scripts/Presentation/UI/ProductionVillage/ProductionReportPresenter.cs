@@ -12,7 +12,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 {
     /// <summary>
     /// 全画面生産レポート画面の Presenter。
-    /// エンドフィールド風のタクティカル全画面 UI (タンク・上下棒グラフ・品目現状 vs 理論値)。
+    /// ガスのタンク・生産と消費の推移・品目ごとの実績と理論値を表示する。
     /// </summary>
     public sealed class ProductionReportPresenter
     {
@@ -395,9 +395,12 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             prodNow.AddToClassList("pp-ind-meter__now");
             var prodTheo = new Label("/ 0");
             prodTheo.AddToClassList("pp-ind-meter__theo");
-            prodMeter.Add(prodLabel);
-            prodMeter.Add(prodNow);
-            prodMeter.Add(prodTheo);
+            var prodValues = new VisualElement();
+            prodValues.AddToClassList("pp-ind-meter__values");
+            prodValues.Add(prodLabel);
+            prodValues.Add(prodNow);
+            prodValues.Add(prodTheo);
+            prodMeter.Add(prodValues);
 
             var prodTrack = new VisualElement();
             prodTrack.AddToClassList("pp-report-bar-track");
@@ -418,9 +421,12 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             consNow.AddToClassList("pp-ind-meter__now");
             var consTheo = new Label("/ 0");
             consTheo.AddToClassList("pp-ind-meter__theo");
-            consMeter.Add(consLabel);
-            consMeter.Add(consNow);
-            consMeter.Add(consTheo);
+            var consValues = new VisualElement();
+            consValues.AddToClassList("pp-ind-meter__values");
+            consValues.Add(consLabel);
+            consValues.Add(consNow);
+            consValues.Add(consTheo);
+            consMeter.Add(consValues);
 
             var consTrack = new VisualElement();
             consTrack.AddToClassList("pp-report-bar-track");

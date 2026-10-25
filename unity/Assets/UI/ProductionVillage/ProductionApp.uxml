@@ -3,7 +3,7 @@
     <ui:Style src="ProductionApp.uss" />
     <ui:VisualElement name="villageApp" class="village-app" picking-mode="Ignore">
         <ui:VisualElement class="village-safe pp-safe-area" picking-mode="Ignore">
-            <!-- 左上: ポケスリ風の主役カード (島ランクバッジ + お魚 + 進捗バー)。右上: 工業モード切替ピル -->
+            <!-- 左上: 島ランク・お魚・進捗バー。右上: 工房モード切替 -->
             <ui:VisualElement name="villageHeader" class="village-header" picking-mode="Ignore">
                 <ui:VisualElement name="villageHero" class="pp-hero">
                     <ui:VisualElement name="villageRankBadge" class="village-rank-badge" picking-mode="Ignore">
@@ -27,7 +27,7 @@
                 <ui:Label name="villageProfile" text="開発用" class="pp-badge pp-badge--accent pp-hidden" picking-mode="Ignore" />
                 <ui:Button name="villageIndustrialSwitch" class="pp-btn pp-btn--raised village-industrial-switch">
                     <ui:VisualElement class="pp-btn__icon pp-icon pp-icon--electricity" picking-mode="Ignore" />
-                    <ui:Label name="villageIndustrialSwitchLabel" text="工業モード" picking-mode="Ignore" />
+                    <ui:Label name="villageIndustrialSwitchLabel" text="工房モード" picking-mode="Ignore" />
                 </ui:Button>
             </ui:VisualElement>
 
@@ -47,10 +47,10 @@
                 </ui:VisualElement>
             </ui:VisualElement>
 
-            <!-- エンドフィールド風: 集成工業モード上部タクティカルバー (見下ろし視点 90° 切替 & 90° 回転) -->
+            <!-- 工房モードの操作バー (見下ろし視点切替・90°回転) -->
             <ui:VisualElement name="villageTacticalBar" class="village-tactical-bar pp-hidden">
                 <ui:VisualElement class="village-tactical-row">
-                    <ui:Label text="⚡ 集成工業" class="village-tactical-title" picking-mode="Ignore" />
+                    <ui:Label text="⚡ ペンギン工房" class="village-tactical-title" picking-mode="Ignore" />
                     <ui:Label name="villageTacticalGas" text="ガス 0/分" class="village-tactical-gas" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <ui:VisualElement class="village-tactical-row">
@@ -78,7 +78,7 @@
             <!-- 3D 施設の頭上に浮かぶ空間ステータスバッジ・回収バブル層 -->
             <ui:VisualElement name="villageSpatialLayer" class="village-spatial-layer" picking-mode="Ignore" />
 
-            <!-- 左下: ボトルネック・並び連携ライブ診断ピル (タップで協約核心レポートを開く) -->
+            <!-- 左下: 生産状況と施設の連携。タップで生産レポートを開く -->
             <ui:Button name="villageInsightBanner" class="village-insight-banner">
                 <ui:VisualElement class="pp-icon pp-icon--production pp-icon--primary" picking-mode="Ignore" />
                 <ui:Label name="villageInsightText" text="稼働状況を診断中..." class="pp-text-caption pp-text-bold" picking-mode="Ignore" />
@@ -96,7 +96,7 @@
                     <ui:VisualElement class="pp-tool__circle" picking-mode="Ignore">
                         <ui:VisualElement class="pp-icon pp-icon--production pp-icon--eco" picking-mode="Ignore" />
                     </ui:VisualElement>
-                    <ui:Label text="コア効率" class="pp-tool__label" picking-mode="Ignore" />
+                    <ui:Label text="生産効率" class="pp-tool__label" picking-mode="Ignore" />
                 </ui:Button>
                 <ui:Button name="villageHarbor" class="pp-tool pp-tool--raised">
                     <ui:VisualElement class="pp-tool__circle" picking-mode="Ignore">
@@ -110,7 +110,7 @@
                 </ui:Button>
             </ui:VisualElement>
 
-            <!-- エンドフィールド風: 盤面を隠さない下部クイック建設ドック -->
+            <!-- 盤面を隠さない下部の施設選択欄 -->
             <ui:VisualElement name="villageQuickDock" class="village-quick-dock pp-hidden">
                 <ui:VisualElement class="village-dock-header">
                     <ui:VisualElement name="villageDockTabs" class="village-dock-tabs" />
@@ -155,7 +155,7 @@
                 </ui:Button>
                 <ui:Button name="villageManageTab" class="pp-tab">
                     <ui:VisualElement class="pp-tab__icon pp-icon--penguin" picking-mode="Ignore" />
-                    <ui:Label text="工業・図面" class="pp-tab__label" picking-mode="Ignore" />
+                    <ui:Label text="工房・図面" class="pp-tab__label" picking-mode="Ignore" />
                 </ui:Button>
                 <ui:Button name="villageMenuTab" class="pp-tab">
                     <ui:VisualElement class="pp-tab__icon pp-icon--menu" picking-mode="Ignore" />
@@ -181,7 +181,7 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- タクティカル全画面生産レポート (集成工業モード) -->
+        <!-- 工房の全画面生産レポート -->
         <ui:Template name="ProductionReport" src="Report/ProductionReport.uxml" />
         <ui:Instance template="ProductionReport" name="villageProductionReport" class="village-production-report" picking-mode="Ignore" />
     </ui:VisualElement>

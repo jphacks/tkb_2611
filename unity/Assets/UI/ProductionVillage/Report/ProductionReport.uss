@@ -10,7 +10,6 @@
     top: 0;
     right: 0;
     bottom: 0;
-    z-index: 200;
 }
 
 .pp-report-empty {
@@ -30,6 +29,7 @@
 
 .pp-report-bar-track {
     width: 100%;
+    flex-shrink: 0;
     height: 6px;
     background-color: var(--color-surface-glass);
     border-radius: 3px;
