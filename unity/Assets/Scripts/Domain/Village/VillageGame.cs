@@ -14,7 +14,7 @@ namespace ProjectPenguin.Domain.Village
     public sealed class VillageNodeView
     {
         public int Id {get; internal set;} public FacilityKind Kind {get; internal set;}
-        public int Effort {get; internal set;} public int Capacity {get; internal set;}
+        public int Effort {get; internal set;} public int WarehouseBaseCapacity {get; internal set;} public int Capacity {get; internal set;}
         public double ProductionSeconds {get; internal set;}
         public VillageEffortView EffortSettings {get; internal set;}
         public int X {get; internal set;} public int Y {get; internal set;} public int Total {get; internal set;}
@@ -81,7 +81,7 @@ namespace ProjectPenguin.Domain.Village
     {
         private sealed class Node
         {
-            internal int Id,X,Y,Effort;internal FacilityKind Kind;
+            internal int Id,X,Y,Effort,WarehouseCapacity;internal FacilityKind Kind;
             internal readonly Dictionary<Item,int> Stock=new Dictionary<Item,int>();
             internal long Started,Finish;internal string Status="待機";
             internal int Held(Item item)=>Stock.TryGetValue(item,out var n)?n:0;
@@ -123,7 +123,7 @@ namespace ProjectPenguin.Domain.Village
         internal static int CoverageRadiusOf(FacilityKind kind)=>
             kind==FacilityKind.ElectricAmplifier||kind==FacilityKind.WaterAmplifier||kind==FacilityKind.GasAmplifier||kind==FacilityKind.IceHouse||kind==FacilityKind.Sorter?6:0;
         private bool IsAmplified(Node target)=>AmplifierBonus(target)>0;
-        private int NodeCapacity(Node n)=>(int)((n.Kind==FacilityKind.Warehouse||n.Kind==FacilityKind.Sorter?20:12)*CoolingMultiplier(n));
+        private int NodeCapacity(Node n)=>(int)((n.Kind==FacilityKind.Warehouse?WarehouseBaseCapacity(n):n.Kind==FacilityKind.Sorter?20:12)*CoolingMultiplier(n));
         private int OutputCap(Node n)=>(int)(6*CoolingMultiplier(n));
         private double NodeSpeedMultiplier(Node n)
         {
@@ -332,7 +332,7 @@ namespace ProjectPenguin.Domain.Village
                 ProducedLastMinute=_history.Sum(e=>(long)e.Made),
                 BottleneckSummary=bottleneckSummary,HasBottleneck=hasBottleneck,
                 Nodes=Array.AsReadOnly(_nodes.Select(n=>new VillageNodeView{Id=n.Id,Kind=n.Kind,X=n.X,Y=n.Y,Total=n.Stock.Values.Sum(),
-                    Effort=n.Effort,Capacity=NodeCapacity(n),EffortSettings=EffortView(n),
+                    Effort=n.Effort,WarehouseBaseCapacity=n.Kind==FacilityKind.Warehouse?WarehouseBaseCapacity(n):0,Capacity=NodeCapacity(n),EffortSettings=EffortView(n),
                     ProductionSeconds=RecipeOf(n)==null?0:Math.Max(.1,RecipeOf(n).Seconds/(_speed*NodeSpeedMultiplier(n))),
                     Status=n.Status,Amplified=IsAmplified(n),InSynergy=synergyNodeIds.Contains(n.Id),CoverageRadius=CoverageRadiusOf(n.Kind),
                     Progress=n.Finish>0?Math.Min(1,(_at-n.Started)/(double)(n.Finish-n.Started)):0,

@@ -56,7 +56,7 @@ namespace ProjectPenguin.Domain.Village
             return new VillageState{EffortSchema=1,At=_at,Requested=_requested,NextId=_nextId,NextCargo=_nextCargo,Produced=_produced,
                 GroupProgress=new VillageGroupProgressState{ElapsedMs=_groupElapsed,Tick=_groupTick,Chikuwa=GroupProgressOf(Item.Chikuwa),Kamaboko=GroupProgressOf(Item.Kamaboko),DriedFish=GroupProgressOf(Item.DriedFish)},
                 DeliveryMs=_deliveryMs,Speed=_speed,Gas=_gas,Electricity=_electricity,Water=_water,Spent=_spent,Unlimited=_unlimited,Ledger=_ledger.Copy(),
-                Nodes=_nodes.Select(n=>new VillageNodeState{Id=n.Id,Kind=n.Kind,Effort=n.Effort,X=n.X,Y=n.Y,Started=n.Started,Finish=n.Finish,
+                Nodes=_nodes.Select(n=>new VillageNodeState{Id=n.Id,Kind=n.Kind,Effort=n.Effort,WarehouseCapacity=n.WarehouseCapacity,X=n.X,Y=n.Y,Started=n.Started,Finish=n.Finish,
                     Stock=Enum.GetValues(typeof(Item)).Cast<Item>().Select(i=>n.Held(i)).ToArray()}).ToList(),
                 Cargo=_cargo.Select(c=>new VillageCargoState{Id=c.Id,From=c.From,To=c.To,Item=c.Item,FromX=c.FromX,FromY=c.FromY,ToX=c.ToX,ToY=c.ToY,Start=c.Start,End=c.End}).ToList(),
                 History=_history.Select(e=>new VillageHistoryState{At=e.At,Gas=e.Gas,Made=e.Made}).ToList(),
@@ -73,8 +73,8 @@ namespace ProjectPenguin.Domain.Village
             g._at=s.At;g._requested=s.Requested;g._spent=s.Spent;g._produced=s.Produced;
             foreach(var n in s.Nodes)
             {
-                if(n==null||n.Id<=0||g._nodes.Any(a=>a.Id==n.Id)||!Supported(n.Kind)||(s.EffortSchema==0?(n.Level<0||n.Level>5):(n.Effort<0||n.Effort>VillageEffortRules.MaxEffort||!VillageEffortRules.Supports(n.Kind)&&n.Effort!=0))||g.Placement(n.Kind,n.X,n.Y,0)!=""||n.Stock==null||n.Stock.Length!=8||n.Stock.Any(i=>i<0||i>VillageEffortRules.MaximumCapacity)||n.Started<0||n.Finish<0||n.Finish>0&&(n.Started>s.At||n.Finish<=s.At||n.Finish<=n.Started)||RecipeOf(new Node{Kind=n.Kind})==null&&n.Finish!=0)throw new ArgumentException("保存の施設が不正です");
-                var node=new Node{Id=n.Id,Kind=n.Kind,Effort=s.EffortSchema==0?(VillageEffortRules.Supports(n.Kind)?Math.Min(VillageEffortRules.MaxEffort,Math.Max(0,n.Level-1)):0):n.Effort,X=n.X,Y=n.Y,Started=n.Started,Finish=n.Finish,Status=n.Finish>0?"生産中":"待機"};
+                if(n==null||n.Id<=0||g._nodes.Any(a=>a.Id==n.Id)||!Supported(n.Kind)||n.WarehouseCapacity<0||n.WarehouseCapacity>MaxWarehouseCapacity||n.Kind!=FacilityKind.Warehouse&&n.WarehouseCapacity!=0||(s.EffortSchema==0?(n.Level<0||n.Level>5):(n.Effort<0||n.Effort>VillageEffortRules.MaxEffort||!VillageEffortRules.Supports(n.Kind)&&n.Effort!=0))||g.Placement(n.Kind,n.X,n.Y,0)!=""||n.Stock==null||n.Stock.Length!=8||n.Stock.Any(i=>i<0||i>SavedCapacityLimit(n.Kind))||n.Started<0||n.Finish<0||n.Finish>0&&(n.Started>s.At||n.Finish<=s.At||n.Finish<=n.Started)||RecipeOf(new Node{Kind=n.Kind})==null&&n.Finish!=0)throw new ArgumentException("保存の施設が不正です");
+                var node=new Node{Id=n.Id,Kind=n.Kind,Effort=s.EffortSchema==0?(VillageEffortRules.Supports(n.Kind)?Math.Min(VillageEffortRules.MaxEffort,Math.Max(0,n.Level-1)):0):n.Effort,WarehouseCapacity=n.WarehouseCapacity,X=n.X,Y=n.Y,Started=n.Started,Finish=n.Finish,Status=n.Finish>0?"生産中":"待機"};
                 for(var i=0;i<8;i++)node.Stock[(Item)i]=n.Stock[i];g._nodes.Add(node);
             }
             foreach(var c in s.Cargo)
@@ -84,7 +84,7 @@ namespace ProjectPenguin.Domain.Village
                 g._cargo.Add(new VillageCargoView{Id=c.Id,From=c.From,To=c.To,Item=c.Item,FromX=c.FromX,FromY=c.FromY,ToX=c.ToX,ToY=c.ToY,Start=c.Start,End=c.End});
             }
             foreach(var n in g._nodes)
-                if(n.Stock.Values.Sum()+g._cargo.Count(c=>c.To==n.Id)+(n.Finish>0&&RecipeOf(n)!=null?RecipeOf(n).Output.Count:0)>VillageEffortRules.MaximumCapacity)throw new ArgumentException("在庫予約が容量を超えています");
+                if(n.Stock.Values.Sum()+g._cargo.Count(c=>c.To==n.Id)+(n.Finish>0&&RecipeOf(n)!=null?RecipeOf(n).Output.Count:0)>SavedCapacityLimit(n.Kind))throw new ArgumentException("在庫予約が容量を超えています");
             if(s.NextId<=g._nodes.Select(n=>n.Id).DefaultIfEmpty(0).Max()||s.NextCargo<=g._cargo.Select(c=>c.Id).DefaultIfEmpty(0).Max())throw new ArgumentException("保存のIDが不正です");
             foreach(var h in s.History){if(h==null||h.At<0||h.At>s.At||h.Made<0||!Finite(h.Gas)||h.Gas<0)throw new ArgumentException("実績が不正です");g._history.Add((h.At,h.Gas,h.Made));}
             if(s.Trend!=null)

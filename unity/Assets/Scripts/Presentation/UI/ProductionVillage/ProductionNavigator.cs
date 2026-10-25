@@ -973,18 +973,32 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 }
             }, UiClasses.Icon.Demolish, primary: false);
 
-            var effortCard = Card();
-            var effortPanel = new VillageEffortPanel(effortCard, (nodeId, effort) =>
+            VillageWarehousePanel warehousePanel = null;
+            VillageEffortPanel effortPanel = null;
+            if (node.Kind == FacilityKind.Warehouse)
             {
-                if (_session.Core.SetEffort(nodeId, effort, ProductionVillageSession.UtcNow))
+                warehousePanel = new VillageWarehousePanel(Card(), (nodeId, value) =>
                 {
-                    ShowToast(_session.Core.Notice);
-                    ShowFacility(nodeId);
-                    return true;
-                }
-                ShowToast(string.IsNullOrEmpty(_session.Core.Error) ? _session.Core.Notice : _session.Core.Error);
-                return false;
-            });
+                    var ok = _session.Core.SetWarehouseCapacity(nodeId, value, ProductionVillageSession.UtcNow);
+                    ShowToast(ok ? _session.Core.Notice : string.IsNullOrEmpty(_session.Core.Error) ? _session.Core.Notice : _session.Core.Error);
+                    if (ok) ShowFacility(nodeId);
+                    return ok;
+                });
+            }
+            else
+            {
+                effortPanel = new VillageEffortPanel(Card(), (nodeId, effort) =>
+                {
+                    if (_session.Core.SetEffort(nodeId, effort, ProductionVillageSession.UtcNow))
+                    {
+                        ShowToast(_session.Core.Notice);
+                        ShowFacility(nodeId);
+                        return true;
+                    }
+                    ShowToast(string.IsNullOrEmpty(_session.Core.Error) ? _session.Core.Notice : _session.Core.Error);
+                    return false;
+                });
+            }
             var stockCard = Card("置いてある品物");
             var capacity = IslandUi.Text("", ProductionUiNames.Subtle);
             stockCard.Add(capacity);
@@ -1011,7 +1025,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 var stock = n.Stock.Where(p => p.Value > 0).ToList();
                 var incoming = view.Cargo.Count(c => c.To == id);
                 capacity.text = $"保管 {n.Total} / {n.Capacity}個  ·  配送待ち {incoming}個";
-                effortPanel.Render(n, view.Gas);
+                effortPanel?.Render(n, view.Gas);
+                warehousePanel?.Render(n, incoming);
                 if (stock.Count == 0)
                 {
                     Empty(items, UiClasses.Icon.StorageFull, incoming > 0 ? $"とどく途中の品物が {incoming} 個あるよ" : "まだ何も置いていないよ");
@@ -1106,7 +1121,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 stats.Add(IslandUi.Row(
                     IslandUi.IconBadge(UiClasses.Icon.Boat, UiClasses.Tint.Point),
                     "出荷港の倉庫連携",
-                    warehouses > 0 ? $"倉庫 {warehouses} 棟が稼働中（保管枠 +{warehouses * 20}）" : "倉庫を建てると大量の品物を備蓄できるよ",
+                    warehouses > 0 ? $"倉庫 {warehouses} 棟が稼働中（合計容量 {view.Nodes.Where(n => n.Kind == FacilityKind.Warehouse).Sum(n => n.Capacity):N0}個）" : "倉庫を建てると大量の品物を備蓄できるよ",
                     Badge(warehouses > 0 ? $"Lv.{warehouses}" : "未設置", UiClasses.Badge.Accent)));
                 stats.Children().Last().AddToClassList(UiClasses.Row.Last);
                 items.Clear();

@@ -5,7 +5,7 @@ namespace ProjectPenguin.Data
 {
     [Serializable] public sealed class ProductionVillageSave
     {
-        public const int CurrentVersion=3;
+        public const int CurrentVersion=4;
         public int Version=CurrentVersion;
         public long UtcMs;
         public string Profile="production", VillageName="ペンギンの村";

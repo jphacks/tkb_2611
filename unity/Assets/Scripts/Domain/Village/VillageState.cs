@@ -36,6 +36,7 @@ namespace ProjectPenguin.Domain.Village
         public int Id, X, Y;
         public int Level = 1; // Legacy saves only; effort saves use EffortSchema.
         public int Effort;
+        public int WarehouseCapacity; // Zero keeps the legacy default.
         public FacilityKind Kind;
         public long Started, Finish;
         public int[] Stock = new int[8];
