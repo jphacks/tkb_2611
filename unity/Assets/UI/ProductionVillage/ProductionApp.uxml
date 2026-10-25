@@ -1,4 +1,4 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements">
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:ind="ProjectPenguin.Presentation.UI.Industrial">
     <!-- 見た目は PanelSettings の PenguinTheme (Tokens / Components / Game / Thumbnails) に任せ、ここはレイアウトだけを読む -->
     <ui:Style src="ProductionApp.uss" />
     <ui:VisualElement name="villageApp" class="village-app" picking-mode="Ignore">
@@ -47,23 +47,29 @@
                 </ui:VisualElement>
             </ui:VisualElement>
 
-            <!-- 工房モードの操作バー (見下ろし視点切替・90°回転) -->
-            <ui:VisualElement name="villageTacticalBar" class="village-tactical-bar pp-hidden">
-                <ui:VisualElement class="village-tactical-row">
-                    <ui:Label text="⚡ ペンギン工房" class="village-tactical-title" picking-mode="Ignore" />
+            <!-- 工房モードの状態 (ガス・稼働の数・次にやること)。島を隠さないよう薄くする。押すと生産レポート -->
+            <ui:Button name="villageTacticalBar" class="village-tactical-bar pp-hidden">
+                <ui:VisualElement class="village-tactical-row" picking-mode="Ignore">
+                    <ui:VisualElement class="pp-icon pp-icon--build pp-icon--point village-tactical-icon" picking-mode="Ignore" />
+                    <ui:Label text="ペンギン工房" class="village-tactical-title" picking-mode="Ignore" />
                     <ui:Label name="villageTacticalGas" text="ガス 0" class="village-tactical-gas" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <ui:Label name="villageTacticalStatus" text="稼働 0/0　停止 0　配送中 0 便" class="village-tactical-status" picking-mode="Ignore" />
-                <ui:VisualElement class="village-tactical-row">
-                    <ui:Button name="villageTopDownToggle" class="village-tactical-btn">
-                        <ui:Label name="villageTopDownLabel" text="見下ろし OFF" picking-mode="Ignore" />
-                    </ui:Button>
-                    <ui:Button name="villageRotateCamera" text="90°回転" class="village-tactical-btn" />
-                    <ui:Button name="villageZoomOverview" text="全体" class="village-tactical-btn village-tactical-btn--active" />
-                    <ui:Button name="villageZoomDetail" text="詳細" class="village-tactical-btn" />
-                </ui:VisualElement>
-                <ui:Label name="villageNextStep" text="▶ 村を読み込んでいるよ" class="village-next-step" picking-mode="Ignore" />
-                <ui:Label name="villageGroupState" text="全体表示・2本指で詳細へ" class="village-group-state" picking-mode="Ignore" />
+                <ui:Label name="villageNextStep" text="村を読み込んでいるよ" class="village-next-step" picking-mode="Ignore" />
+            </ui:Button>
+
+            <!-- 工房モードのカメラ操作。右端に縦に並べ、盤面を隠さない -->
+            <ui:VisualElement name="villageCameraRail" class="village-camera-rail pp-hidden">
+                <ui:Button name="villageZoomOverview" text="全体" class="village-tactical-btn village-tactical-btn--active" />
+                <ui:Button name="villageZoomDetail" text="詳細" class="village-tactical-btn" />
+                <ui:Label name="villageGroupState" text="全体表示" class="village-group-state" picking-mode="Ignore" />
+                <ui:Button name="villageTopDownToggle" class="village-tactical-btn">
+                    <ui:Label name="villageTopDownLabel" text="斜め" picking-mode="Ignore" />
+                </ui:Button>
+                <ui:Button name="villageRotateCamera" class="village-tactical-btn">
+                    <ui:VisualElement class="pp-icon pp-icon--rotate village-tactical-icon" picking-mode="Ignore" />
+                    <ui:Label text="90°" picking-mode="Ignore" />
+                </ui:Button>
             </ui:VisualElement>
 
             <!-- 読み込みや保存に失敗している間だけ出す。解消するまで消さない -->
@@ -137,6 +143,20 @@
             <ui:VisualElement name="villageToastLayer" class="pp-toast-layer village-toasts" picking-mode="Ignore" />
         </ui:VisualElement>
 
+        <!-- やわらかい全画面ページ (メニュー・記録)。下のタブはこの上に重なり、タブで行き来できる -->
+        <ui:VisualElement name="villageSoftPage" class="village-soft-page pp-safe-area pp-hidden">
+            <ui:VisualElement class="village-soft-page__bar">
+                <ui:Button name="villageSoftBack" class="village-soft-page__back">
+                    <ui:VisualElement class="pp-icon pp-icon--chevron-left village-soft-page__back-icon" picking-mode="Ignore" />
+                </ui:Button>
+                <ui:VisualElement class="village-soft-page__heading" picking-mode="Ignore">
+                    <ui:Label name="villageSoftTitle" class="village-soft-page__title" text="" picking-mode="Ignore" />
+                    <ui:Label name="villageSoftSub" class="village-soft-page__sub" text="" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:ScrollView name="villageSoftContent" class="village-soft-page__body" />
+        </ui:VisualElement>
+
         <!-- 下のタブ。スキャンは中央の大きな丸 -->
         <ui:VisualElement name="villageNavigation" class="pp-tab-bar village-navigation">
             <ui:VisualElement class="pp-tab-bar__tabs">
@@ -182,6 +202,26 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
+        <!-- 工房まわりのウィンドウ (施設・図面・港・工房)。生産レポートと同じ枠の全画面ページ -->
+        <ui:VisualElement name="villageWorkshopPage" class="pp-industrial pp-safe-area village-workshop-page pp-hidden">
+            <ui:VisualElement class="pp-ind-page">
+                <ui:VisualElement class="pp-ind-header">
+                    <ui:VisualElement class="pp-ind-title">
+                        <ui:Label name="villageWorkshopMicro" class="pp-ind-micro" text="WORKSHOP" />
+                        <ui:VisualElement class="pp-ind-h1">
+                            <ind:HexMark class="pp-ind-hex-mark" />
+                            <ui:Label name="villageWorkshopTitle" class="pp-ind-h1__text" text="工房" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Button name="villageWorkshopClose" class="pp-ind-close">
+                        <ui:VisualElement class="pp-icon pp-icon--close pp-ind-close__icon" picking-mode="Ignore" />
+                    </ui:Button>
+                </ui:VisualElement>
+                <ui:VisualElement class="pp-ind-hatch" />
+                <ui:ScrollView name="villageWorkshopContent" class="pp-ind-scroll village-workshop-page__body" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
         <!-- 工房の全画面生産レポート -->
         <ui:Template name="ProductionReport" src="Report/ProductionReport.uxml" />
         <ui:Instance template="ProductionReport" name="villageProductionReport" class="village-production-report" picking-mode="Ignore" />
@@ -189,5 +229,23 @@
         <!-- 水分補給とエコ活動の写真を撮る全画面カメラ。開くまでは隠しておく -->
         <ui:Template name="VillageWaterCamera" src="VillageWaterCamera.uxml" />
         <ui:Instance template="VillageWaterCamera" name="villageWaterCamera" class="village-water-camera pp-hidden" />
+
+        <!-- チュートリアルの吹き出し (VillageTutorialPresenter)。ページや生産レポートの上にも出す。吹き出しの外は押せる -->
+        <ui:VisualElement name="villageCoach" class="village-coach pp-hidden" picking-mode="Ignore">
+            <ui:VisualElement class="village-coach__card">
+                <ui:VisualElement class="village-coach__head" picking-mode="Ignore">
+                    <ui:VisualElement class="pp-icon pp-icon--penguin pp-icon--original village-coach__icon" picking-mode="Ignore" />
+                    <ui:VisualElement class="village-coach__heading" picking-mode="Ignore">
+                        <ui:Label name="villageCoachStep" class="village-coach__step" text="1 / 7" picking-mode="Ignore" />
+                        <ui:Label name="villageCoachTitle" class="village-coach__title" text="" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label name="villageCoachBody" class="village-coach__body" text="" picking-mode="Ignore" />
+                <ui:VisualElement class="village-coach__actions">
+                    <ui:Button name="villageCoachSkip" class="pp-btn pp-btn--ghost village-coach__skip" text="飛ばす" />
+                    <ui:Button name="villageCoachNext" class="pp-btn pp-btn--raised village-coach__next" text="次へ" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

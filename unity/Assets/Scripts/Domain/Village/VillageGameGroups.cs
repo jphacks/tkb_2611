@@ -49,7 +49,7 @@ namespace ProjectPenguin.Domain.Village
                         NodeIds=Array.AsReadOnly(nodes.Select(n=>n.Id).OrderBy(id=>id).ToArray()),MinX=candidate.X,MinY=candidate.Y,
                         Width=nodes.Max(n=>n.X+n.Size)-candidate.X,Height=nodes.Max(n=>n.Y+n.Size)-candidate.Y,
                         Active=active,BonusPerMinute=active?VillageGroupRules.ItemsPerMinute:0,
-                        Status=!_groupViewActive?"縮小すると追加生産":!running?"施設の稼働待ち":!room?"中心施設の空き待ち":"追加生産中"});
+                        Status=!_groupViewActive?"全体表示で追加生産":!running?"施設の稼働待ち":!room?"中心施設の空き待ち":"追加生産中"});
                 }
             }
             return result;

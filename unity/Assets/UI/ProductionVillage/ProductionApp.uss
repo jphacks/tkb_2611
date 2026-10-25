@@ -74,16 +74,56 @@
     margin: var(--space-2) var(--space-4) 0 var(--space-4);
 }
 
-/* 工房モードの操作バー */
+/* 工房モードの状態バー (押すと生産レポート)。ボタンの既定の見た目を打ち消し、薄く保つ */
 .village-tactical-bar {
+    flex-direction: column;
+    align-items: stretch;
+    -unity-text-align: upper-left;
     margin: var(--space-2) var(--space-4) 0 var(--space-4);
-    padding: var(--space-2) var(--space-3);
+    padding: var(--space-1) var(--space-3) var(--space-2) var(--space-3);
     border-radius: var(--radius-md);
     background-color: var(--color-tactical-bg);
     border-width: 2px;
     border-color: var(--color-tactical-cyan);
     border-bottom-width: 6px;
     border-bottom-color: var(--color-tactical-lip);
+}
+
+.village-tactical-bar:hover,
+.village-tactical-bar:active {
+    background-color: var(--color-tactical-surface);
+}
+
+/* 工房モードのカメラ操作。右端に縦に並べる */
+.village-camera-rail {
+    position: absolute;
+    right: var(--space-3);
+    top: 640px;
+    width: 132px;
+    align-items: stretch;
+    padding: var(--space-1);
+    border-radius: var(--radius-md);
+    background-color: var(--color-tactical-bg);
+    border-width: 2px;
+    border-color: var(--color-tactical-cyan-soft);
+}
+
+.village-camera-rail .village-tactical-btn {
+    justify-content: center;
+    margin: var(--space-1) 0;
+    padding: 0 var(--space-1);
+    white-space: nowrap;
+}
+
+.village-camera-rail .village-tactical-icon {
+    width: 32px;
+    height: 32px;
+    margin-right: 2px;
+}
+
+.village-camera-rail .village-group-state {
+    margin: 0 0 var(--space-1) 0;
+    -unity-text-align: middle-center;
 }
 
 .village-tactical-title {
@@ -107,9 +147,9 @@
 
 /* 稼働・停止・配送中の数 (生産レポートの札と同じ数え方)。止まっている施設があれば赤くする */
 .village-tactical-status {
-    margin-top: var(--space-1);
+    margin-top: 0;
     color: var(--color-text-on-primary);
-    font-size: var(--font-size-body);
+    font-size: var(--font-size-caption);
     -unity-font-definition: var(--font-bold);
 }
 
@@ -505,7 +545,7 @@
 }
 .village-tactical-row { flex-direction: row; flex-wrap: wrap; align-items: center; }
 /* 次にやること (VillageInsight.NextStep)。困っているときは赤い帯で目立たせる */
-.village-next-step { color: var(--color-accent); font-size: var(--font-size-body); -unity-font-style: bold; white-space: normal; margin-top: var(--space-2); padding: var(--space-1) var(--space-2); border-left-width: 6px; border-left-color: var(--color-accent); background-color: var(--color-tactical-cyan-soft); }
+.village-next-step { color: var(--color-accent); font-size: var(--font-size-body); -unity-font-style: bold; white-space: normal; margin-top: var(--space-1); padding: 2px var(--space-2); border-left-width: 6px; border-left-color: var(--color-accent); background-color: var(--color-tactical-cyan-soft); }
 .village-next-step--warn { color: var(--color-danger-soft); border-left-color: var(--color-danger); }
 .village-group-state { color: var(--color-tactical-cyan); font-size: var(--font-size-caption); white-space: normal; margin-top: var(--space-1); }
 .village-group-mark { position: absolute; width: 46px; height: 46px; opacity: 0.55; }
@@ -517,4 +557,654 @@
     top: 0;
     right: 0;
     bottom: 0;
+}
+
+/* ============ 工房まわりのウィンドウ (全画面ページ) ============
+   生産レポートと同じ枠 (pp-industrial / pp-ind-*)。中身はシートと同じ組み立てなので、
+   ページの中だけ、カード・行・札を生産レポートの紺の行にそろえる。 */
+.village-workshop-page {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.village-workshop-page__body {
+    flex-grow: 1;
+}
+
+.village-workshop-page__body > .unity-scroll-view__content-viewport > .unity-scroll-view__content-container {
+    padding: var(--space-2) var(--space-6) var(--space-8) var(--space-6);
+}
+
+/* 節 (カード) は紺の板。左に黄の帯を付けて見出しを読みやすくする */
+.village-workshop-page .pp-card {
+    flex-shrink: 0;
+    margin: 0 var(--space-6) var(--space-4) var(--space-6);
+    padding: var(--space-3) var(--space-4);
+    border-radius: 0;
+    background-color: var(--ind-navy);
+    border-width: 0;
+    border-left-width: 8px;
+    border-left-color: var(--ind-yellow);
+    color: var(--ind-on);
+}
+
+.village-workshop-page .village-card__title {
+    margin-bottom: var(--space-2);
+    color: var(--ind-yellow);
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.village-workshop-page .village-subtle,
+.village-workshop-page .pp-row__sub {
+    color: var(--ind-on-sub);
+    white-space: normal;
+}
+
+.village-workshop-page .pp-row {
+    border-bottom-color: var(--ind-navy-2);
+    min-height: 120px;
+}
+
+.village-workshop-page .pp-row__title {
+    color: var(--ind-on);
+    -unity-font-definition: var(--font-heavy);
+}
+
+/* 行の中の文字を折り返し、右の札と重ならないようにする (図面の行が重なっていた) */
+.village-workshop-page .pp-row > VisualElement {
+    flex-shrink: 1;
+}
+
+.village-workshop-page .pp-row .pp-badge {
+    flex-shrink: 0;
+    height: auto;
+    min-height: 44px;
+    margin-left: var(--space-2);
+    white-space: normal;
+    max-width: 260px;
+}
+
+.village-workshop-page .village-stat {
+    color: var(--ind-cyan);
+    -unity-font-definition: var(--font-num-heavy);
+    font-size: var(--font-size-title);
+}
+
+/* 折り返す並びは縮めない (縮めると 3 段目がカードの外へはみ出す) */
+.village-workshop-page .village-items {
+    flex-shrink: 0;
+    align-content: flex-start;
+}
+
+/* 割合の幅で折り返すと高さの計算が合わないので、ページの中では幅を決め打つ (3 列) */
+.village-workshop-page .village-items > .pp-item-card {
+    width: 284px;
+}
+
+.village-workshop-page .village-shelf {
+    flex-shrink: 0;
+    margin: 0 var(--space-6) var(--space-4) var(--space-6);
+}
+
+/* 施設の棚と品物の札は、紺の地に白い絵を載せる */
+.village-workshop-page .pp-shelf-card,
+.village-workshop-page .pp-item-card {
+    background-color: var(--ind-navy);
+    border-radius: 0;
+    border-width: 2px;
+    border-color: var(--ind-navy-2);
+    border-bottom-width: 6px;
+    border-bottom-color: var(--ind-yellow);
+}
+
+.village-workshop-page .pp-shelf-card__name,
+.village-workshop-page .pp-item-card__rate {
+    color: var(--ind-on);
+}
+
+.village-workshop-page .pp-item-card__value {
+    color: var(--ind-on);
+    -unity-font-definition: var(--font-num-heavy);
+}
+
+.village-workshop-page .pp-cost__value {
+    color: var(--ind-yellow);
+}
+
+/* 絵文字の代わりのアイコン (お魚などと同じ SVG)。見出し・札・操作バーで使う */
+.village-card__head {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--space-2);
+}
+
+.village-card__head > .pp-icon {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    margin-right: var(--space-2);
+}
+
+.village-card__head > .village-card__title {
+    margin-bottom: 0;
+}
+
+.village-spatial-badge__icon {
+    width: 32px;
+    height: 32px;
+    margin-right: 4px;
+    -unity-background-image-tint-color: var(--color-primary);
+}
+
+/* USS は :not() を使えないので、状態ごとに上書きする */
+.village-spatial-badge--warn .village-spatial-badge__icon {
+    -unity-background-image-tint-color: var(--color-text-on-primary);
+}
+
+.village-spatial-badge--synergy .village-spatial-badge__icon {
+    -unity-background-image-tint-color: var(--color-text);
+}
+
+.village-tactical-icon {
+    width: 40px;
+    height: 40px;
+    margin-right: var(--space-1);
+}
+
+.village-tactical-btn .village-tactical-icon {
+    -unity-background-image-tint-color: var(--color-text-on-primary);
+}
+
+/* ============ チュートリアル (VillageTutorialPresenter) ============
+   吹き出しは画面の下 (タブの上) に出し、光らせる場所が下にある段では上に出す。吹き出しの外は押せる。 */
+.village-coach {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: flex-end;
+    padding: 0 var(--space-4) 300px var(--space-4);
+}
+
+/* 上に出すときは、右端のカメラの列 (top 640px) にかからないよう、資源の帯のあたりまで上げる */
+.village-coach--top {
+    justify-content: flex-start;
+    padding: 120px var(--space-4) 0 var(--space-4);
+}
+
+.village-coach__card {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface-solid);
+    border-width: 4px;
+    border-color: var(--color-primary);
+    border-bottom-width: 10px;
+    border-bottom-color: var(--color-primary-dark);
+}
+
+.village-coach__head {
+    flex-direction: row;
+    align-items: center;
+}
+
+.village-coach__icon {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+    margin-right: var(--space-2);
+}
+
+.village-coach__heading {
+    flex-shrink: 1;
+}
+
+.village-coach__step {
+    color: var(--color-primary);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-num-bold);
+}
+
+.village-coach__title {
+    color: var(--color-text);
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-heavy);
+    white-space: normal;
+}
+
+.village-coach__body {
+    margin-top: var(--space-2);
+    color: var(--color-text);
+    font-size: var(--font-size-body);
+    white-space: normal;
+}
+
+.village-coach__actions {
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-top: var(--space-3);
+}
+
+.village-coach__skip {
+    margin-right: var(--space-2);
+}
+
+/* 押す場所を脈打つ枠で囲む (presenter が --on を付け外しする) */
+.village-coach-target {
+    border-width: 6px;
+    border-color: var(--color-accent);
+    transition-property: border-color;
+    transition-duration: 0.3s;
+}
+
+.village-coach-target--on {
+    border-color: var(--color-primary);
+}
+
+/* ============ やわらかい全画面ページ (メニュー・記録) ============
+   ホームの主役のカード (.pp-hero) と同じ手触り: 氷色の地に、白く丸いカードと下の縁の厚み。
+   下のタブはこのページの上に重なるので、本文の下に余白を空ける。 */
+.village-soft-page {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--color-ice-50);
+}
+
+.village-soft-page__bar {
+    flex-direction: row;
+    align-items: center;
+    padding: var(--space-3) var(--space-4) var(--space-2) var(--space-4);
+}
+
+.village-soft-page__back {
+    width: 96px;
+    height: 96px;
+    margin: 0 var(--space-2) 0 0;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    border-width: 0;
+    border-bottom-width: var(--raise-depth);
+    border-bottom-color: var(--color-ice-200);
+    background-color: var(--color-surface-solid);
+}
+
+.village-soft-page__back:hover,
+.village-soft-page__back:active {
+    background-color: var(--color-surface-solid);
+}
+
+.village-soft-page__back:active {
+    border-bottom-width: var(--raise-depth-pressed);
+}
+
+.village-soft-page__back-icon {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    -unity-background-image-tint-color: var(--color-primary);
+}
+
+.village-soft-page__heading {
+    flex-shrink: 1;
+}
+
+.village-soft-page__title {
+    color: var(--color-text);
+    font-size: var(--font-size-headline);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.village-soft-page__sub {
+    color: var(--color-text-sub);
+    font-size: var(--font-size-caption);
+    white-space: normal;
+}
+
+.village-soft-page__body {
+    flex-grow: 1;
+}
+
+.village-soft-page__body .unity-scroll-view__content-container {
+    padding: var(--space-2) var(--space-4) 280px var(--space-4);
+}
+
+/* カード: 白く丸く、下の縁に厚み */
+.village-soft-card {
+    flex-shrink: 0;
+    margin-bottom: var(--space-4);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface-solid);
+    border-bottom-width: var(--raise-depth);
+    border-bottom-color: var(--color-ice-200);
+}
+
+.village-soft-card__head {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--space-3);
+}
+
+.village-soft-card__head > .pp-icon {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    margin-right: var(--space-2);
+}
+
+.village-soft-card__title {
+    color: var(--color-text);
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-heavy);
+}
+
+/* メニューの上: 大きなペンギンと村の名前 */
+.village-soft-hero {
+    flex-direction: row;
+    align-items: center;
+}
+
+.village-soft-hero__mascot {
+    width: 200px;
+    height: 200px;
+    margin-right: var(--space-3);
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    background-color: var(--color-ice-100);
+}
+
+.village-soft-hero__mascot > .pp-icon {
+    width: 160px;
+    height: 160px;
+}
+
+.village-soft-hero__name {
+    color: var(--color-text);
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-heavy);
+    white-space: normal;
+}
+
+.village-soft-hero__rank {
+    align-self: flex-start;
+    margin-top: var(--space-1);
+    padding: 4px var(--space-2);
+    border-radius: var(--radius-pill-sm);
+    background-color: var(--color-accent);
+    color: var(--color-text-rank);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-heavy);
+}
+
+/* タイル: 2 列、大きなアイコンの丸 + 名前 + ひとこと。押すと沈む */
+.village-soft-tiles {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-content: flex-start;
+    flex-shrink: 0;
+}
+
+.village-soft-tile {
+    width: 488px;
+    flex-shrink: 0;
+    margin: 0 0 var(--space-3) 0;
+    padding: var(--space-3);
+    flex-direction: column;
+    align-items: flex-start;
+    border-width: 0;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface-solid);
+    border-bottom-width: var(--raise-depth);
+    border-bottom-color: var(--color-ice-200);
+}
+
+.village-soft-tile:hover,
+.village-soft-tile:active {
+    background-color: var(--color-surface-solid);
+}
+
+.village-soft-tile:active {
+    border-bottom-width: var(--raise-depth-pressed);
+}
+
+.village-soft-tile__circle {
+    width: 112px;
+    height: 112px;
+    margin-bottom: var(--space-2);
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    background-color: var(--color-ice-100);
+}
+
+.village-soft-tile__circle > .pp-icon {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+}
+
+.village-soft-tile__name {
+    color: var(--color-text);
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.village-soft-tile__sub {
+    margin-top: 4px;
+    color: var(--color-text-sub);
+    font-size: var(--font-size-caption);
+    white-space: normal;
+}
+
+/* 遊び方の小さなカード (絵とひとことの横並び) */
+.village-soft-tips {
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.village-soft-tip {
+    width: 30%;
+    align-items: center;
+}
+
+.village-soft-tip > .pp-icon-badge {
+    margin-bottom: var(--space-1);
+}
+
+.village-soft-tip__text {
+    color: var(--color-text);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+.village-soft-note {
+    color: var(--color-text-sub);
+    font-size: var(--font-size-caption);
+    white-space: normal;
+}
+
+/* ---- 記録: 今日 ---- */
+.village-record-today {
+    flex-direction: row;
+    align-items: center;
+}
+
+.village-record-ring {
+    width: 300px;
+    height: 300px;
+    margin-right: var(--space-4);
+    align-items: center;
+    justify-content: center;
+    --ring-track-color: var(--color-ice-100);
+    --ring-fill-color: var(--color-res-gas);
+    --ring-width: 26;
+}
+
+.village-record-ring__center {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+.village-record-steps {
+    color: var(--color-text);
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-num-heavy);
+}
+
+.village-record-steps__unit {
+    color: var(--color-text-sub);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+}
+
+.village-record-ring__hint {
+    flex-shrink: 1;
+    color: var(--color-text);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-bold);
+    white-space: normal;
+}
+
+.village-record-chips {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: var(--space-3);
+}
+
+.village-record-chip {
+    width: 31%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-2) var(--space-1);
+    border-radius: var(--radius-md);
+    background-color: var(--color-ice-50);
+}
+
+.village-record-chip > .pp-icon {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    margin-right: 6px;
+}
+
+.village-record-chip__value {
+    color: var(--color-text);
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-num-heavy);
+}
+
+.village-record-chip__label {
+    margin-left: 4px;
+    color: var(--color-text-sub);
+    font-size: var(--font-size-micro);
+}
+
+/* ---- 記録: この 7 日 ---- */
+.village-record-week {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 300px;
+}
+
+.village-record-week--empty {
+    height: 96px;
+}
+
+.village-record-bar {
+    width: 12%;
+    height: 100%;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.village-record-bar__stack {
+    width: 56px;
+    flex-direction: column-reverse;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    opacity: 0.7;
+}
+
+.village-record-bar--today .village-record-bar__stack {
+    opacity: 1;
+}
+
+.village-record-bar__gas { background-color: var(--color-res-gas); }
+.village-record-bar__electricity { background-color: var(--color-res-electricity); }
+.village-record-bar__water { background-color: var(--color-res-water); }
+
+.village-record-bar__dot {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-ice-200);
+}
+
+.village-record-bar__label {
+    margin-top: var(--space-1);
+    color: var(--color-text-sub);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+}
+
+.village-record-bar--today .village-record-bar__label {
+    color: var(--color-primary);
+}
+
+/* ---- 記録: 履歴 ---- */
+.village-record-day {
+    margin: var(--space-3) 0 var(--space-1) 0;
+    color: var(--color-primary);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.village-record-line {
+    flex-direction: row;
+    align-items: center;
+    padding: var(--space-1) 0;
+    border-bottom-width: 2px;
+    border-bottom-color: var(--color-divider);
+}
+
+.village-record-line > .pp-icon-badge {
+    margin-right: var(--space-2);
+}
+
+.village-record-line__title {
+    flex-grow: 1;
+    color: var(--color-text);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-bold);
+}
+
+.village-record-line__amount {
+    color: var(--color-text);
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-num-heavy);
+}
+
+.village-record-empty {
+    align-items: center;
+    padding: var(--space-3) 0;
+}
+
+.village-record-empty > .village-record-empty__mascot {
+    width: 160px;
+    height: 160px;
+    margin-bottom: var(--space-2);
 }

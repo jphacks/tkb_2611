@@ -16,6 +16,7 @@ namespace ProjectPenguin.Systems
         private readonly Func<VillageGame> _initial;
         private readonly bool _developmentAllowed;
         private long _utc;
+        private int _tutorial;
         public bool Development {get;private set;}
         public bool Running {get;private set;}=true;
         public double TimeScale {get;private set;}=1;
@@ -31,14 +32,14 @@ namespace ProjectPenguin.Systems
             try
             {
                 var s=_store.Load();
-                if(s==null){var candidate=_initial();_store.Save(Snapshot(candidate,utc));_game=candidate;_utc=utc;}
-                else{s.Validate("production");var g=VillageGame.Restore(s.State);g.AdvanceTo(checked(g.RequestedMs+Math.Max(0,utc-s.UtcMs)));_utc=Math.Max(utc,s.UtcMs);_store.Save(Snapshot(g,_utc));_game=g;}
+                if(s==null){_tutorial=VillageTutorial.NotStarted;var candidate=_initial();_store.Save(Snapshot(candidate,utc));_game=candidate;_utc=utc;}
+                else{s.Validate("production");_tutorial=new VillageTutorial(s.Tutorial).Step;var g=VillageGame.Restore(s.State);g.AdvanceTo(checked(g.RequestedMs+Math.Max(0,utc-s.UtcMs)));_utc=Math.Max(utc,s.UtcMs);_store.Save(Snapshot(g,_utc));_game=g;}
                 Error="";
             }
             catch(Exception){Error="村を読み込めませんでした。保存データを保護しています。メニューから再試行してください";_game=null;}
             Changed?.Invoke();
         }
-        private ProductionVillageSave Snapshot(VillageGame g,long utc)=>new ProductionVillageSave{State=g.Export(),UtcMs=utc,Profile=Development?"development":"production",Running=Running,TimeScale=TimeScale};
+        private ProductionVillageSave Snapshot(VillageGame g,long utc)=>new ProductionVillageSave{State=g.Export(),UtcMs=utc,Profile=Development?"development":"production",Running=Running,TimeScale=TimeScale,Tutorial=_tutorial};
         /// <param name="quiet">true なら <see cref="Notice"/> を書き換えず、失敗しても知らせない (すれ違いの台帳の更新など、画面に出さない記録)。</param>
         private bool Command(Func<VillageGame,VillageResult> command,long utc,bool quiet=false)
         {
@@ -50,6 +51,17 @@ namespace ProjectPenguin.Systems
                 _store.Save(Snapshot(candidate,Math.Max(_utc,utc)));_game=candidate;_utc=Math.Max(_utc,utc);Error="";Changed?.Invoke();return true;
             }
             catch(Exception){Error="保存できませんでした。操作を反映せず、直前の村を維持しています";Changed?.Invoke();return false;}
+        }
+        /// <summary>チュートリアルの段 (VillageTutorial)。0 = 未開始、-1 = 終わり。</summary>
+        public int Tutorial=>_tutorial;
+        /// <summary>チュートリアルの段を保存する。村の状態は変えない。</summary>
+        public bool SetTutorial(int step,long utc)
+        {
+            if(_game==null||!VillageTutorial.IsValid(step))return false;
+            if(_tutorial==step)return true;
+            var previous=_tutorial;_tutorial=step;
+            try{_store.Save(Snapshot(_game,Math.Max(_utc,utc)));_utc=Math.Max(_utc,utc);return true;}
+            catch(Exception){_tutorial=previous;Error="保存できませんでした。チュートリアルの進み具合は次の保存で反映します";Changed?.Invoke();return false;}
         }
         public void SetGroupViewActive(bool active)
         {

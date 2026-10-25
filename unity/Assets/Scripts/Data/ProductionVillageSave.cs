@@ -11,6 +11,8 @@ namespace ProjectPenguin.Data
         public VillageState State;
         public bool Running=true;
         public double TimeScale=1;
+        /// <summary>チュートリアルの段 (VillageTutorial)。0 = 未開始、-1 = 終わり。古い保存には無いので 0 として読む。範囲外は終わりとして扱い、保存全体は拒まない。</summary>
+        public int Tutorial;
         public void Validate(string profile)
         {
             if(Version!=1)throw new InvalidOperationException("未対応の保存バージョンです。上書きを停止しました");

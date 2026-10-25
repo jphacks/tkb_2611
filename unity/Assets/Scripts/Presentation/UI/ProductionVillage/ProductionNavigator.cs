@@ -4,6 +4,7 @@ using System.Linq;
 using ProjectPenguin.Domain.Encounter;
 using ProjectPenguin.Domain.Island;
 using ProjectPenguin.Domain.Village;
+using ProjectPenguin.Presentation.UI.Industrial;
 using ProjectPenguin.Presentation.World.ProductionVillage;
 using ProjectPenguin.Systems;
 using UnityEngine;
@@ -43,7 +44,10 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         private VillageScreenTimePresenter _screenTime;
         private VillageEncounters _encounters;
         private Action _refreshSheet;
-        private bool _sheetOpen;
+        private bool _sheetOpen, _pageOpen, _softOpen;
+        private ScrollView _sheetContent, _pageContent, _softContent;
+        private VisualElement _page, _softPage;
+        private Label _pageTitle, _pageMicro, _softTitle, _softSub;
         private bool _industrialMode;
         private string _dockCategory = "all";
         private float _nextRefresh, _nextSheetRefresh;
@@ -59,6 +63,22 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         public VillagePlacementController Placement => _world.Placement;
         public VillageWorldPresenter World => _world;
 
+        /// <summary>施設の詳細ページの英字の小見出し。チュートリアルが「施設のページが開いた」を見分けるのに使う。</summary>
+        public const string FacilityPage = "FACILITY";
+        public bool IndustrialMode => _industrialMode;
+        /// <summary>開いている工房のページ (英字の小見出し)。開いていなければ null。</summary>
+        public string OpenPageName => _pageOpen ? _pageMicro?.text : null;
+        public bool ReportOpen => _report != null && _report.IsOpen;
+        private VillageTutorialPresenter _tutorial;
+
+        /// <summary>施設一覧のその施設の札。無ければ null。<paramref name="scroll"/> なら見えるところまでスクロールする (チュートリアルで光らせるため)。</summary>
+        public VisualElement DockSlot(FacilityKind kind, bool scroll)
+        {
+            var slot = _dockScroll?.Children().FirstOrDefault(s => s.userData is FacilityKind k && k == kind);
+            if (slot != null && scroll) _dockScroll.ScrollTo(slot);
+            return slot;
+        }
+
         private void Start()
         {
             _root = GetComponent<UIDocument>().rootVisualElement;
@@ -71,7 +91,15 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             }
             _app = _root.Q(ProductionUiNames.Root);
             _sheet = _root.Q(ProductionUiNames.Sheet);
-            _content = _root.Q<ScrollView>(ProductionUiNames.Content);
+            _content = _sheetContent = _root.Q<ScrollView>(ProductionUiNames.Content);
+            _page = _root.Q(ProductionUiNames.WorkshopPage);
+            _pageContent = _root.Q<ScrollView>(ProductionUiNames.WorkshopContent);
+            _pageTitle = _root.Q<Label>(ProductionUiNames.WorkshopTitle);
+            _pageMicro = _root.Q<Label>(ProductionUiNames.WorkshopMicro);
+            _softPage = _root.Q(ProductionUiNames.SoftPage);
+            _softContent = _root.Q<ScrollView>(ProductionUiNames.SoftContent);
+            _softTitle = _root.Q<Label>(ProductionUiNames.SoftTitle);
+            _softSub = _root.Q<Label>(ProductionUiNames.SoftSub);
             _tools = _root.Q(ProductionUiNames.Tools);
             _tray = _root.Q(ProductionUiNames.Tray);
             _toastLayer = _root.Q(ProductionUiNames.ToastLayer);
@@ -109,6 +137,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             Bind(ProductionUiNames.ZoomOverview, () => _world?.CameraController?.SetLevel(VillageZoomLevel.Overview));
             Bind(ProductionUiNames.ZoomDetail, () => _world?.CameraController?.SetLevel(VillageZoomLevel.Detail));
             Bind(ProductionUiNames.InsightBanner, ShowReport);
+            Bind(ProductionUiNames.TacticalBar, ShowReport);
             Bind(ProductionUiNames.DockCatalogBtn, ShowPlacement);
             Bind(ProductionUiNames.Placement, () => SetIndustrialMode(true));
             Bind(ProductionUiNames.Move, () => Placement?.MoveSelect());
@@ -120,6 +149,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 Close();
             });
             Bind(ProductionUiNames.Close, Close);
+            Bind(ProductionUiNames.WorkshopClose, Close);
+            Bind(ProductionUiNames.SoftBack, Close);
             Bind(ProductionUiNames.RecordTab, ShowRecord);
             Bind(ProductionUiNames.ScanTab, ShowScan);
             Bind(ProductionUiNames.ManageTab, ShowManagement);
@@ -141,6 +172,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             }
 
             RebuildQuickDock();
+            _tutorial = new VillageTutorialPresenter(_root, this, _session);
         }
 
         private void Bind(string name, Action action)
@@ -157,6 +189,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             }
 
             CountUpFish();
+            _tutorial?.Update();
             var core = _session.Core;
             var view = core.View;
             UpdateSpatialBadges(view);
@@ -207,6 +240,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             }
 
             IslandUi.SetVisible(_tacticalBar, enabled);
+            if (_root != null) IslandUi.SetVisible(_root.Q(ProductionUiNames.CameraRail), enabled);
             UpdateTopDownUi();
             if (enabled)
             {
@@ -241,7 +275,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             var topDown = _world?.CameraController != null && _world.CameraController.IsTopDown;
             if (_topDownLabel != null)
             {
-                _topDownLabel.text = topDown ? "見下ろし ON" : "見下ろし OFF";
+                _topDownLabel.text = topDown ? "真上" : "斜め";
             }
 
             _topDownToggle?.EnableInClassList(ProductionUiNames.TacticalBtnActiveClass, topDown);
@@ -256,15 +290,21 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             var groupState = _root.Q<Label>(ProductionUiNames.GroupState);
             if (groupState != null)
             {
-                groupState.text = level == VillageZoomLevel.Overview
-                    ? "全体表示・施設群が追加生産中・2本指で広げると詳細"
-                    : "詳細表示・施設を1棟ずつ編集・2本指で縮めると全体";
+                groupState.text = level == VillageZoomLevel.Overview ? "施設群が\n追加生産中" : "1棟ずつ\n編集できる";
             }
         }
 
         // ------------------------------------------------------------------
         // ホーム & 空間ステータスバッジ
         // ------------------------------------------------------------------
+
+        /// <summary>島ランク (1〜9) と次のランクまでの進み具合。作った数と施設の数から決める (ホームの見出しとメニューで共通)。</summary>
+        private static (int Rank, float Progress) IslandRank(VillageView view)
+        {
+            var score = view.Produced + view.Nodes.Count * 15L;
+            var rank = Math.Min(9, 1 + (int)(score / 60));
+            return (rank, rank >= 9 ? 1f : (score % 60) / 60f);
+        }
 
         private void ShowResources(VillageView view)
         {
@@ -289,9 +329,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             _fishRate.text = $"+{IslandUi.Number(view.ProducedLastMinute)}/分";
 
             // 島ランクと次ランクまでの進捗バー (ポケモンスリープ風)
-            var score = view.Produced + view.Nodes.Count * 15L;
-            var rank = Math.Min(9, 1 + (int)(score / 60));
-            var progress = rank >= 9 ? 1f : (score % 60) / 60f;
+            var (rank, progress) = IslandRank(view);
             if (_rankText != null) _rankText.text = $"{rank}";
             if (_rankProgress != null) _rankProgress.value = progress;
 
@@ -325,7 +363,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             var next = _root.Q<Label>(ProductionUiNames.NextStep);
             if (next != null)
             {
-                next.text = "▶ " + stepText;
+                next.text = stepText;
                 next.EnableInClassList(ProductionUiNames.NextStepWarnClass, trouble);
             }
 
@@ -354,13 +392,24 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             IslandUi.SetVisible(_spatialLayer, true);
             var cam = _world.ViewCamera;
             var activeIds = new HashSet<int>();
-            foreach (var n in view.Nodes)
+            var overview = _world.CameraController == null || _world.CameraController.Level == VillageZoomLevel.Overview;
+            // 画面の部品 (状態バー・施設一覧・カメラ操作) の下に来る札は出さない
+            var covers = new[] { _tacticalBar, _quickDock, _root.Q(ProductionUiNames.CameraRail) }
+                .Where(e => e != null && !e.ClassListContains(UiClasses.Hidden)).Select(e => e.worldBound).ToArray();
+            var placed = new List<Rect>();
+            foreach (var n in view.Nodes.OrderBy(a => a.Y).ThenBy(a => a.X))
             {
                 activeIds.Add(n.Id);
                 if (!_spatialBadges.TryGetValue(n.Id, out var badge))
                 {
                     var nodeId = n.Id;
                     badge = new Button(() => ShowFacility(nodeId));
+                    // 札の印は絵文字ではなくアイコン (お魚などと同じ SVG) を使う
+                    var badgeIcon = new VisualElement { pickingMode = PickingMode.Ignore };
+                    badgeIcon.AddToClassList(UiClasses.Icon.Root);
+                    badgeIcon.AddToClassList(ProductionUiNames.SpatialBadgeIconClass);
+                    badge.Add(badgeIcon);
+                    badge.Add(new Label { pickingMode = PickingMode.Ignore });
                     badge.AddToClassList(ProductionUiNames.SpatialBadgeClass);
                     _spatialLayer.Add(badge);
                     _spatialBadges[n.Id] = badge;
@@ -374,32 +423,53 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                     continue;
                 }
 
-                IslandUi.SetVisible(badge, true);
                 // 札は spatial layer の中に置くので、パネルの座標をこの層の座標に直す (セーフエリアの余白でずれないように)
-                var panelPos = _spatialLayer.WorldToLocal(RuntimePanelUtils.ScreenToPanel(_root.panel, new Vector2(screenPos.x, Screen.height - screenPos.y)));
-                badge.style.left = panelPos.x - 44f;
-                badge.style.top = panelPos.y - 28f;
+                var onPanel = RuntimePanelUtils.ScreenToPanel(_root.panel, new Vector2(screenPos.x, Screen.height - screenPos.y));
+                var panelPos = _spatialLayer.WorldToLocal(onPanel);
 
-                var warn = n.Status == "ガスを待っています" || n.Status == "出力の置き場が満杯" || n.Status == "材料を待っています";
+                var warn = VillageInsight.IsStopped(n.Status);
                 badge.EnableInClassList(ProductionUiNames.SpatialBadgeWarnClass, warn);
                 badge.EnableInClassList(ProductionUiNames.SpatialBadgeSynergyClass, !warn && (n.InSynergy || n.Amplified));
 
                 var def = IslandCatalog.Get(n.Kind);
                 var recipe = def.Recipes.FirstOrDefault();
-                var label = warn ? (n.Status == "ガスを待っています" ? "! ガス不足" : n.Status == "出力の置き場が満杯" ? "! 満杯" : "Zz 材料待")
-                    : _industrialMode && n.InSynergy ? $"✨{def.Name} {(int)(n.Progress * 100)}%"
-                    : _industrialMode && n.Amplified ? $"⚡{def.Name} {(int)(n.Progress * 100)}%"
+                // 全体表示では止まっている施設の札だけを出す。詳細表示では短い札をすべて出す
+                var label = warn ? (n.Status == VillageInsight.GasWait ? "ガス不足" : n.Status == VillageInsight.Full ? "満杯" : "材料待ち")
+                    : overview ? ""
+                    : _industrialMode && n.InSynergy ? $"施設群 {(int)(n.Progress * 100)}%"
+                    : _industrialMode && n.Amplified ? $"増幅 {(int)(n.Progress * 100)}%"
                     : recipe != null && n.Total > 0 ? $"{IslandCatalog.NameOf(recipe.Output.Item)} ×{n.Total}"
                     : _industrialMode ? def.Name : "";
 
-                if (string.IsNullOrEmpty(label))
+                if (string.IsNullOrEmpty(label) || covers.Any(r => r.Contains(onPanel)))
                 {
                     IslandUi.SetVisible(badge, false);
+                    continue;
                 }
-                else
+
+                IslandUi.SetVisible(badge, true);
+                var icon = badge.Q(className: ProductionUiNames.SpatialBadgeIconClass);
+                var iconClass = warn ? (n.Status == VillageInsight.GasWait ? UiClasses.Icon.GasEmpty : n.Status == VillageInsight.Full ? UiClasses.Icon.StorageFull : UiClasses.Icon.MaterialWait)
+                    : _industrialMode && n.InSynergy ? UiClasses.Icon.Production
+                    : _industrialMode && n.Amplified ? UiClasses.Icon.Electricity
+                    : recipe != null && n.Total > 0 ? IslandUi.IconClass(recipe.Output.Item) : null;
+                if (icon.userData as string != iconClass)
                 {
-                    badge.text = label;
+                    if (icon.userData is string old) icon.RemoveFromClassList(old);
+                    if (iconClass != null) icon.AddToClassList(iconClass);
+                    icon.userData = iconClass;
                 }
+
+                IslandUi.SetVisible(icon, iconClass != null);
+                badge.Q<Label>().text = label;
+                // 隣の札と重なるときは上へずらす (前のフレームの大きさで判定する)
+                var width = float.IsNaN(badge.layout.width) || badge.layout.width <= 0 ? 120f : badge.layout.width;
+                var height = float.IsNaN(badge.layout.height) || badge.layout.height <= 0 ? 44f : badge.layout.height;
+                var rect = new Rect(panelPos.x - width * .5f, panelPos.y - height, width, height);
+                for (var tries = 0; tries < 4 && placed.Any(r => r.Overlaps(rect)); tries++) rect.y -= height + 4f;
+                placed.Add(rect);
+                badge.style.left = rect.x;
+                badge.style.top = rect.y;
             }
 
             foreach (var oldId in _spatialBadges.Keys.Where(id => !activeIds.Contains(id)).ToArray())
@@ -627,7 +697,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             var bad = placement.HasCandidate && placement.Reason.Length > 0;
             _reason.text = placement.Reason.Length > 0 ? placement.Reason
                 : placement.Mode == VillagePlacementMode.Build && !placement.HasCandidate ? "置きたい場所をタップしてね"
-                : placement.HasCandidate ? "ここでよければ ✓" : "";
+                : placement.HasCandidate ? "ここでよければ決定を押してね" : "";
             _reason.EnableInClassList(ProductionUiNames.HintBad, bad);
             IslandUi.SetVisible(_reason, _reason.text.Length > 0);
             IslandUi.SetVisible(_confirm, choosingSpot);
@@ -696,6 +766,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         private void Open(string title, string tab)
         {
             Placement?.Cancel();
+            HidePage();
+            _content = _sheetContent;
             _content.Clear();
             _title.text = title;
             _refreshSheet = null;
@@ -709,6 +781,61 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             }
         }
 
+        /// <summary>
+        /// 工房まわりのウィンドウ (施設・図面・港・工房) を、生産レポートと同じ枠の全画面ページで開く。
+        /// 中身の組み立て (Card・Action など) はシートと共通で、ページの中では工業風の見た目になる (ProductionApp.uss)。
+        /// </summary>
+        private void OpenPage(string micro, string title, string tab)
+        {
+            BeginPage(_pageContent, tab);
+            _pageMicro.text = micro;
+            _pageTitle.text = title;
+            _sheetOpen = _pageOpen = true;
+            IslandUi.SetVisible(_page, true);
+        }
+
+        /// <summary>
+        /// メニューと記録を、ホームと同じ手触りのやわらかい全画面ページで開く (氷色の地に、厚みのある白いカード)。
+        /// 下のタブはページの上に残るので、タブでそのまま行き来できる。
+        /// </summary>
+        private void OpenSoft(string title, string sub, string tab)
+        {
+            BeginPage(_softContent, tab);
+            _softTitle.text = title;
+            _softSub.text = sub ?? "";
+            IslandUi.SetVisible(_softSub, !string.IsNullOrEmpty(sub));
+            _sheetOpen = _softOpen = true;
+            IslandUi.SetVisible(_softPage, true);
+        }
+
+        /// <summary>全画面ページを開く前に、シート・ほかのページ・生産レポートを閉じて、中身の置き場を切り替える。</summary>
+        private void BeginPage(ScrollView content, string tab)
+        {
+            Placement?.Cancel();
+            if (_sheetOpen && !_pageOpen && !_softOpen)
+            {
+                _sheet.AddToClassList(UiClasses.Sheet.Closed);
+                IslandUi.SetVisible(_sheet, false);
+            }
+
+            HidePage();
+            _report?.Close();
+            _content = content;
+            _content.Clear();
+            _refreshSheet = null;
+            _content.scrollOffset = Vector2.zero;
+            SetTab(tab);
+        }
+
+        private void HidePage()
+        {
+            if (!_pageOpen && !_softOpen) return;
+            _pageOpen = _softOpen = false;
+            _sheetOpen = false;
+            IslandUi.SetVisible(_page, false);
+            IslandUi.SetVisible(_softPage, false);
+        }
+
         private void Live(Action refresh)
         {
             _refreshSheet = refresh;
@@ -718,6 +845,12 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         private void CloseSheetOnly()
         {
+            if (_pageOpen || _softOpen)
+            {
+                HidePage();
+                return;
+            }
+
             if (!_sheetOpen) return;
             _sheetOpen = false;
             _sheet.AddToClassList(UiClasses.Sheet.Closed);
@@ -744,7 +877,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             _activeTab?.AddToClassList(UiClasses.Tab.Active);
         }
 
-        private VisualElement Card(string title = null)
+        /// <summary>見出し付きの節。見出しの印は絵文字ではなく、デザインシステムのアイコン (<paramref name="icon"/>) を使う。</summary>
+        private VisualElement Card(string title = null, string icon = null, string tint = null)
         {
             var card = new VisualElement();
             card.AddToClassList(UiClasses.Card);
@@ -752,7 +886,18 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             card.AddToClassList(ProductionUiNames.Card);
             if (!string.IsNullOrEmpty(title))
             {
-                card.Add(IslandUi.Text(title, ProductionUiNames.CardTitle));
+                if (icon == null)
+                {
+                    card.Add(IslandUi.Text(title, ProductionUiNames.CardTitle));
+                }
+                else
+                {
+                    var head = new VisualElement { pickingMode = PickingMode.Ignore };
+                    head.AddToClassList(ProductionUiNames.CardHead);
+                    head.Add(IslandUi.Icon(icon, tint ?? UiClasses.Tint.Point));
+                    head.Add(IslandUi.Text(title, ProductionUiNames.CardTitle));
+                    card.Add(head);
+                }
             }
 
             _content.Add(card);
@@ -811,11 +956,11 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         public void ShowPlacement()
         {
-            Open("工房の施設・連携図面", null);
+            OpenPage("BLUEPRINTS", "施設と連携図面", null);
             var view = _session.Core.View;
 
             // おすすめ連携図面カード
-            var blueprintCard = Card("📐 施設群の図面 (縮小中に追加生産)");
+            var blueprintCard = Card("施設群の図面 (全体表示の間に追加生産)", UiClasses.Icon.Production);
             blueprintCard.Add(IslandUi.Row(
                 IslandUi.IconBadge(UiClasses.Icon.Kamaboko, UiClasses.Tint.Point),
                 "かまぼこ黄金ライン",
@@ -936,7 +1081,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             }
 
             var def = IslandCatalog.Get(node.Kind);
-            Open(def.Name, null);
+            OpenPage(FacilityPage, def.Name, null);
             _world.SelectedId = id;
             var top = Card();
             var header = new VisualElement();
@@ -964,8 +1109,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 recipeLine.AddToClassList(UiClasses.Recipe.Root);
                 IslandUi.FillRecipe(recipeLine, node.Kind, recipe);
                 top.Add(recipeLine);
-                var bonusText = node.InSynergy ? "✨ 施設群が成立。縮小中の稼働状況は群マークで確認。 " : "";
-                if (node.Amplified) bonusText += "⚡ 増幅エリア速度 +25% 適用中！ ";
+                var bonusText = node.InSynergy ? "施設群が成立しているよ。全体表示の間は追加生産が動く。" : "";
+                if (node.Amplified) bonusText += "増幅器の近くなので、速さが +25%。";
                 top.Add(IslandUi.Text(bonusText + "つくるたびにガスを 1 つかう。近くの施設へ自動でとどけるよ", ProductionUiNames.Subtle));
             }
             else
@@ -1088,7 +1233,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 return;
             }
 
-            Open("出荷港 ＆ 島内倉庫", null);
+            OpenPage("HARBOR", "出荷港と島の倉庫", null);
             var stats = Card();
             var rateSection = Card("村にある品物 (倉庫・施設在庫)");
             var items = new VisualElement();
@@ -1122,57 +1267,183 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         // ---- 記録 ----
 
+        private const float WeekBarMaxHeight = 220f, WeekBarMinHeight = 14f;
+        private static readonly string[] WeekdayNames = { "日", "月", "火", "水", "木", "金", "土" };
+
         private void ShowRecord()
         {
             var health = _session.GetComponent<VillageHealthInput>();
-            Open("記録", ProductionUiNames.RecordTab);
-            var steps = Card();
-            steps.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Gas, UiClasses.Tint.Gas), "歩数", $"1 歩ごとにガスが {VillageGame.GasPerStep} たまるよ", null));
-            var stepStatus = IslandUi.Text(health?.Status ?? "歩数につながっていないよ", ProductionUiNames.Subtle);
-            steps.Add(stepStatus);
-            Action(steps, "歩数を確かめる", () => health?.Request(), UiClasses.Icon.Check, primary: false, enabled: health != null);
+            OpenSoft("記録", "歩いた分と、受け取った資源", ProductionUiNames.RecordTab);
 
-            var list = Card();
+            // 今日: 歩数と次のガスまでの輪、受け取った資源の札
+            var todayCard = SoftCard("今日", UiClasses.Icon.Gas, UiClasses.Tint.Gas);
+            var top = new VisualElement { pickingMode = PickingMode.Ignore };
+            top.AddToClassList(ProductionUiNames.RecordToday);
+            var ring = new StepRing();
+            ring.AddToClassList(ProductionUiNames.RecordRing);
+            var center = new VisualElement { pickingMode = PickingMode.Ignore };
+            center.AddToClassList(ProductionUiNames.RecordRingCenter);
+            var steps = IslandUi.Text("0", ProductionUiNames.RecordSteps);
+            center.Add(steps);
+            center.Add(IslandUi.Text("歩", ProductionUiNames.RecordStepsUnit));
+            ring.Add(center);
+            var hint = IslandUi.Text("", ProductionUiNames.RecordRingHint);
+            top.Add(ring);
+            top.Add(hint);
+            todayCard.Add(top);
+
+            var chips = new VisualElement { pickingMode = PickingMode.Ignore };
+            chips.AddToClassList(ProductionUiNames.RecordChips);
+            var gas = RecordChip(chips, UiClasses.Icon.Gas, UiClasses.Tint.Gas, "ガス");
+            var electricity = RecordChip(chips, UiClasses.Icon.Electricity, UiClasses.Tint.Electricity, "電気");
+            var water = RecordChip(chips, UiClasses.Icon.Water, UiClasses.Tint.Water, "水");
+            todayCard.Add(chips);
+
+            var stepStatus = IslandUi.Text("", ProductionUiNames.SoftNote);
+            stepStatus.style.marginTop = 16;
+            todayCard.Add(stepStatus);
+            var check = Action(todayCard, "歩数を確かめる", () => health?.Request(), UiClasses.Icon.Check, primary: false, enabled: health != null);
+
+            var weekCard = SoftCard("この 7 日", UiClasses.Icon.Clock, UiClasses.Tint.Primary);
+            var week = new VisualElement { pickingMode = PickingMode.Ignore };
+            week.AddToClassList(ProductionUiNames.RecordWeek);
+            weekCard.Add(week);
+
+            var historyCard = SoftCard("受け取った資源", UiClasses.Icon.Book, UiClasses.Tint.Primary);
+            var history = new VisualElement { pickingMode = PickingMode.Ignore };
+            historyCard.Add(history);
+
+            string shown = null;
             Live(() =>
             {
+                var summary = VillageRecordSummary.From(_session.Core.Records, VillageHealthInput.Day(DateTimeOffset.Now));
+                steps.text = summary.TodaySteps.ToString("#,0");
+                // 輪は今日の歩数の目安までの進み具合。ガスは 1 歩ごとにたまるので、輪の区切りとは関係しない
+                ring.Progress = (float)summary.GoalProgress;
+                var perStep = $"1 歩でガスが {VillageGame.GasPerStep} たまるよ。";
+                hint.text = summary.StepsToGoal == 0
+                    ? $"{perStep}今日の目安の {VillageRecordSummary.DailyStepGoal:#,0} 歩を歩いたよ"
+                    : $"{perStep}目安の {VillageRecordSummary.DailyStepGoal:#,0} 歩まで、あと {summary.StepsToGoal:#,0} 歩";
+                gas.text = "+" + IslandUi.Number(summary.TodayTotals.Gas);
+                electricity.text = "+" + IslandUi.Number(summary.TodayTotals.Electricity);
+                water.text = "+" + IslandUi.Number(summary.TodayTotals.Water);
+
+                // 今日の歩数が届いていれば、つながりの説明と確かめるボタンは要らない
+                var connected = summary.TodaySteps > 0;
                 stepStatus.text = health?.Status ?? "歩数につながっていないよ";
-                var entries = _session.Core.Records?.Entries;
-                var count = entries?.Count ?? 0;
-                if (list.userData is int shown && shown == count)
+                IslandUi.SetVisible(stepStatus, !connected);
+                IslandUi.SetVisible(check.parent, !connected);
+
+                // 7 日と履歴は、記録が変わったときだけ組み直す
+                var key = $"{summary.Today}:{_session.Core.Records?.Entries?.Count ?? 0}";
+                if (key == shown)
                 {
                     return;
                 }
 
-                list.userData = count;
-                list.Clear();
-                list.Add(IslandUi.Text("受け取った資源", ProductionUiNames.CardTitle));
-                if (count == 0)
-                {
-                    Empty(list, UiClasses.Icon.Book, "まだ記録がないよ。歩くとガスがたまるよ");
-                    return;
-                }
-
-                foreach (var e in entries.AsEnumerable().Reverse().Take(100))
-                {
-                    var (icon, tint) = RecordIcon(e.Kind);
-                    var date = new DateTime(1970, 1, 1).AddDays(e.Day).ToString("M月d日");
-                    list.Add(IslandUi.Row(IslandUi.IconBadge(icon, tint), RecordTitle(e.Kind), date, Stat("+" + IslandUi.Number(e.Amount))));
-                }
-
-                list.Children().Last().AddToClassList(UiClasses.Row.Last);
+                shown = key;
+                BuildRecordWeek(week, summary);
+                BuildRecordHistory(history, summary);
             });
         }
 
-        private static (string Icon, string Tint) RecordIcon(string kind) =>
-            kind.Contains("水") ? (UiClasses.Icon.Water, UiClasses.Tint.Water)
-            : kind.Contains("電気") ? (UiClasses.Icon.Electricity, UiClasses.Tint.Electricity)
-            : (UiClasses.Icon.Gas, UiClasses.Tint.Gas);
-
-        private static string RecordTitle(string kind)
+        private static Label RecordChip(VisualElement parent, string icon, string tint, string label)
         {
-            var arrow = kind.IndexOf('→');
-            return arrow > 0 ? kind.Substring(0, arrow).Trim() : kind;
+            var chip = new VisualElement { pickingMode = PickingMode.Ignore };
+            chip.AddToClassList(ProductionUiNames.RecordChip);
+            chip.Add(IslandUi.Icon(icon, tint));
+            var value = IslandUi.Text("+0", ProductionUiNames.RecordChipValue);
+            chip.Add(value);
+            chip.Add(IslandUi.Text(label, ProductionUiNames.RecordChipLabel));
+            parent.Add(chip);
+            return value;
         }
+
+        /// <summary>この 7 日の棒。受け取ったガス・電気・水を下から積み、いちばん多い日を高さの上限にする。記録の無い日は低い点。</summary>
+        private static void BuildRecordWeek(VisualElement week, VillageRecordSummary summary)
+        {
+            week.Clear();
+            var max = Math.Max(1, summary.Week.Max(d => d.Total));
+            // 1 本も棒が無い週は、点と曜日だけの低い帯にする (空の大きな余白を見せない)
+            week.EnableInClassList(ProductionUiNames.RecordWeekEmpty, summary.Week.All(d => d.Total <= 0));
+            foreach (var day in summary.Week)
+            {
+                var col = new VisualElement { pickingMode = PickingMode.Ignore };
+                col.AddToClassList(ProductionUiNames.RecordBarCol);
+                col.EnableInClassList(ProductionUiNames.RecordBarToday, day.Day == summary.Today);
+                if (day.Total <= 0)
+                {
+                    var dot = new VisualElement { pickingMode = PickingMode.Ignore };
+                    dot.AddToClassList(ProductionUiNames.RecordBarDot);
+                    col.Add(dot);
+                }
+                else
+                {
+                    var stack = new VisualElement { pickingMode = PickingMode.Ignore };
+                    stack.AddToClassList(ProductionUiNames.RecordBarStack);
+                    stack.style.height = Math.Max(WeekBarMinHeight, (float)(WeekBarMaxHeight * day.Total / max));
+                    AddSegment(stack, ProductionUiNames.RecordBarGas, day.Gas);
+                    AddSegment(stack, ProductionUiNames.RecordBarElectricity, day.Electricity);
+                    AddSegment(stack, ProductionUiNames.RecordBarWater, day.Water);
+                    col.Add(stack);
+                }
+
+                var label = day.Day == summary.Today ? "今日" : WeekdayNames[(int)DateOfDay(day.Day).DayOfWeek];
+                col.Add(IslandUi.Text(label, ProductionUiNames.RecordBarLabel));
+                week.Add(col);
+            }
+
+            static void AddSegment(VisualElement stack, string className, double amount)
+            {
+                if (amount <= 0) return;
+                var segment = new VisualElement { pickingMode = PickingMode.Ignore };
+                segment.AddToClassList(className);
+                segment.style.flexGrow = (float)amount;
+                stack.Add(segment);
+            }
+        }
+
+        /// <summary>日ごとの履歴 (新しい日から 30 日)。同じ日の同じ種類はまとめて 1 行にする。</summary>
+        private static void BuildRecordHistory(VisualElement history, VillageRecordSummary summary)
+        {
+            history.Clear();
+            if (summary.Empty)
+            {
+                var empty = new VisualElement { pickingMode = PickingMode.Ignore };
+                empty.AddToClassList(ProductionUiNames.RecordEmpty);
+                var mascot = IslandUi.Icon(UiClasses.Icon.Penguin, UiClasses.Tint.Original);
+                mascot.AddToClassList(ProductionUiNames.RecordEmptyMascot);
+                empty.Add(mascot);
+                empty.Add(IslandUi.Text("まだ記録がないよ。歩くとガスがたまるよ。水の写真やすれ違いでも資源がもらえるよ", ProductionUiNames.SoftNote));
+                history.Add(empty);
+                return;
+            }
+
+            foreach (var day in summary.History)
+            {
+                var title = day.Key == summary.Today ? "今日"
+                    : day.Key == summary.Today - 1 ? "昨日"
+                    : DateOfDay(day.Key).ToString("M月d日");
+                history.Add(IslandUi.Text(title, ProductionUiNames.RecordDay));
+                foreach (var line in day.GroupBy(l => (l.Resource, l.Title)))
+                {
+                    var (icon, tint) = RecordIcon(line.Key.Resource);
+                    var row = new VisualElement { pickingMode = PickingMode.Ignore };
+                    row.AddToClassList(ProductionUiNames.RecordLine);
+                    row.Add(IslandUi.IconBadge(icon, tint));
+                    row.Add(IslandUi.Text(line.Key.Title, ProductionUiNames.RecordLineTitle));
+                    row.Add(IslandUi.Text("+" + IslandUi.Number(line.Sum(l => l.Amount)), ProductionUiNames.RecordLineAmount));
+                    history.Add(row);
+                }
+            }
+        }
+
+        private static DateTime DateOfDay(int day) => new DateTime(1970, 1, 1).AddDays(day);
+
+        private static (string Icon, string Tint) RecordIcon(VillageRecordResource resource) =>
+            resource == VillageRecordResource.Water ? (UiClasses.Icon.Water, UiClasses.Tint.Water)
+            : resource == VillageRecordResource.Electricity ? (UiClasses.Icon.Electricity, UiClasses.Tint.Electricity)
+            : (UiClasses.Icon.Gas, UiClasses.Tint.Gas);
 
         private void OnDestroy()
         {
@@ -1230,10 +1501,10 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         private void ShowManagement()
         {
-            Open("ペンギン工房・連携図面", ProductionUiNames.ManageTab);
+            OpenPage("WORKSHOP", "ペンギン工房", ProductionUiNames.ManageTab);
             var view = _session.Core.View;
 
-            var modeCard = Card("⚡ ペンギン工房");
+            var modeCard = Card("ペンギン工房", UiClasses.Icon.Build, UiClasses.Tint.Point);
             modeCard.Add(IslandUi.Text("島を真上から見ながら、画面下の一覧から施設を選んで建てられるよ。施設の並べ方や資源を運ぶ道を工夫して、ペンギンたちのものづくりを手伝おう。", ProductionUiNames.Subtle));
             Action(modeCard, "工房モードを開く", () =>
             {
@@ -1242,25 +1513,25 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             }, UiClasses.Icon.Electricity);
             Action(modeCard, "生産レポートを見る", ShowReport, UiClasses.Icon.Production, primary: false);
 
-            var synCard = Card("✨ 施設の並べ方ボーナス");
+            var synCard = Card("施設の並べ方ボーナス", UiClasses.Icon.Production);
             synCard.Add(IslandUi.Row(
                 IslandUi.IconBadge(UiClasses.Icon.Kamaboko, UiClasses.Tint.Point),
                 "かまぼこ黄金ライン",
-                "[漁場] - [塩田] - [漁場] を直線に並べる → かまぼこ追加生成",
+                "[漁場] - [塩田] - [漁場] を直線に並べると、かまぼこを追加で作る",
                 Badge(GroupStatus(view, Item.Kamaboko), UiClasses.Badge.Accent)));
             synCard.Add(IslandUi.Row(
                 IslandUi.IconBadge(UiClasses.Icon.Chikuwa, UiClasses.Tint.Point),
                 "ちくわ3連ライン",
-                "[漁場] × 3 を直線に並べる → ちくわ追加生成",
+                "[漁場] × 3 を直線に並べると、ちくわを追加で作る",
                 Badge(GroupStatus(view, Item.Chikuwa), UiClasses.Badge.Accent)));
             synCard.Add(IslandUi.Row(
                 IslandUi.IconBadge(UiClasses.Icon.DriedFish, UiClasses.Tint.Point),
                 "干物L字ライン",
-                "[塩田] を角にして [漁場] × 2 をL字配置 → 干物追加生成",
+                "[塩田] を角にして [漁場] × 2 をL字に置くと、干物を追加で作る",
                 Badge(GroupStatus(view, Item.DriedFish), UiClasses.Badge.Accent)));
             synCard.Children().Last().AddToClassList(UiClasses.Row.Last);
 
-            var infraCard = Card("🏭 稼働中のインフラ・増幅効果");
+            var infraCard = Card("稼働中の設備と増幅", UiClasses.Icon.Research);
             var dorms = view?.Nodes.Count(n => n.Kind == FacilityKind.Dormitory) ?? 0;
             var labs = view?.Nodes.Count(n => n.Kind == FacilityKind.Research) ?? 0;
             var amps = view?.Nodes.Count(n => n.Kind == FacilityKind.ElectricAmplifier || n.Kind == FacilityKind.WaterAmplifier || n.Kind == FacilityKind.GasAmplifier) ?? 0;
@@ -1276,18 +1547,56 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         private void ShowMenu()
         {
-            Open("メニュー", ProductionUiNames.MenuTab);
-            var howTo = Card("遊び方");
-            howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Build, UiClasses.Tint.Primary), "工房モードで建てる", "画面下の一覧から施設を選んで、建てたい場所をタップ", null));
-            howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.TopDown, UiClasses.Tint.Primary), "島を真上から見る", "工房モード上部のボタンで視点を切り替え、施設や道の配置を確認", null));
-            howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Move, UiClasses.Tint.Primary), "動かす", "施設をタップして、移したい場所をタップして ✓", null));
-            howTo.Children().Last().AddToClassList(UiClasses.Row.Last);
+            OpenSoft("メニュー", null, ProductionUiNames.MenuTab);
 
-            var data = Card("データ");
-            data.Add(IslandUi.Text("村はこの端末の中だけに保存するよ。写真や買い物の明細は保存しないよ", ProductionUiNames.Subtle));
-            Action(data, "保存をやり直す", () => _session.RetryLoad(), UiClasses.Icon.Undo, primary: false);
-            Action(data, "記録を見る", ShowRecord, UiClasses.Icon.Book, primary: false);
-            Action(data, "ライセンス", ShowLicenses, UiClasses.Icon.Help, primary: false);
+            // 上: 大きなペンギンと島のランク
+            var view = _session.Core.View;
+            var heroCard = SoftCard();
+            var hero = new VisualElement { pickingMode = PickingMode.Ignore };
+            hero.AddToClassList(ProductionUiNames.SoftHero);
+            var mascot = new VisualElement { pickingMode = PickingMode.Ignore };
+            mascot.AddToClassList(ProductionUiNames.SoftHeroMascot);
+            mascot.Add(IslandUi.Icon(UiClasses.Icon.Penguin, UiClasses.Tint.Original));
+            hero.Add(mascot);
+            var heroText = new VisualElement { pickingMode = PickingMode.Ignore };
+            heroText.style.flexShrink = 1;
+            heroText.Add(IslandUi.Text("ペンギンの島", ProductionUiNames.SoftHeroName));
+            if (view != null)
+            {
+                heroText.Add(IslandUi.Text($"島ランク {IslandRank(view).Rank}", ProductionUiNames.SoftHeroRank));
+                heroText.Add(IslandUi.Text($"お魚 {IslandUi.Number(view.Totals.GetValueOrDefault(Item.Fish))}・施設 {view.Nodes.Count} 棟", ProductionUiNames.SoftNote));
+            }
+
+            hero.Add(heroText);
+            heroCard.Add(hero);
+
+            // 押せるタイル (2 列)
+            var tiles = new VisualElement();
+            tiles.AddToClassList(ProductionUiNames.SoftTiles);
+            _content.Add(tiles);
+            SoftTile(tiles, UiClasses.Icon.Help, UiClasses.Tint.Primary, "チュートリアル", "操作しながら、もう一度", () =>
+            {
+                Close();
+                SetIndustrialMode(false);
+                _tutorial?.Restart();
+            });
+            SoftTile(tiles, UiClasses.Icon.Book, UiClasses.Tint.Gas, "記録", "歩数と受け取った資源", ShowRecord);
+            SoftTile(tiles, UiClasses.Icon.Production, UiClasses.Tint.Point, "生産レポート", "施設の動きと品物", ShowReport);
+            SoftTile(tiles, UiClasses.Icon.Build, UiClasses.Tint.Primary, "ペンギン工房", "建てる・並べ方のボーナス", ShowManagement);
+            SoftTile(tiles, UiClasses.Icon.Undo, UiClasses.Tint.Sub, "読み込み直す", "保存した村をもう一度読む", () => _session.RetryLoad());
+            SoftTile(tiles, UiClasses.Icon.Flag, UiClasses.Tint.Sub, "ライセンス", "使っている素材の表記", ShowLicenses);
+
+            // 遊び方: 絵とひとことの横並び
+            var howTo = SoftCard("遊び方", UiClasses.Icon.Penguin, UiClasses.Tint.Original);
+            var tips = new VisualElement { pickingMode = PickingMode.Ignore };
+            tips.AddToClassList(ProductionUiNames.SoftTips);
+            SoftTip(tips, UiClasses.Icon.Build, "一覧から選んで建てる");
+            SoftTip(tips, UiClasses.Icon.TopDown, "真上から見て並べる");
+            SoftTip(tips, UiClasses.Icon.Move, "タップして動かす");
+            howTo.Add(tips);
+
+            var data = SoftCard("データ", UiClasses.Icon.Lock, UiClasses.Tint.Sub);
+            data.Add(IslandUi.Text("村はこの端末の中だけに保存するよ。写真や買い物の明細は保存しないよ", ProductionUiNames.SoftNote));
 
             ShowDebugCard();
         }
@@ -1300,12 +1609,12 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         {
             var core = _session.Core;
             var free = core.FreeResources;
-            var debug = Card("デバッグ (審査用)");
+            var debug = SoftCard("デバッグ (審査用)", UiClasses.Icon.Warning, UiClasses.Tint.Point);
             debug.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Electricity, UiClasses.Tint.Electricity), "資源無限のモード",
                 free ? "オン: 建設・生産でガス・電気・水が減らないよ" : "オフ: ふだんどおり、歩数・写真で集めた資源を使うよ",
                 Badge(free ? "オン" : "オフ", UiClasses.Badge.Accent)));
             debug.Children().Last().AddToClassList(UiClasses.Row.Last);
-            debug.Add(IslandUi.Text("材料と物流はふだんどおり動くよ。資源無限の村はふだんの村と別に保存するので、オフにすればもとの村に戻るよ", ProductionUiNames.Subtle));
+            debug.Add(IslandUi.Text("材料と物流はふだんどおり動くよ。資源無限の村はふだんの村と別に保存するので、オフにすればもとの村に戻るよ", ProductionUiNames.SoftNote));
             Action(debug, free ? "ふだんの村に戻る" : "資源無限にする", () =>
             {
                 _session.SetFreeResources(!free);
@@ -1322,6 +1631,51 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                     ShowToast($"今日の歩数に {DevelopmentSteps} 歩を足したよ");
                 }, UiClasses.Icon.Gas, primary: false);
             }
+        }
+
+        /// <summary>やわらかいページのカード。見出しの印はデザインシステムのアイコン。</summary>
+        private VisualElement SoftCard(string title = null, string icon = null, string tint = null)
+        {
+            var card = new VisualElement();
+            card.AddToClassList(ProductionUiNames.SoftCard);
+            if (!string.IsNullOrEmpty(title))
+            {
+                var head = new VisualElement { pickingMode = PickingMode.Ignore };
+                head.AddToClassList(ProductionUiNames.SoftCardHead);
+                if (icon != null)
+                {
+                    head.Add(IslandUi.Icon(icon, tint ?? UiClasses.Tint.Primary));
+                }
+
+                head.Add(IslandUi.Text(title, ProductionUiNames.SoftCardTitle));
+                card.Add(head);
+            }
+
+            _content.Add(card);
+            return card;
+        }
+
+        /// <summary>メニューの押せるタイル (大きなアイコンの丸・名前・ひとこと)。</summary>
+        private static void SoftTile(VisualElement parent, string icon, string tint, string name, string sub, Action onClick)
+        {
+            var tile = new Button(onClick);
+            tile.AddToClassList(ProductionUiNames.SoftTile);
+            var circle = new VisualElement { pickingMode = PickingMode.Ignore };
+            circle.AddToClassList(ProductionUiNames.SoftTileCircle);
+            circle.Add(IslandUi.Icon(icon, tint));
+            tile.Add(circle);
+            tile.Add(IslandUi.Text(name, ProductionUiNames.SoftTileName));
+            tile.Add(IslandUi.Text(sub, ProductionUiNames.SoftTileSub));
+            parent.Add(tile);
+        }
+
+        private static void SoftTip(VisualElement parent, string icon, string text)
+        {
+            var tip = new VisualElement { pickingMode = PickingMode.Ignore };
+            tip.AddToClassList(ProductionUiNames.SoftTip);
+            tip.Add(IslandUi.IconBadge(icon, UiClasses.Tint.Primary));
+            tip.Add(IslandUi.Text(text, ProductionUiNames.SoftTipText));
+            parent.Add(tip);
         }
 
         /// <summary>同梱している外部の素材 (アイコン・フォント・ライブラリ) の著作権表示と許諾文。</summary>
