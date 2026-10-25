@@ -550,3 +550,117 @@
     right: 0;
     bottom: 0;
 }
+
+/* ============ 工房まわりのウィンドウ (全画面ページ) ============
+   生産レポートと同じ枠 (pp-industrial / pp-ind-*)。中身はシートと同じ組み立てなので、
+   ページの中だけ、カード・行・札を生産レポートの紺の行にそろえる。 */
+.village-workshop-page {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.village-workshop-page__body {
+    flex-grow: 1;
+}
+
+.village-workshop-page__body > .unity-scroll-view__content-viewport > .unity-scroll-view__content-container {
+    padding: var(--space-2) var(--space-6) var(--space-8) var(--space-6);
+}
+
+/* 節 (カード) は紺の板。左に黄の帯を付けて見出しを読みやすくする */
+.village-workshop-page .pp-card {
+    flex-shrink: 0;
+    margin: 0 var(--space-6) var(--space-4) var(--space-6);
+    padding: var(--space-3) var(--space-4);
+    border-radius: 0;
+    background-color: var(--ind-navy);
+    border-width: 0;
+    border-left-width: 8px;
+    border-left-color: var(--ind-yellow);
+    color: var(--ind-on);
+}
+
+.village-workshop-page .village-card__title {
+    margin-bottom: var(--space-2);
+    color: var(--ind-yellow);
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.village-workshop-page .village-subtle,
+.village-workshop-page .pp-row__sub {
+    color: var(--ind-on-sub);
+    white-space: normal;
+}
+
+.village-workshop-page .pp-row {
+    border-bottom-color: var(--ind-navy-2);
+    min-height: 120px;
+}
+
+.village-workshop-page .pp-row__title {
+    color: var(--ind-on);
+    -unity-font-definition: var(--font-heavy);
+}
+
+/* 行の中の文字を折り返し、右の札と重ならないようにする (図面の行が重なっていた) */
+.village-workshop-page .pp-row > VisualElement {
+    flex-shrink: 1;
+}
+
+.village-workshop-page .pp-row .pp-badge {
+    flex-shrink: 0;
+    margin-left: var(--space-2);
+    white-space: normal;
+    max-width: 260px;
+}
+
+.village-workshop-page .village-stat {
+    color: var(--ind-cyan);
+    -unity-font-definition: var(--font-num-heavy);
+    font-size: var(--font-size-title);
+}
+
+/* 折り返す並びは縮めない (縮めると 3 段目がカードの外へはみ出す) */
+.village-workshop-page .village-items {
+    flex-shrink: 0;
+    align-content: flex-start;
+}
+
+/* 割合の幅で折り返すと高さの計算が合わないので、ページの中では幅を決め打つ (3 列) */
+.village-workshop-page .village-items > .pp-item-card {
+    width: 284px;
+}
+
+.village-workshop-page .village-shelf {
+    flex-shrink: 0;
+    margin: 0 var(--space-6) var(--space-4) var(--space-6);
+}
+
+/* 施設の棚と品物の札は、紺の地に白い絵を載せる */
+.village-workshop-page .pp-shelf-card,
+.village-workshop-page .pp-item-card {
+    background-color: var(--ind-navy);
+    border-radius: 0;
+    border-width: 2px;
+    border-color: var(--ind-navy-2);
+    border-bottom-width: 6px;
+    border-bottom-color: var(--ind-yellow);
+}
+
+.village-workshop-page .pp-shelf-card__name,
+.village-workshop-page .pp-item-card__rate {
+    color: var(--ind-on);
+}
+
+.village-workshop-page .pp-item-card__value {
+    color: var(--ind-on);
+    -unity-font-definition: var(--font-num-heavy);
+}
+
+.village-workshop-page .pp-cost__value {
+    color: var(--ind-yellow);
+}

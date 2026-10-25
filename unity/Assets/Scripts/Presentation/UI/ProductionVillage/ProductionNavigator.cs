@@ -33,7 +33,10 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         private Button _confirm, _activeTab, _topDownToggle, _insightBanner;
         private ProductionReportPresenter _report;
         private Action _refreshSheet;
-        private bool _sheetOpen;
+        private bool _sheetOpen, _pageOpen;
+        private ScrollView _sheetContent, _pageContent;
+        private VisualElement _page;
+        private Label _pageTitle, _pageMicro;
         private bool _industrialMode;
         private string _dockCategory = "all";
         private float _nextRefresh, _nextSheetRefresh;
@@ -53,7 +56,11 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             _root = GetComponent<UIDocument>().rootVisualElement;
             _app = _root.Q(ProductionUiNames.Root);
             _sheet = _root.Q(ProductionUiNames.Sheet);
-            _content = _root.Q<ScrollView>(ProductionUiNames.Content);
+            _content = _sheetContent = _root.Q<ScrollView>(ProductionUiNames.Content);
+            _page = _root.Q(ProductionUiNames.WorkshopPage);
+            _pageContent = _root.Q<ScrollView>(ProductionUiNames.WorkshopContent);
+            _pageTitle = _root.Q<Label>(ProductionUiNames.WorkshopTitle);
+            _pageMicro = _root.Q<Label>(ProductionUiNames.WorkshopMicro);
             _tools = _root.Q(ProductionUiNames.Tools);
             _tray = _root.Q(ProductionUiNames.Tray);
             _toastLayer = _root.Q(ProductionUiNames.ToastLayer);
@@ -103,6 +110,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 Close();
             });
             Bind(ProductionUiNames.Close, Close);
+            Bind(ProductionUiNames.WorkshopClose, Close);
             Bind(ProductionUiNames.RecordTab, ShowRecord);
             Bind(ProductionUiNames.ScanTab, ShowScan);
             Bind(ProductionUiNames.ManageTab, ShowManagement);
@@ -688,6 +696,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         private void Open(string title, string tab)
         {
             Placement?.Cancel();
+            HidePage();
+            _content = _sheetContent;
             _content.Clear();
             _title.text = title;
             _refreshSheet = null;
@@ -701,6 +711,39 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             }
         }
 
+        /// <summary>
+        /// 工房まわりのウィンドウ (施設・図面・港・工房) を、生産レポートと同じ枠の全画面ページで開く。
+        /// 中身の組み立て (Card・Action など) はシートと共通で、ページの中では工業風の見た目になる (ProductionApp.uss)。
+        /// </summary>
+        private void OpenPage(string micro, string title, string tab)
+        {
+            Placement?.Cancel();
+            if (_sheetOpen && !_pageOpen)
+            {
+                _sheet.AddToClassList(UiClasses.Sheet.Closed);
+                IslandUi.SetVisible(_sheet, false);
+            }
+
+            _report?.Close();
+            _content = _pageContent;
+            _content.Clear();
+            _pageMicro.text = micro;
+            _pageTitle.text = title;
+            _refreshSheet = null;
+            _content.scrollOffset = Vector2.zero;
+            SetTab(tab);
+            _sheetOpen = _pageOpen = true;
+            IslandUi.SetVisible(_page, true);
+        }
+
+        private void HidePage()
+        {
+            if (!_pageOpen) return;
+            _pageOpen = false;
+            _sheetOpen = false;
+            IslandUi.SetVisible(_page, false);
+        }
+
         private void Live(Action refresh)
         {
             _refreshSheet = refresh;
@@ -710,6 +753,12 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         private void CloseSheetOnly()
         {
+            if (_pageOpen)
+            {
+                HidePage();
+                return;
+            }
+
             if (!_sheetOpen) return;
             _sheetOpen = false;
             _sheet.AddToClassList(UiClasses.Sheet.Closed);
@@ -803,7 +852,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         public void ShowPlacement()
         {
-            Open("工房の施設・連携図面", null);
+            OpenPage("BLUEPRINTS", "施設と連携図面", null);
             var view = _session.Core.View;
 
             // おすすめ連携図面カード
@@ -928,7 +977,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             }
 
             var def = IslandCatalog.Get(node.Kind);
-            Open(def.Name, null);
+            OpenPage("FACILITY", def.Name, null);
             _world.SelectedId = id;
             var top = Card();
             var header = new VisualElement();
@@ -1080,7 +1129,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 return;
             }
 
-            Open("出荷港 ＆ 島内倉庫", null);
+            OpenPage("HARBOR", "出荷港と島の倉庫", null);
             var stats = Card();
             var rateSection = Card("村にある品物 (倉庫・施設在庫)");
             var items = new VisualElement();
@@ -1182,7 +1231,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         private void ShowManagement()
         {
-            Open("ペンギン工房・連携図面", ProductionUiNames.ManageTab);
+            OpenPage("WORKSHOP", "ペンギン工房", ProductionUiNames.ManageTab);
             var view = _session.Core.View;
 
             var modeCard = Card("⚡ ペンギン工房");

@@ -1,4 +1,4 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements">
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:ind="ProjectPenguin.Presentation.UI.Industrial">
     <!-- 見た目は PanelSettings の PenguinTheme (Tokens / Components / Game / Thumbnails) に任せ、ここはレイアウトだけを読む -->
     <ui:Style src="ProductionApp.uss" />
     <ui:VisualElement name="villageApp" class="village-app" picking-mode="Ignore">
@@ -181,6 +181,26 @@
                 </ui:VisualElement>
                 <ui:ScrollView name="villageSheetContent" class="pp-sheet__body village-sheet__body" />
                 <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- 工房まわりのウィンドウ (施設・図面・港・工房)。生産レポートと同じ枠の全画面ページ -->
+        <ui:VisualElement name="villageWorkshopPage" class="pp-industrial pp-safe-area village-workshop-page pp-hidden">
+            <ui:VisualElement class="pp-ind-page">
+                <ui:VisualElement class="pp-ind-header">
+                    <ui:VisualElement class="pp-ind-title">
+                        <ui:Label name="villageWorkshopMicro" class="pp-ind-micro" text="WORKSHOP" />
+                        <ui:VisualElement class="pp-ind-h1">
+                            <ind:HexMark class="pp-ind-hex-mark" />
+                            <ui:Label name="villageWorkshopTitle" class="pp-ind-h1__text" text="工房" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Button name="villageWorkshopClose" class="pp-ind-close">
+                        <ui:Label class="pp-ind-close__text" text="✕" />
+                    </ui:Button>
+                </ui:VisualElement>
+                <ui:VisualElement class="pp-ind-hatch" />
+                <ui:ScrollView name="villageWorkshopContent" class="pp-ind-scroll village-workshop-page__body" />
             </ui:VisualElement>
         </ui:VisualElement>
 
