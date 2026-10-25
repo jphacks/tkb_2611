@@ -196,20 +196,19 @@ namespace ProjectPenguin.Domain.Village
         private List<VillageRouteView> Routes()
         {
             var routes=new List<VillageRouteView>();
-            var hasSorter=_nodes.Any(n=>n.Kind==FacilityKind.Sorter);
             foreach(var a in _nodes)
             {
-                var recipe=RecipeOf(a);if(recipe==null)continue;
+                if(RecipeOf(a)==null)continue;
                 foreach(var b in _nodes.Where(n=>n.Id!=a.Id).OrderBy(n=>n.Kind==FacilityKind.Warehouse?1:0).ThenBy(n=>Math.Abs(n.X-a.X)+Math.Abs(n.Y-a.Y)))
-                {
-                    var distance=Math.Abs(a.X-b.X)+Math.Abs(a.Y-b.Y);
-                    var maxDist=hasSorter&&_nodes.Any(s=>s.Kind==FacilityKind.Sorter&&Math.Abs(s.X-a.X)+Math.Abs(s.Y-a.Y)<=6)?12:8;
-                    if(distance<=maxDist&&SendableItems(a).Any(i=>Accepts(b,i)))
-                        routes.Add(new VillageRouteView{From=a.Id,To=b.Id});
-                }
+                    if(Links(a,b,_nodes))routes.Add(new VillageRouteView{From=a.Id,To=b.Id});
             }
             return routes;
         }
+        /// <summary>送り元 a から自動配送が届くマンハッタン距離。近く (6 以内) に仕分け所があれば 12、なければ 8。</summary>
+        private static int ReachOf(Node a,IReadOnlyCollection<Node> all)=>all.Any(s=>s.Kind==FacilityKind.Sorter&&Math.Abs(s.X-a.X)+Math.Abs(s.Y-a.Y)<=6)?12:8;
+        /// <summary>a から b へ自動配送の道ができるか (配送の規則の唯一の判定)。</summary>
+        private static bool Links(Node a,Node b,IReadOnlyCollection<Node> all)=>
+            a.Id!=b.Id&&RecipeOf(a)!=null&&Math.Abs(a.X-b.X)+Math.Abs(a.Y-b.Y)<=ReachOf(a,all)&&SendableItems(a).Any(i=>Accepts(b,i));
         private void Step()
         {
             _at+=100;
