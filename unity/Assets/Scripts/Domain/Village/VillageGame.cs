@@ -14,6 +14,9 @@ namespace ProjectPenguin.Domain.Village
     public sealed class VillageNodeView
     {
         public int Id {get; internal set;} public FacilityKind Kind {get; internal set;}
+        public int Level {get; internal set;} public int Capacity {get; internal set;}
+        public double ProductionSeconds {get; internal set;}
+        public VillageUpgradeView Upgrade {get; internal set;}
         public int X {get; internal set;} public int Y {get; internal set;} public int Total {get; internal set;}
         public int Size=>IslandCatalog.Get(Kind).Size;
         public double Progress {get; internal set;} public string Status {get; internal set;}
@@ -78,7 +81,7 @@ namespace ProjectPenguin.Domain.Village
     {
         private sealed class Node
         {
-            internal int Id,X,Y;internal FacilityKind Kind;
+            internal int Id,X,Y,Level=1;internal FacilityKind Kind;
             internal readonly Dictionary<Item,int> Stock=new Dictionary<Item,int>();
             internal long Started,Finish;internal string Status="待機";
             internal int Held(Item item)=>Stock.TryGetValue(item,out var n)?n:0;
@@ -119,20 +122,16 @@ namespace ProjectPenguin.Domain.Village
         public string CanPlace(FacilityKind kind,int x,int y)=>!Supported(kind)?"未対応の施設です":Placement(kind,x,y,0);
         internal static int CoverageRadiusOf(FacilityKind kind)=>
             kind==FacilityKind.ElectricAmplifier||kind==FacilityKind.WaterAmplifier||kind==FacilityKind.GasAmplifier||kind==FacilityKind.IceHouse||kind==FacilityKind.Sorter?6:0;
-        private bool IsAmplified(Node target)=>
-            _nodes.Any(a=>a.Id!=target.Id&&(a.Kind==FacilityKind.ElectricAmplifier||a.Kind==FacilityKind.WaterAmplifier||a.Kind==FacilityKind.GasAmplifier)&&
-                Math.Max(Math.Abs(a.X-target.X),Math.Abs(a.Y-target.Y))<=6);
-        private bool IsCooled(Node target)=>
-            _nodes.Any(a=>a.Id!=target.Id&&a.Kind==FacilityKind.IceHouse&&Math.Max(Math.Abs(a.X-target.X),Math.Abs(a.Y-target.Y))<=6);
-        private int NodeCapacity(Node n)=>(n.Kind==FacilityKind.Warehouse||n.Kind==FacilityKind.Sorter?20:12)*(IsCooled(n)?2:1);
-        private int OutputCap(Node n)=>6*(IsCooled(n)?2:1);
+        private bool IsAmplified(Node target)=>AmplifierBonus(target)>0;
+        private int NodeCapacity(Node n)=>(int)(VillageUpgradeRules.BaseCapacity(n.Kind,n.Level)*CoolingMultiplier(n));
+        private int OutputCap(Node n)=>(int)(6*VillageUpgradeRules.Speed(n.Level)*CoolingMultiplier(n));
         private double NodeSpeedMultiplier(Node n)
         {
             var mult=1.0;
-            if(IsAmplified(n))mult+=0.25;
-            mult+=0.10*_nodes.Count(a=>a.Kind==FacilityKind.Dormitory);
-            mult+=0.15*_nodes.Count(a=>a.Kind==FacilityKind.Research);
-            return mult;
+            mult+=AmplifierBonus(n);
+            mult+=_nodes.Where(a=>a.Kind==FacilityKind.Dormitory).Sum(a=>VillageUpgradeRules.Dormitory(a.Level));
+            mult+=_nodes.Where(a=>a.Kind==FacilityKind.Research).Sum(a=>VillageUpgradeRules.Research(a.Level));
+            return mult*VillageUpgradeRules.Speed(n.Level);
         }
         private string Placement(FacilityKind kind,int x,int y,int ignore)
         {
@@ -196,14 +195,13 @@ namespace ProjectPenguin.Domain.Village
         private List<VillageRouteView> Routes()
         {
             var routes=new List<VillageRouteView>();
-            var hasSorter=_nodes.Any(n=>n.Kind==FacilityKind.Sorter);
             foreach(var a in _nodes)
             {
                 var recipe=RecipeOf(a);if(recipe==null)continue;
                 foreach(var b in _nodes.Where(n=>n.Id!=a.Id).OrderBy(n=>n.Kind==FacilityKind.Warehouse?1:0).ThenBy(n=>Math.Abs(n.X-a.X)+Math.Abs(n.Y-a.Y)))
                 {
                     var distance=Math.Abs(a.X-b.X)+Math.Abs(a.Y-b.Y);
-                    var maxDist=hasSorter&&_nodes.Any(s=>s.Kind==FacilityKind.Sorter&&Math.Abs(s.X-a.X)+Math.Abs(s.Y-a.Y)<=6)?12:8;
+                    var maxDist=DeliveryRange(a);
                     if(distance<=maxDist&&SendableItems(a).Any(i=>Accepts(b,i)))
                         routes.Add(new VillageRouteView{From=a.Id,To=b.Id});
                 }
@@ -238,11 +236,7 @@ namespace ProjectPenguin.Domain.Village
                 if(r==null)
                 {
                     n.Status=n.Kind==FacilityKind.Warehouse?"受け取り待ち"
-                        :n.Kind==FacilityKind.IceHouse?"周囲の保管容量 ×2"
-                        :n.Kind==FacilityKind.Sorter?"周囲の配送距離を拡張中"
-                        :n.Kind==FacilityKind.Dormitory?"島全体の作業速度 +10%"
-                        :n.Kind==FacilityKind.Research?"島全体の研究効率 +15%"
-                        :"周囲の生産速度 +25%";
+                        :SupportStatus(n);
                     continue;
                 }
                 var arrivals=reserved[n.Id];
@@ -337,6 +331,8 @@ namespace ProjectPenguin.Domain.Village
                 ProducedLastMinute=_history.Sum(e=>(long)e.Made),
                 BottleneckSummary=bottleneckSummary,HasBottleneck=hasBottleneck,
                 Nodes=Array.AsReadOnly(_nodes.Select(n=>new VillageNodeView{Id=n.Id,Kind=n.Kind,X=n.X,Y=n.Y,Total=n.Stock.Values.Sum(),
+                    Level=n.Level,Capacity=NodeCapacity(n),Upgrade=UpgradeView(n),
+                    ProductionSeconds=RecipeOf(n)==null?0:Math.Max(.1,RecipeOf(n).Seconds/(_speed*NodeSpeedMultiplier(n))),
                     Status=n.Status,Amplified=IsAmplified(n),InSynergy=synergyNodeIds.Contains(n.Id),CoverageRadius=CoverageRadiusOf(n.Kind),
                     Progress=n.Finish>0?Math.Min(1,(_at-n.Started)/(double)(n.Finish-n.Started)):0,
                     Stock=new ReadOnlyDictionary<Item,int>(new Dictionary<Item,int>(n.Stock))}).ToArray()),

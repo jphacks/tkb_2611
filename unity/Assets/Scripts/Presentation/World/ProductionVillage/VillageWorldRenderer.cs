@@ -10,6 +10,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
     public sealed class VillageWorldRenderer
     {
         public const float Cell=.65f;
+        private const float ModelScale=.86f;
         private readonly Transform _parent;
         private readonly VillagePrefabCatalog _prefabs;
         private readonly RectTransform _canvas;
@@ -19,6 +20,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
         private readonly Dictionary<int,FacilityKind> _kinds=new Dictionary<int,FacilityKind>();
         private readonly Dictionary<int,bool> _working=new Dictionary<int,bool>();
         private readonly Dictionary<int,Image> _footprints=new Dictionary<int,Image>();
+        private readonly Dictionary<int,Image> _statusBars=new Dictionary<int,Image>();
         private readonly Dictionary<int,Image> _zones=new Dictionary<int,Image>();
         private readonly Dictionary<string,Image> _synergies=new Dictionary<string,Image>();
         private readonly Dictionary<string,Image> _lines=new Dictionary<string,Image>();
@@ -58,7 +60,8 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
             Rect("Left",_tacticalFrame.transform,new Vector2(-halfSpan,0),new Vector2(.06f,boardSpan),borderCol);
             Rect("Right",_tacticalFrame.transform,new Vector2(halfSpan,0),new Vector2(.06f,boardSpan),borderCol);
             _tacticalFrame.SetActive(false);
-            _selection=Rect(ProductionWorldNames.Selection,_canvas,Vector2.zero,Vector2.zero,new Color(.18f,.85f,.95f,.42f));_selection.enabled=false;
+            _selection=Rect(ProductionWorldNames.Selection,_canvas,Vector2.zero,Vector2.zero,Color.clear);
+            SelectionBorder(_selection.rectTransform);_selection.gameObject.SetActive(false);
             _preview=Rect(ProductionWorldNames.Preview,_canvas,Vector2.zero,Vector2.zero,Color.green);_preview.enabled=false;
             if(harbor!=null){var port=Model(harbor,2.5f,ProductionWorldNames.Port);port.transform.position=HarborPosition;}
         }
@@ -69,7 +72,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
             foreach(var id in _models.Keys.Where(id=>!view.Nodes.Any(n=>n.Id==id&&n.Kind==_kinds[id])).ToArray())
             {
                 Object.Destroy(_models[id]);_models.Remove(id);_kinds.Remove(id);_working.Remove(id);
-                if(_footprints.TryGetValue(id,out var fp)){Object.Destroy(fp.gameObject);_footprints.Remove(id);}
+                if(_footprints.TryGetValue(id,out var fp)){Object.Destroy(fp.gameObject);_footprints.Remove(id);_statusBars.Remove(id);}
                 if(_zones.TryGetValue(id,out var zn)){Object.Destroy(zn.gameObject);_zones.Remove(id);}
             }
             // 1. 増幅器・氷室・仕分け機の稼働エリア (Cyan Coverage Zone)
@@ -101,20 +104,23 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
                 }
             }
             foreach(var k in _synergies.Keys.Where(k=>!synKeys.Contains(k)).ToArray()){Object.Destroy(_synergies[k].gameObject);_synergies.Remove(k);}
-            // 3. 施設モデルと足元ステータス座布団 (Footprint Pad)
+            // 3. 足元の面は強化レベル、手前の細い帯は稼働状態。
             foreach(var n in view.Nodes)
             {
-                if(!_models.TryGetValue(n.Id,out var model)){_models[n.Id]=model=Model(_prefabs.Get(n.Kind),n.Size*Cell*.94f,ProductionWorldNames.Facility+n.Id);_kinds[n.Id]=n.Kind;}
+                if(!_models.TryGetValue(n.Id,out var model)){_models[n.Id]=model=Model(_prefabs.Get(n.Kind),n.Size*Cell*ModelScale,ProductionWorldNames.Facility+n.Id);_kinds[n.Id]=n.Kind;}
                 model.transform.position=Position(n.X,n.Y,n.Size);
                 if(!_footprints.TryGetValue(n.Id,out var fp))
-                    _footprints[n.Id]=fp=Rect(ProductionWorldNames.Footprint+n.Id,_canvas,Vector2.zero,Vector2.one*(n.Size*Cell*.92f),Color.clear);
+                {
+                    _footprints[n.Id]=fp=Rect(ProductionWorldNames.Footprint+n.Id,_canvas,Vector2.zero,Vector2.one*(n.Size*Cell*.98f),Color.clear);
+                    _statusBars[n.Id]=Rect("Status",fp.transform,new Vector2(0,-n.Size*Cell*.43f),new Vector2(n.Size*Cell*.72f,.07f),Color.clear);
+                }
                 fp.rectTransform.anchoredPosition=Flat(Position(n.X,n.Y,n.Size));
+                fp.color=VillageLevelColors.Tile(n.Level);
                 var stopped=n.Status=="ガスを待っています"||n.Status=="出力の置き場が満杯";
                 var waiting=n.Status=="材料を待っています";
-                fp.color=stopped?new Color(.95f,.28f,.28f,.34f)
-                    :waiting?new Color(.96f,.65f,.14f,.28f)
-                    :n.Amplified?new Color(.18f,.83f,.92f,.24f)
-                    :IndustrialMode?new Color(.15f,.55f,.75f,.18f):new Color(.2f,.65f,.85f,.08f);
+                _statusBars[n.Id].color=stopped?new Color(.95f,.28f,.28f,.95f)
+                    :waiting?new Color(.96f,.65f,.14f,.95f)
+                    :n.Amplified?new Color(.18f,.83f,.92f,.95f):Color.clear;
                 var working=running&&n.Status=="生産中"&&n.Progress<1;
                 if(!_working.TryGetValue(n.Id,out var previous)||previous!=working)
                 {
@@ -123,8 +129,8 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
                     foreach(var animator in model.GetComponentsInChildren<Animator>(true))animator.enabled=working;
                 }
             }
-            var selection=view.Nodes.FirstOrDefault(n=>n.Id==selected);_selection.enabled=selection!=null;
-            if(selection!=null){_selection.rectTransform.anchoredPosition=Flat(Position(selection.X,selection.Y,selection.Size));_selection.rectTransform.sizeDelta=Vector2.one*selection.Size*Cell;}
+            var selection=view.Nodes.FirstOrDefault(n=>n.Id==selected);_selection.gameObject.SetActive(selection!=null);
+            if(selection!=null){_selection.rectTransform.anchoredPosition=Flat(Position(selection.X,selection.Y,selection.Size));_selection.rectTransform.sizeDelta=Vector2.one*selection.Size*Cell;_selection.transform.SetAsLastSibling();}
             // 4. コンベア・物流ライン + 方向パルスマーカー
             var keys=new HashSet<string>();
             var pulse=Mathf.Repeat(Time.unscaledTime*.85f,1f);
@@ -172,8 +178,9 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
             _tacticalFrame.SetActive(enabled||IndustrialMode);
             _preview.enabled=enabled;
             if(!enabled){if(_ghost!=null)_ghost.SetActive(false);return;}
+            _preview.transform.SetAsLastSibling();
             var size=IslandCatalog.Get(kind).Size;
-            if(_ghost==null||_ghostKind!=kind){if(_ghost!=null)Object.Destroy(_ghost);_ghostKind=kind;_ghost=Model(_prefabs.Get(kind),size*Cell*.94f,ProductionWorldNames.Ghost);}
+            if(_ghost==null||_ghostKind!=kind){if(_ghost!=null)Object.Destroy(_ghost);_ghostKind=kind;_ghost=Model(_prefabs.Get(kind),size*Cell*ModelScale,ProductionWorldNames.Ghost);}
             _ghost.SetActive(true);_ghost.transform.position=Position(x,y,size)+Vector3.up*.15f;
             _preview.color=valid?new Color(.15f,.85f,.5f,.65f):new Color(.95f,.25f,.22f,.65f);
             _preview.rectTransform.anchoredPosition=Flat(Position(x,y,size));_preview.rectTransform.sizeDelta=Vector2.one*size*Cell;
@@ -182,6 +189,18 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
         {var rt=image.rectTransform;var delta=b-a;rt.pivot=new Vector2(0,.5f);rt.anchoredPosition=a;rt.sizeDelta=new Vector2(delta.magnitude,width);rt.localRotation=Quaternion.Euler(0,0,Mathf.Atan2(delta.y,delta.x)*Mathf.Rad2Deg);}
         private static Image Rect(string name,Transform parent,Vector2 position,Vector2 size,Color color)
         {var go=new GameObject(name,typeof(RectTransform),typeof(Image));go.transform.SetParent(parent,false);var rt=(RectTransform)go.transform;rt.anchoredPosition=position;rt.sizeDelta=size;var i=go.GetComponent<Image>();i.color=color;i.raycastTarget=false;return i;}
+        private static void SelectionBorder(RectTransform parent)
+        {
+            var color=new Color(.08f,.68f,.84f,1);
+            for(var edge=0;edge<4;edge++)
+            {
+                var rt=Rect("Edge"+edge,parent,Vector2.zero,Vector2.zero,color).rectTransform;
+                var horizontal=edge<2;var side=edge%2;
+                rt.anchorMin=horizontal?new Vector2(0,side):new Vector2(side,0);
+                rt.anchorMax=horizontal?new Vector2(1,side):new Vector2(side,1);
+                rt.sizeDelta=horizontal?new Vector2(0,.035f):new Vector2(.035f,0);
+            }
+        }
         private GameObject Model(GameObject prefab,float width,string name)
         {
             var holder=new GameObject(name);holder.transform.SetParent(_parent,false);

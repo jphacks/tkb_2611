@@ -36,5 +36,10 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         /// <summary>主役の数字が増えたときに一瞬ふくらませる (Components.uss)。</summary>
         public const string HeroBump="pp-hero--bump";
+        public const string Upgrade="village-upgrade",UpgradeHeader="village-upgrade__header",UpgradeLevel="village-upgrade__level",
+            UpgradeGrid="village-upgrade__grid",UpgradeStage="village-upgrade__stage",UpgradeNext="village-upgrade__stage--next",
+            UpgradeCaption="village-upgrade__caption",UpgradeEffect="village-upgrade__effect",UpgradeCost="village-upgrade__cost",
+            UpgradeHint="village-upgrade__hint",UpgradeWarning="village-upgrade__hint--warning",UpgradeConfirm="village-upgrade__confirm",
+            UpgradeActions="village-upgrade__actions",FacilityLevel="village-facility__level";
     }
 }

@@ -57,6 +57,7 @@ namespace ProjectPenguin.Systems
         public bool Place(FacilityKind kind,int x,int y,long utc)=>Command(g=>g.Place(kind,x,y),utc);
         public bool Move(int id,int x,int y,long utc)=>Command(g=>g.Move(id,x,y),utc);
         public bool Remove(int id,long utc)=>Command(g=>g.Remove(id),utc);
+        public bool Upgrade(int id,int expectedLevel,long utc)=>Command(g=>g.Upgrade(id,expectedLevel),utc);
         public string CanPlace(FacilityKind kind,int x,int y)=>_game?.CanPlace(kind,x,y)??"村を読み込めません";
         public string CanMove(int id,int x,int y)=>_game?.CanMove(id,x,y)??"村を読み込めません";
         public bool AcceptSteps(int day,int steps,int today,long utc)=>Command(g=>g.AcceptSteps(day,steps,today),utc);

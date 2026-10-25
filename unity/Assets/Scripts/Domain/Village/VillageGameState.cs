@@ -56,7 +56,7 @@ namespace ProjectPenguin.Domain.Village
             return new VillageState{At=_at,Requested=_requested,NextId=_nextId,NextCargo=_nextCargo,Produced=_produced,
                 GroupProgress=new VillageGroupProgressState{ElapsedMs=_groupElapsed,Tick=_groupTick,Chikuwa=GroupProgressOf(Item.Chikuwa),Kamaboko=GroupProgressOf(Item.Kamaboko),DriedFish=GroupProgressOf(Item.DriedFish)},
                 DeliveryMs=_deliveryMs,Speed=_speed,Gas=_gas,Electricity=_electricity,Water=_water,Spent=_spent,Unlimited=_unlimited,Ledger=_ledger.Copy(),
-                Nodes=_nodes.Select(n=>new VillageNodeState{Id=n.Id,Kind=n.Kind,X=n.X,Y=n.Y,Started=n.Started,Finish=n.Finish,
+                Nodes=_nodes.Select(n=>new VillageNodeState{Id=n.Id,Kind=n.Kind,Level=n.Level,X=n.X,Y=n.Y,Started=n.Started,Finish=n.Finish,
                     Stock=Enum.GetValues(typeof(Item)).Cast<Item>().Select(i=>n.Held(i)).ToArray()}).ToList(),
                 Cargo=_cargo.Select(c=>new VillageCargoState{Id=c.Id,From=c.From,To=c.To,Item=c.Item,FromX=c.FromX,FromY=c.FromY,ToX=c.ToX,ToY=c.ToY,Start=c.Start,End=c.End}).ToList(),
                 History=_history.Select(e=>new VillageHistoryState{At=e.At,Gas=e.Gas,Made=e.Made}).ToList(),
@@ -73,8 +73,8 @@ namespace ProjectPenguin.Domain.Village
             g._at=s.At;g._requested=s.Requested;g._spent=s.Spent;g._produced=s.Produced;
             foreach(var n in s.Nodes)
             {
-                if(n==null||n.Id<=0||g._nodes.Any(a=>a.Id==n.Id)||!Supported(n.Kind)||g.Placement(n.Kind,n.X,n.Y,0)!=""||n.Stock==null||n.Stock.Length!=8||n.Stock.Any(i=>i<0||i>40)||n.Started<0||n.Finish<0||n.Finish>0&&(n.Started>s.At||n.Finish<=s.At||n.Finish<=n.Started)||RecipeOf(new Node{Kind=n.Kind})==null&&n.Finish!=0)throw new ArgumentException("保存の施設が不正です");
-                var node=new Node{Id=n.Id,Kind=n.Kind,X=n.X,Y=n.Y,Started=n.Started,Finish=n.Finish,Status=n.Finish>0?"生産中":"待機"};
+                if(n==null||n.Id<=0||g._nodes.Any(a=>a.Id==n.Id)||!Supported(n.Kind)||n.Level<0||n.Level>VillageUpgradeRules.MaxLevel||g.Placement(n.Kind,n.X,n.Y,0)!=""||n.Stock==null||n.Stock.Length!=8||n.Stock.Any(i=>i<0||i>VillageUpgradeRules.MaximumCapacity)||n.Started<0||n.Finish<0||n.Finish>0&&(n.Started>s.At||n.Finish<=s.At||n.Finish<=n.Started)||RecipeOf(new Node{Kind=n.Kind})==null&&n.Finish!=0)throw new ArgumentException("保存の施設が不正です");
+                var node=new Node{Id=n.Id,Kind=n.Kind,Level=Math.Max(1,n.Level),X=n.X,Y=n.Y,Started=n.Started,Finish=n.Finish,Status=n.Finish>0?"生産中":"待機"};
                 for(var i=0;i<8;i++)node.Stock[(Item)i]=n.Stock[i];g._nodes.Add(node);
             }
             foreach(var c in s.Cargo)

@@ -33,6 +33,7 @@ namespace ProjectPenguin.Domain.Village
     [Serializable] public sealed class VillageNodeState
     {
         public int Id, X, Y;
+        public int Level = 1;
         public FacilityKind Kind;
         public long Started, Finish;
         public int[] Stock = new int[8];
