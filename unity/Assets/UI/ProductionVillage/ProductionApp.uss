@@ -74,16 +74,48 @@
     margin: var(--space-2) var(--space-4) 0 var(--space-4);
 }
 
-/* 工房モードの操作バー */
+/* 工房モードの状態バー (押すと生産レポート)。ボタンの既定の見た目を打ち消し、薄く保つ */
 .village-tactical-bar {
+    flex-direction: column;
+    align-items: stretch;
+    -unity-text-align: upper-left;
     margin: var(--space-2) var(--space-4) 0 var(--space-4);
-    padding: var(--space-2) var(--space-3);
+    padding: var(--space-1) var(--space-3) var(--space-2) var(--space-3);
     border-radius: var(--radius-md);
     background-color: var(--color-tactical-bg);
     border-width: 2px;
     border-color: var(--color-tactical-cyan);
     border-bottom-width: 6px;
     border-bottom-color: var(--color-tactical-lip);
+}
+
+.village-tactical-bar:hover,
+.village-tactical-bar:active {
+    background-color: var(--color-tactical-surface);
+}
+
+/* 工房モードのカメラ操作。右端に縦に並べる */
+.village-camera-rail {
+    position: absolute;
+    right: var(--space-3);
+    top: 640px;
+    width: 132px;
+    align-items: stretch;
+    padding: var(--space-1);
+    border-radius: var(--radius-md);
+    background-color: var(--color-tactical-bg);
+    border-width: 2px;
+    border-color: var(--color-tactical-cyan-soft);
+}
+
+.village-camera-rail .village-tactical-btn {
+    justify-content: center;
+    margin: var(--space-1) 0;
+}
+
+.village-camera-rail .village-group-state {
+    margin: 0 0 var(--space-1) 0;
+    -unity-text-align: middle-center;
 }
 
 .village-tactical-title {
@@ -107,9 +139,9 @@
 
 /* 稼働・停止・配送中の数 (生産レポートの札と同じ数え方)。止まっている施設があれば赤くする */
 .village-tactical-status {
-    margin-top: var(--space-1);
+    margin-top: 0;
     color: var(--color-text-on-primary);
-    font-size: var(--font-size-body);
+    font-size: var(--font-size-caption);
     -unity-font-definition: var(--font-bold);
 }
 
@@ -505,7 +537,7 @@
 }
 .village-tactical-row { flex-direction: row; flex-wrap: wrap; align-items: center; }
 /* 次にやること (VillageInsight.NextStep)。困っているときは赤い帯で目立たせる */
-.village-next-step { color: var(--color-accent); font-size: var(--font-size-body); -unity-font-style: bold; white-space: normal; margin-top: var(--space-2); padding: var(--space-1) var(--space-2); border-left-width: 6px; border-left-color: var(--color-accent); background-color: var(--color-tactical-cyan-soft); }
+.village-next-step { color: var(--color-accent); font-size: var(--font-size-body); -unity-font-style: bold; white-space: normal; margin-top: var(--space-1); padding: 2px var(--space-2); border-left-width: 6px; border-left-color: var(--color-accent); background-color: var(--color-tactical-cyan-soft); }
 .village-next-step--warn { color: var(--color-danger-soft); border-left-color: var(--color-danger); }
 .village-group-state { color: var(--color-tactical-cyan); font-size: var(--font-size-caption); white-space: normal; margin-top: var(--space-1); }
 .village-group-mark { position: absolute; width: 46px; height: 46px; opacity: 0.55; }
