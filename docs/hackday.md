@@ -10,7 +10,7 @@
 |---|---|
 | backend の土台 (設定・`/api/v1/health`・ミドルウェア)、CI、検査スクリプト | 写真判定のエンドポイントと AI の呼び出し |
 | 契約 (`api/openapi.yaml`・例) | 検証層 (確信度での振り分け・画面撮影と文字だけの写真の判定) |
-| `docs/`・`CLAUDE.md`・ルール | CO₂e の換算 (#90 の根拠から) |
+| `docs/`・`CLAUDE.md`・ルール | |
 | テストの土台 (`backend/tests/support/`: 契約の検証・合成の写真・Bedrock と DynamoDB の偽物・写真の漏れの検査、未実装の一覧、本物の AWS に当てるテスト) | 写真判定・みんなの氷山の機能のテスト (土台を使って当日に書く) |
 | AWS の資源 (`infra/backend.yaml`: DynamoDB のテーブル・Vercel 用のロール・Nova の呼び出しの権限) | backend から AWS を呼ぶコード (OIDC でロールを借りる・boto3 の呼び出し) |
 | | みんなの氷山の集計・節目、会場表示の Web ページ |
