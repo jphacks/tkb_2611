@@ -98,7 +98,15 @@ def test_nova_answers_the_water_tool_in_shape(runtime: BedrockRuntimeClient) -> 
 
     assert reading.container in {"pet_bottle", "unknown"}
     assert reading.label_capacity_ml >= 0
-    assert 0 <= reading.fill_ratio <= 1
+    assert reading.remaining in {
+        "empty",
+        "little",
+        "quarter",
+        "half",
+        "three_quarters",
+        "full",
+        "unknown",
+    }
 
 
 def test_other_models_are_denied_for_developers(runtime: BedrockRuntimeClient) -> None:
