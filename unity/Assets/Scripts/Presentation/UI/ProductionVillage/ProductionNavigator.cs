@@ -11,8 +11,7 @@ using UnityEngine.UIElements;
 namespace ProjectPenguin.Presentation.UI.ProductionVillage
 {
     /// <summary>
-    /// 村のホームの UI。ポケモンスリープ風の温かい「ホームモード」と、
-    /// エンドフィールド風の盤面直結「集成工業モード (見下ろし視点・クイック建設ドック・空間バッジ・協約核心レポート)」を切り替える。
+    /// 村のホームの UI。島を眺めるホームモードと、施設を配置して生産状況を確認する工房モードを切り替える。
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public sealed class ProductionNavigator : MonoBehaviour
@@ -170,7 +169,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         }
 
         // ------------------------------------------------------------------
-        // モード切替 (ホーム ⇔ 集成工業モード) & カメラ操作
+        // モード切替 (ホーム ⇔ 工房モード) & カメラ操作
         // ------------------------------------------------------------------
 
         public void SetIndustrialMode(bool enabled)
@@ -187,7 +186,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
             if (_industrialSwitchLabel != null)
             {
-                _industrialSwitchLabel.text = enabled ? "ホームへ戻る" : "工業モード";
+                _industrialSwitchLabel.text = enabled ? "ホームへ戻る" : "工房モード";
             }
 
             IslandUi.SetVisible(_tacticalBar, enabled);
@@ -264,7 +263,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             if (_rankText != null) _rankText.text = $"{rank}";
             if (_rankProgress != null) _rankProgress.value = progress;
 
-            // 集成工業バーのガス収支表示
+            // 工房の操作バーにガス収支を表示
             if (_tacticalGas != null)
             {
                 _tacticalGas.text = $"🔥 消費 {view.GasPerMinute:0.#}/分 (理論 {view.TheoreticalGasPerMinute:0.#}/分)";
@@ -461,7 +460,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         }
 
         // ------------------------------------------------------------------
-        // 下部クイック建設ドック (盤面を隠さない Endfield スタイル)
+        // 盤面を隠さない下部の施設選択欄
         // ------------------------------------------------------------------
 
         private void RebuildQuickDock()
@@ -750,7 +749,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         public void ShowPlacement()
         {
-            Open("工業設備カタログ ＆ 連携図面", null);
+            Open("工房の施設・連携図面", null);
             var view = _session.Core.View;
 
             // おすすめ連携図面カード
@@ -1125,23 +1124,23 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             card.Add(IslandUi.Text("写真の読み取りがつながると使えるようになるよ。写真は村に保存しないよ", ProductionUiNames.Subtle));
         }
 
-        // ---- 工業・図面管理 (ShowManagement) ----
+        // ---- 工房・図面管理 (ShowManagement) ----
 
         private void ShowManagement()
         {
-            Open("集成工業・連携図面管理", ProductionUiNames.ManageTab);
+            Open("ペンギン工房・連携図面", ProductionUiNames.ManageTab);
             var view = _session.Core.View;
 
-            var modeCard = Card("⚡ ペンギン集成工業モード");
-            modeCard.Add(IslandUi.Text("盤面を見下ろし視点 (90°) に切り替え、画面下のクイック建設ドックから直接設備や増幅器を配置・配線できます。", ProductionUiNames.Subtle));
-            Action(modeCard, "集成工業モードを起動する", () =>
+            var modeCard = Card("⚡ ペンギン工房");
+            modeCard.Add(IslandUi.Text("島を真上から見ながら、画面下の一覧から施設を選んで建てられるよ。施設の並べ方や資源を運ぶ道を工夫して、ペンギンたちのものづくりを手伝おう。", ProductionUiNames.Subtle));
+            Action(modeCard, "工房モードを開く", () =>
             {
                 Close();
                 SetIndustrialMode(true);
             }, UiClasses.Icon.Electricity);
             Action(modeCard, "生産レポートを見る", ShowReport, UiClasses.Icon.Production, primary: false);
 
-            var synCard = Card("✨ 施設の並び連携ボーナス (evolve ルール)");
+            var synCard = Card("✨ 施設の並べ方ボーナス");
             synCard.Add(IslandUi.Row(
                 IslandUi.IconBadge(UiClasses.Icon.Kamaboko, UiClasses.Tint.Point),
                 "かまぼこ黄金ライン",
@@ -1177,8 +1176,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         {
             Open("メニュー", ProductionUiNames.MenuTab);
             var howTo = Card("遊び方");
-            howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Build, UiClasses.Tint.Primary), "工業モードで建てる", "下のクイック建設ドックから選んで盤面をタップ", null));
-            howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.TopDown, UiClasses.Tint.Primary), "見下ろし視点 (90°)", "工業モード上部のボタンで真上からの配線視点に切替", null));
+            howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Build, UiClasses.Tint.Primary), "工房モードで建てる", "画面下の一覧から施設を選んで、建てたい場所をタップ", null));
+            howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.TopDown, UiClasses.Tint.Primary), "島を真上から見る", "工房モード上部のボタンで視点を切り替え、施設や道の配置を確認", null));
             howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Move, UiClasses.Tint.Primary), "動かす", "施設をタップして、移したい場所をタップして ✓", null));
             howTo.Children().Last().AddToClassList(UiClasses.Row.Last);
 

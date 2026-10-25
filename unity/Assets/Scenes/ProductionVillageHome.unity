@@ -546,7 +546,7 @@ Transform:
   m_GameObject: {fileID: 83076382}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7.5, y: -0.35, z: 16.5}
+  m_LocalPosition: {x: 3, y: -0.35, z: 14.02}
   m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1206,6 +1206,28 @@ MonoBehaviour:
     _cell: {x: 11, y: 10}
   - _kind: 8
     _cell: {x: 14, y: 10}
+  _inspectorDebugSettings:
+    _enabled: 0
+    _gas: 10000
+    _electricity: 100
+    _water: 100
+    _recipeSpeed: 0.01
+    _timeScale: 100
+    _deliveryMs: 1500
+    _unlimited: 0
+    _facilities:
+    - _kind: 0
+      _cell: {x: 8, y: 10}
+      _stock: []
+    - _kind: 0
+      _cell: {x: 10, y: 10}
+      _stock: []
+    - _kind: 0
+      _cell: {x: 12, y: 10}
+      _stock: []
+    - _kind: 8
+      _cell: {x: 10, y: 13}
+      _stock: []
 --- !u!4 &456161917
 Transform:
   m_ObjectHideFlags: 0
@@ -2285,6 +2307,8 @@ MonoBehaviour:
   _pitch: 55
   _fill: 1
   _viewportShift: -0.04
+  _groupEnterRatio: 0.9
+  _groupExitRatio: 0.8
 --- !u!1001 &1168128766
 PrefabInstance:
   m_ObjectHideFlags: 0
