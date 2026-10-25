@@ -1,51 +1,74 @@
-using System;
+using System.Linq;
 using NUnit.Framework;
+using ProjectPenguin.Presentation.World.ProductionVillage;
 namespace ProjectPenguin.Tests.EditMode
 {
     public sealed class VillageZoomInputTests
     {
-        private static Type Policy => typeof(VillageZoomInputTests).Assembly.GetType("ProjectPenguin.Presentation.World.ProductionVillage.VillageZoomPolicy") ?? AppDomain.CurrentDomain.GetAssemblies().SelectType("ProjectPenguin.Presentation.World.ProductionVillage.VillageZoomPolicy");
-        [Test] public void ZoomHysteresisRetainsStateBetweenThresholds()
+        [Test] public void PinchSwitchesOnlyAfterCrossingThreshold()
         {
-            Assert.That(Policy, Is.Not.Null, "カメラのズーム判定が必要です");
-            var method = Policy.GetMethod("GroupActive");
-            bool Active(float size, bool old) => (bool)method.Invoke(null,new object[]{size,10f,old,.9f,.8f});
-            Assert.That(Active(9f,false),Is.True);
-            Assert.That(Active(8.5f,true),Is.True);
-            Assert.That(Active(8.5f,false),Is.False);
-            Assert.That(Active(8f,true),Is.False);
-            Assert.That(Active(float.NaN,true),Is.False);
+            Assert.That(VillageZoomPolicy.AfterPinch(VillageZoomLevel.Overview,1.1f),Is.EqualTo(VillageZoomLevel.Overview));
+            Assert.That(VillageZoomPolicy.AfterPinch(VillageZoomLevel.Overview,VillageZoomPolicy.SpreadToDetail),Is.EqualTo(VillageZoomLevel.Detail));
+            Assert.That(VillageZoomPolicy.AfterPinch(VillageZoomLevel.Overview,.5f),Is.EqualTo(VillageZoomLevel.Overview),"全体からさらに縮めても変わらない");
+            Assert.That(VillageZoomPolicy.AfterPinch(VillageZoomLevel.Detail,.9f),Is.EqualTo(VillageZoomLevel.Detail));
+            Assert.That(VillageZoomPolicy.AfterPinch(VillageZoomLevel.Detail,VillageZoomPolicy.SpreadToOverview),Is.EqualTo(VillageZoomLevel.Overview));
+            Assert.That(VillageZoomPolicy.AfterPinch(VillageZoomLevel.Detail,3f),Is.EqualTo(VillageZoomLevel.Detail),"詳細からさらに広げても変わらない");
+            foreach(var bad in new[]{float.NaN,float.PositiveInfinity,0f,-1f})
+                Assert.That(VillageZoomPolicy.AfterPinch(VillageZoomLevel.Overview,bad),Is.EqualTo(VillageZoomLevel.Overview),bad.ToString());
+        }
+        [Test] public void OnePinchSwitchesAtMostOnce()
+        {
+            var pinch=new VillagePinch();
+            var level=VillageZoomLevel.Overview;
+            Assert.That(pinch.Observe(100,level,out _),Is.False,"つまみ始めは基準を記録するだけ");
+            Assert.That(pinch.Observe(110,level,out _),Is.False);
+            Assert.That(pinch.Observe(130,level,out var next),Is.True);
+            Assert.That(next,Is.EqualTo(VillageZoomLevel.Detail));
+            level=next;
+            Assert.That(pinch.Observe(40,level,out _),Is.False,"同じつまみの中では戻らない");
+            pinch.Reset();
+            Assert.That(pinch.Observe(100,level,out _),Is.False);
+            Assert.That(pinch.Observe(80,level,out next),Is.True,"指を離して次のつまみなら全体へ戻れる");
+            Assert.That(next,Is.EqualTo(VillageZoomLevel.Overview));
+            Assert.That(pinch.Observe(float.NaN,level,out _),Is.False);
+        }
+        [Test] public void WheelMovesOneLevelPerDirection()
+        {
+            Assert.That(VillageZoomPolicy.AfterWheel(VillageZoomLevel.Overview,120),Is.EqualTo(VillageZoomLevel.Detail));
+            Assert.That(VillageZoomPolicy.AfterWheel(VillageZoomLevel.Detail,-120),Is.EqualTo(VillageZoomLevel.Overview));
+            Assert.That(VillageZoomPolicy.AfterWheel(VillageZoomLevel.Detail,.05f),Is.EqualTo(VillageZoomLevel.Detail));
+            Assert.That(VillageZoomPolicy.AfterWheel(VillageZoomLevel.Overview,float.NaN),Is.EqualTo(VillageZoomLevel.Overview));
+        }
+        [Test] public void EaseStartsFastAndLandsExactly()
+        {
+            Assert.That(VillageZoomPolicy.Ease(0),Is.EqualTo(0));
+            Assert.That(VillageZoomPolicy.Ease(1),Is.EqualTo(1));
+            Assert.That(VillageZoomPolicy.Ease(.5f),Is.GreaterThan(.5f));
+            Assert.That(VillageZoomPolicy.Ease(2),Is.EqualTo(1));
+            Assert.That(VillageZoomPolicy.Ease(float.NaN),Is.EqualTo(1));
         }
         [Test] public void IndustrialControlsAreAvailableWithPlacementTray()
         {
             var xml=System.Xml.Linq.XDocument.Load("Assets/UI/ProductionVillage/ProductionApp.uxml");
-            foreach(var name in new[]{"villageZoomIn","villageZoomOut","villageFrameCamera","villageGroupState"})
-                Assert.That(System.Linq.Enumerable.Any(xml.Descendants(),e=>(string)e.Attribute("name")==name),Is.True,name);
+            foreach(var name in new[]{"villageZoomOverview","villageZoomDetail","villageGroupState"})
+                Assert.That(xml.Descendants().Any(e=>(string)e.Attribute("name")==name),Is.True,name);
         }
         [Test] public void GestureWaitsForAllFingersAndBlocksUiOrigin()
         {
-            var type = AppDomain.CurrentDomain.GetAssemblies().SelectType("ProjectPenguin.Presentation.World.ProductionVillage.VillageGestureGate");
-            Assert.That(type,Is.Not.Null,"配置を壊さないgesture gateが必要です");
-            dynamic gate=Activator.CreateInstance(type);
-            Assert.That((bool)gate.Observe(1,true,true),Is.True);
-            Assert.That((bool)gate.Observe(2,false,true),Is.True);
-            Assert.That((bool)gate.AllowPinch,Is.False);
+            var gate=new VillageGestureGate();
+            Assert.That(gate.Observe(1,true,true),Is.True);
+            Assert.That(gate.Observe(2,false,true),Is.True);
+            Assert.That(gate.AllowPinch,Is.False);
             gate.Observe(0,false,true);
-            Assert.That((bool)gate.Observe(2,false,true),Is.True);
-            Assert.That((bool)gate.AllowPinch,Is.True);
-            Assert.That((bool)gate.Observe(1,false,true),Is.True);
+            Assert.That(gate.Observe(2,false,true),Is.True);
+            Assert.That(gate.AllowPinch,Is.True);
+            Assert.That(gate.Observe(1,false,true),Is.True);
             gate.Observe(0,false,true);
-            Assert.That((bool)gate.Observe(1,false,true),Is.False);
+            Assert.That(gate.Observe(1,false,true),Is.False);
             gate.Interrupt();
-            Assert.That((bool)gate.Observe(1,false,true),Is.True);
+            Assert.That(gate.Observe(1,false,true),Is.True);
             gate.Observe(0,false,true);
-            Assert.That((bool)gate.Observe(1,false,true),Is.False);
+            Assert.That(gate.Observe(1,false,true),Is.False);
         }
     }
-    internal static class ZoomTestTypes
-    {
-        internal static Type SelectType(this System.Reflection.Assembly[] assemblies,string name)
-        {foreach(var assembly in assemblies){var type=assembly.GetType(name);if(type!=null)return type;}return null;}
-    }
 }
-

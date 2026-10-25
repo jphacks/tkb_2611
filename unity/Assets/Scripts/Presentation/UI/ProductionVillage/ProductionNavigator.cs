@@ -88,9 +88,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             Bind(ProductionUiNames.IndustrialSwitch, () => SetIndustrialMode(!_industrialMode));
             Bind(ProductionUiNames.TopDownToggle, ToggleTopDownCamera);
             Bind(ProductionUiNames.RotateCamera, RotateCamera90);
-            Bind(ProductionUiNames.ZoomIn, () => _world?.CameraController?.Zoom(.85f));
-            Bind(ProductionUiNames.ZoomOut, () => _world?.CameraController?.Zoom(1f/.85f));
-            Bind(ProductionUiNames.FrameCamera, () => _world?.CameraController?.Frame());
+            Bind(ProductionUiNames.ZoomOverview, () => _world?.CameraController?.SetLevel(VillageZoomLevel.Overview));
+            Bind(ProductionUiNames.ZoomDetail, () => _world?.CameraController?.SetLevel(VillageZoomLevel.Detail));
             Bind(ProductionUiNames.InsightBanner, ShowReport);
             Bind(ProductionUiNames.DockCatalogBtn, ShowPlacement);
             Bind(ProductionUiNames.Placement, () => SetIndustrialMode(true));
@@ -154,8 +153,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             ShowResources(view);
             ShowStatus(core);
             ShowPlacementTray();
-            var groupState = _root.Q<Label>(ProductionUiNames.GroupState);
-            if (groupState != null) groupState.text = (view?.GroupViewActive == true ? "施設群" : "個別施設") + "・2本指で拡大・縮小";
+            ShowZoomLevel();
             if (_sheetOpen && _refreshSheet != null && Time.unscaledTime >= _nextSheetRefresh)
             {
                 _nextSheetRefresh = Time.unscaledTime + SheetRefreshSeconds;
@@ -228,6 +226,21 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             }
 
             _topDownToggle?.EnableInClassList(ProductionUiNames.TacticalBtnActiveClass, topDown);
+        }
+
+        /// <summary>全体 | 詳細 の切り替えと、今の段階の説明。施設群の追加生産は全体表示の間だけ動く。</summary>
+        private void ShowZoomLevel()
+        {
+            var level = _world?.CameraController != null ? _world.CameraController.Level : VillageZoomLevel.Overview;
+            _root.Q<Button>(ProductionUiNames.ZoomOverview)?.EnableInClassList(ProductionUiNames.TacticalBtnActiveClass, level == VillageZoomLevel.Overview);
+            _root.Q<Button>(ProductionUiNames.ZoomDetail)?.EnableInClassList(ProductionUiNames.TacticalBtnActiveClass, level == VillageZoomLevel.Detail);
+            var groupState = _root.Q<Label>(ProductionUiNames.GroupState);
+            if (groupState != null)
+            {
+                groupState.text = level == VillageZoomLevel.Overview
+                    ? "全体表示・施設群が追加生産中・2本指で広げると詳細"
+                    : "詳細表示・施設を1棟ずつ編集・2本指で縮めると全体";
+            }
         }
 
         // ------------------------------------------------------------------
