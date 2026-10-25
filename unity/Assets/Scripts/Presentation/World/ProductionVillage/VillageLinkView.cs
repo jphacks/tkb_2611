@@ -13,7 +13,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
     /// </summary>
     public sealed class VillageLinkView
     {
-        private const float ArrowSpacing=.34f,ArrowSpeed=.55f,ArrowWidth=.16f,PortWidth=.24f,CargoWidth=.2f,PopSeconds=.9f;
+        private const float ArrowSpacing=.42f,ArrowSpeed=.55f,ArrowWidth=.26f,PortWidth=.36f,CargoWidth=.3f,PopSeconds=.9f,OverviewScale=2f;
         private static readonly Color In=new Color(.55f,.92f,1f),Out=new Color(1f,.86f,.38f),Dim=new Color(.62f,.66f,.7f),Plain=Color.white;
 
         private readonly Transform _root;
@@ -48,7 +48,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
             if(view==null){End();return;}
             var nodes=view.Nodes.ToDictionary(n=>n.Id);
             var overview=level==VillageZoomLevel.Overview;
-            var scale=overview?1.45f:1f;
+            var scale=overview?OverviewScale:1f;
             var time=Time.unscaledTime;
 
             // 1. 道ごとの出口と入口 (同じ施設の同じ辺は 1 つにまとめる)
