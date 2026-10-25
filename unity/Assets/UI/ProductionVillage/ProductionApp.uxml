@@ -143,6 +143,20 @@
             <ui:VisualElement name="villageToastLayer" class="pp-toast-layer village-toasts" picking-mode="Ignore" />
         </ui:VisualElement>
 
+        <!-- やわらかい全画面ページ (メニュー・記録)。下のタブはこの上に重なり、タブで行き来できる -->
+        <ui:VisualElement name="villageSoftPage" class="village-soft-page pp-safe-area pp-hidden">
+            <ui:VisualElement class="village-soft-page__bar">
+                <ui:Button name="villageSoftBack" class="village-soft-page__back">
+                    <ui:VisualElement class="pp-icon pp-icon--chevron-left village-soft-page__back-icon" picking-mode="Ignore" />
+                </ui:Button>
+                <ui:VisualElement class="village-soft-page__heading" picking-mode="Ignore">
+                    <ui:Label name="villageSoftTitle" class="village-soft-page__title" text="" picking-mode="Ignore" />
+                    <ui:Label name="villageSoftSub" class="village-soft-page__sub" text="" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:ScrollView name="villageSoftContent" class="village-soft-page__body" />
+        </ui:VisualElement>
+
         <!-- 下のタブ。スキャンは中央の大きな丸 -->
         <ui:VisualElement name="villageNavigation" class="pp-tab-bar village-navigation">
             <ui:VisualElement class="pp-tab-bar__tabs">

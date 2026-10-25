@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ProjectPenguin.Domain.Island;
 using ProjectPenguin.Domain.Village;
+using ProjectPenguin.Presentation.UI.Industrial;
 using ProjectPenguin.Presentation.World.ProductionVillage;
 using ProjectPenguin.Systems;
 using UnityEngine;
@@ -33,10 +34,10 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         private Button _confirm, _activeTab, _topDownToggle, _insightBanner;
         private ProductionReportPresenter _report;
         private Action _refreshSheet;
-        private bool _sheetOpen, _pageOpen;
-        private ScrollView _sheetContent, _pageContent;
-        private VisualElement _page;
-        private Label _pageTitle, _pageMicro;
+        private bool _sheetOpen, _pageOpen, _softOpen;
+        private ScrollView _sheetContent, _pageContent, _softContent;
+        private VisualElement _page, _softPage;
+        private Label _pageTitle, _pageMicro, _softTitle, _softSub;
         private bool _industrialMode;
         private string _dockCategory = "all";
         private float _nextRefresh, _nextSheetRefresh;
@@ -77,6 +78,10 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             _pageContent = _root.Q<ScrollView>(ProductionUiNames.WorkshopContent);
             _pageTitle = _root.Q<Label>(ProductionUiNames.WorkshopTitle);
             _pageMicro = _root.Q<Label>(ProductionUiNames.WorkshopMicro);
+            _softPage = _root.Q(ProductionUiNames.SoftPage);
+            _softContent = _root.Q<ScrollView>(ProductionUiNames.SoftContent);
+            _softTitle = _root.Q<Label>(ProductionUiNames.SoftTitle);
+            _softSub = _root.Q<Label>(ProductionUiNames.SoftSub);
             _tools = _root.Q(ProductionUiNames.Tools);
             _tray = _root.Q(ProductionUiNames.Tray);
             _toastLayer = _root.Q(ProductionUiNames.ToastLayer);
@@ -127,6 +132,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             });
             Bind(ProductionUiNames.Close, Close);
             Bind(ProductionUiNames.WorkshopClose, Close);
+            Bind(ProductionUiNames.SoftBack, Close);
             Bind(ProductionUiNames.RecordTab, ShowRecord);
             Bind(ProductionUiNames.ScanTab, ShowScan);
             Bind(ProductionUiNames.ManageTab, ShowManagement);
@@ -273,6 +279,14 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         // ホーム & 空間ステータスバッジ
         // ------------------------------------------------------------------
 
+        /// <summary>島ランク (1〜9) と次のランクまでの進み具合。作った数と施設の数から決める (ホームの見出しとメニューで共通)。</summary>
+        private static (int Rank, float Progress) IslandRank(VillageView view)
+        {
+            var score = view.Produced + view.Nodes.Count * 15L;
+            var rank = Math.Min(9, 1 + (int)(score / 60));
+            return (rank, rank >= 9 ? 1f : (score % 60) / 60f);
+        }
+
         private void ShowResources(VillageView view)
         {
             if (view == null)
@@ -296,9 +310,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             _fishRate.text = $"+{IslandUi.Number(view.ProducedLastMinute)}/分";
 
             // 島ランクと次ランクまでの進捗バー (ポケモンスリープ風)
-            var score = view.Produced + view.Nodes.Count * 15L;
-            var rank = Math.Min(9, 1 + (int)(score / 60));
-            var progress = rank >= 9 ? 1f : (score % 60) / 60f;
+            var (rank, progress) = IslandRank(view);
             if (_rankText != null) _rankText.text = $"{rank}";
             if (_rankProgress != null) _rankProgress.value = progress;
 
@@ -754,31 +766,53 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         /// </summary>
         private void OpenPage(string micro, string title, string tab)
         {
+            BeginPage(_pageContent, tab);
+            _pageMicro.text = micro;
+            _pageTitle.text = title;
+            _sheetOpen = _pageOpen = true;
+            IslandUi.SetVisible(_page, true);
+        }
+
+        /// <summary>
+        /// メニューと記録を、ホームと同じ手触りのやわらかい全画面ページで開く (氷色の地に、厚みのある白いカード)。
+        /// 下のタブはページの上に残るので、タブでそのまま行き来できる。
+        /// </summary>
+        private void OpenSoft(string title, string sub, string tab)
+        {
+            BeginPage(_softContent, tab);
+            _softTitle.text = title;
+            _softSub.text = sub ?? "";
+            IslandUi.SetVisible(_softSub, !string.IsNullOrEmpty(sub));
+            _sheetOpen = _softOpen = true;
+            IslandUi.SetVisible(_softPage, true);
+        }
+
+        /// <summary>全画面ページを開く前に、シート・ほかのページ・生産レポートを閉じて、中身の置き場を切り替える。</summary>
+        private void BeginPage(ScrollView content, string tab)
+        {
             Placement?.Cancel();
-            if (_sheetOpen && !_pageOpen)
+            if (_sheetOpen && !_pageOpen && !_softOpen)
             {
                 _sheet.AddToClassList(UiClasses.Sheet.Closed);
                 IslandUi.SetVisible(_sheet, false);
             }
 
+            HidePage();
             _report?.Close();
-            _content = _pageContent;
+            _content = content;
             _content.Clear();
-            _pageMicro.text = micro;
-            _pageTitle.text = title;
             _refreshSheet = null;
             _content.scrollOffset = Vector2.zero;
             SetTab(tab);
-            _sheetOpen = _pageOpen = true;
-            IslandUi.SetVisible(_page, true);
         }
 
         private void HidePage()
         {
-            if (!_pageOpen) return;
-            _pageOpen = false;
+            if (!_pageOpen && !_softOpen) return;
+            _pageOpen = _softOpen = false;
             _sheetOpen = false;
             IslandUi.SetVisible(_page, false);
+            IslandUi.SetVisible(_softPage, false);
         }
 
         private void Live(Action refresh)
@@ -790,7 +824,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         private void CloseSheetOnly()
         {
-            if (_pageOpen)
+            if (_pageOpen || _softOpen)
             {
                 HidePage();
                 return;
@@ -1212,58 +1246,181 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         // ---- 記録 ----
 
+        private const float WeekBarMaxHeight = 220f, WeekBarMinHeight = 14f;
+        private static readonly string[] WeekdayNames = { "日", "月", "火", "水", "木", "金", "土" };
+
         private void ShowRecord()
         {
             var health = _session.GetComponent<VillageHealthInput>();
-            Open("記録", ProductionUiNames.RecordTab);
-            var steps = Card();
-            steps.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Gas, UiClasses.Tint.Gas), "歩数", "500 歩ごとにガスが 1 たまるよ", null));
-            var stepStatus = IslandUi.Text(health?.Status ?? "歩数につながっていないよ", ProductionUiNames.Subtle);
-            steps.Add(stepStatus);
-            Action(steps, "歩数を確かめる", () => health?.Request(), UiClasses.Icon.Check, primary: false, enabled: health != null);
+            OpenSoft("記録", "歩いた分と、受け取った資源", ProductionUiNames.RecordTab);
 
-            var list = Card();
+            // 今日: 歩数と次のガスまでの輪、受け取った資源の札
+            var todayCard = SoftCard("今日", UiClasses.Icon.Gas, UiClasses.Tint.Gas);
+            var top = new VisualElement { pickingMode = PickingMode.Ignore };
+            top.AddToClassList(ProductionUiNames.RecordToday);
+            var ring = new StepRing();
+            ring.AddToClassList(ProductionUiNames.RecordRing);
+            var center = new VisualElement { pickingMode = PickingMode.Ignore };
+            center.AddToClassList(ProductionUiNames.RecordRingCenter);
+            var steps = IslandUi.Text("0", ProductionUiNames.RecordSteps);
+            center.Add(steps);
+            center.Add(IslandUi.Text("歩", ProductionUiNames.RecordStepsUnit));
+            ring.Add(center);
+            var hint = IslandUi.Text("", ProductionUiNames.RecordRingHint);
+            top.Add(ring);
+            top.Add(hint);
+            todayCard.Add(top);
+
+            var chips = new VisualElement { pickingMode = PickingMode.Ignore };
+            chips.AddToClassList(ProductionUiNames.RecordChips);
+            var gas = RecordChip(chips, UiClasses.Icon.Gas, UiClasses.Tint.Gas, "ガス");
+            var electricity = RecordChip(chips, UiClasses.Icon.Electricity, UiClasses.Tint.Electricity, "電気");
+            var water = RecordChip(chips, UiClasses.Icon.Water, UiClasses.Tint.Water, "水");
+            todayCard.Add(chips);
+
+            var stepStatus = IslandUi.Text("", ProductionUiNames.SoftNote);
+            stepStatus.style.marginTop = 16;
+            todayCard.Add(stepStatus);
+            var check = Action(todayCard, "歩数を確かめる", () => health?.Request(), UiClasses.Icon.Check, primary: false, enabled: health != null);
+
+            var weekCard = SoftCard("この 7 日", UiClasses.Icon.Clock, UiClasses.Tint.Primary);
+            var week = new VisualElement { pickingMode = PickingMode.Ignore };
+            week.AddToClassList(ProductionUiNames.RecordWeek);
+            weekCard.Add(week);
+
+            var historyCard = SoftCard("受け取った資源", UiClasses.Icon.Book, UiClasses.Tint.Primary);
+            var history = new VisualElement { pickingMode = PickingMode.Ignore };
+            historyCard.Add(history);
+
+            string shown = null;
             Live(() =>
             {
+                var summary = VillageRecordSummary.From(_session.Core.Records, VillageHealthInput.Day(DateTimeOffset.Now));
+                steps.text = summary.TodaySteps.ToString("#,0");
+                ring.Progress = (float)summary.NextGasProgress;
+                hint.text = summary.TodaySteps == 0
+                    ? $"{VillageRecordSummary.StepsPerGas} 歩ごとに、ガスが 1 たまるよ"
+                    : $"あと {summary.StepsToNextGas:#,0} 歩で、ガスが 1 たまるよ";
+                gas.text = "+" + IslandUi.Number(summary.TodayTotals.Gas);
+                electricity.text = "+" + IslandUi.Number(summary.TodayTotals.Electricity);
+                water.text = "+" + IslandUi.Number(summary.TodayTotals.Water);
+
+                // 今日の歩数が届いていれば、つながりの説明と確かめるボタンは要らない
+                var connected = summary.TodaySteps > 0;
                 stepStatus.text = health?.Status ?? "歩数につながっていないよ";
-                var entries = _session.Core.Records?.Entries;
-                var count = entries?.Count ?? 0;
-                if (list.userData is int shown && shown == count)
+                IslandUi.SetVisible(stepStatus, !connected);
+                IslandUi.SetVisible(check.parent, !connected);
+
+                // 7 日と履歴は、記録が変わったときだけ組み直す
+                var key = $"{summary.Today}:{_session.Core.Records?.Entries?.Count ?? 0}";
+                if (key == shown)
                 {
                     return;
                 }
 
-                list.userData = count;
-                list.Clear();
-                list.Add(IslandUi.Text("受け取った資源", ProductionUiNames.CardTitle));
-                if (count == 0)
-                {
-                    Empty(list, UiClasses.Icon.Book, "まだ記録がないよ。歩くとガスがたまるよ");
-                    return;
-                }
-
-                foreach (var e in entries.AsEnumerable().Reverse().Take(100))
-                {
-                    var (icon, tint) = RecordIcon(e.Kind);
-                    var date = new DateTime(1970, 1, 1).AddDays(e.Day).ToString("M月d日");
-                    list.Add(IslandUi.Row(IslandUi.IconBadge(icon, tint), RecordTitle(e.Kind), date, Stat("+" + IslandUi.Number(e.Amount))));
-                }
-
-                list.Children().Last().AddToClassList(UiClasses.Row.Last);
+                shown = key;
+                BuildRecordWeek(week, summary);
+                BuildRecordHistory(history, summary);
             });
         }
 
-        private static (string Icon, string Tint) RecordIcon(string kind) =>
-            kind.Contains("水") ? (UiClasses.Icon.Water, UiClasses.Tint.Water)
-            : kind.Contains("電気") ? (UiClasses.Icon.Electricity, UiClasses.Tint.Electricity)
-            : (UiClasses.Icon.Gas, UiClasses.Tint.Gas);
-
-        private static string RecordTitle(string kind)
+        private static Label RecordChip(VisualElement parent, string icon, string tint, string label)
         {
-            // 記録の種類は「歩数 (矢印) ガス」の形 (VillageGame の台帳)。表示の文字ではないので符号で書く
-            var arrow = kind.IndexOf('\u2192');
-            return arrow > 0 ? kind.Substring(0, arrow).Trim() : kind;
+            var chip = new VisualElement { pickingMode = PickingMode.Ignore };
+            chip.AddToClassList(ProductionUiNames.RecordChip);
+            chip.Add(IslandUi.Icon(icon, tint));
+            var value = IslandUi.Text("+0", ProductionUiNames.RecordChipValue);
+            chip.Add(value);
+            chip.Add(IslandUi.Text(label, ProductionUiNames.RecordChipLabel));
+            parent.Add(chip);
+            return value;
         }
+
+        /// <summary>この 7 日の棒。受け取ったガス・電気・水を下から積み、いちばん多い日を高さの上限にする。記録の無い日は低い点。</summary>
+        private static void BuildRecordWeek(VisualElement week, VillageRecordSummary summary)
+        {
+            week.Clear();
+            var max = Math.Max(1, summary.Week.Max(d => d.Total));
+            // 1 本も棒が無い週は、点と曜日だけの低い帯にする (空の大きな余白を見せない)
+            week.EnableInClassList(ProductionUiNames.RecordWeekEmpty, summary.Week.All(d => d.Total <= 0));
+            foreach (var day in summary.Week)
+            {
+                var col = new VisualElement { pickingMode = PickingMode.Ignore };
+                col.AddToClassList(ProductionUiNames.RecordBarCol);
+                col.EnableInClassList(ProductionUiNames.RecordBarToday, day.Day == summary.Today);
+                if (day.Total <= 0)
+                {
+                    var dot = new VisualElement { pickingMode = PickingMode.Ignore };
+                    dot.AddToClassList(ProductionUiNames.RecordBarDot);
+                    col.Add(dot);
+                }
+                else
+                {
+                    var stack = new VisualElement { pickingMode = PickingMode.Ignore };
+                    stack.AddToClassList(ProductionUiNames.RecordBarStack);
+                    stack.style.height = Math.Max(WeekBarMinHeight, (float)(WeekBarMaxHeight * day.Total / max));
+                    AddSegment(stack, ProductionUiNames.RecordBarGas, day.Gas);
+                    AddSegment(stack, ProductionUiNames.RecordBarElectricity, day.Electricity);
+                    AddSegment(stack, ProductionUiNames.RecordBarWater, day.Water);
+                    col.Add(stack);
+                }
+
+                var label = day.Day == summary.Today ? "今日" : WeekdayNames[(int)DateOfDay(day.Day).DayOfWeek];
+                col.Add(IslandUi.Text(label, ProductionUiNames.RecordBarLabel));
+                week.Add(col);
+            }
+
+            static void AddSegment(VisualElement stack, string className, double amount)
+            {
+                if (amount <= 0) return;
+                var segment = new VisualElement { pickingMode = PickingMode.Ignore };
+                segment.AddToClassList(className);
+                segment.style.flexGrow = (float)amount;
+                stack.Add(segment);
+            }
+        }
+
+        /// <summary>日ごとの履歴 (新しい日から 30 日)。同じ日の同じ種類はまとめて 1 行にする。</summary>
+        private static void BuildRecordHistory(VisualElement history, VillageRecordSummary summary)
+        {
+            history.Clear();
+            if (summary.Empty)
+            {
+                var empty = new VisualElement { pickingMode = PickingMode.Ignore };
+                empty.AddToClassList(ProductionUiNames.RecordEmpty);
+                var mascot = IslandUi.Icon(UiClasses.Icon.Penguin, UiClasses.Tint.Original);
+                mascot.AddToClassList(ProductionUiNames.RecordEmptyMascot);
+                empty.Add(mascot);
+                empty.Add(IslandUi.Text("まだ記録がないよ。歩くとガスがたまるよ", ProductionUiNames.SoftNote));
+                history.Add(empty);
+                return;
+            }
+
+            foreach (var day in summary.History)
+            {
+                var title = day.Key == summary.Today ? "今日"
+                    : day.Key == summary.Today - 1 ? "昨日"
+                    : DateOfDay(day.Key).ToString("M月d日");
+                history.Add(IslandUi.Text(title, ProductionUiNames.RecordDay));
+                foreach (var line in day.GroupBy(l => (l.Resource, l.Title)))
+                {
+                    var (icon, tint) = RecordIcon(line.Key.Resource);
+                    var row = new VisualElement { pickingMode = PickingMode.Ignore };
+                    row.AddToClassList(ProductionUiNames.RecordLine);
+                    row.Add(IslandUi.IconBadge(icon, tint));
+                    row.Add(IslandUi.Text(line.Key.Title, ProductionUiNames.RecordLineTitle));
+                    row.Add(IslandUi.Text("+" + IslandUi.Number(line.Sum(l => l.Amount)), ProductionUiNames.RecordLineAmount));
+                    history.Add(row);
+                }
+            }
+        }
+
+        private static DateTime DateOfDay(int day) => new DateTime(1970, 1, 1).AddDays(day);
+
+        private static (string Icon, string Tint) RecordIcon(VillageRecordResource resource) =>
+            resource == VillageRecordResource.Water ? (UiClasses.Icon.Water, UiClasses.Tint.Water)
+            : resource == VillageRecordResource.Electricity ? (UiClasses.Icon.Electricity, UiClasses.Tint.Electricity)
+            : (UiClasses.Icon.Gas, UiClasses.Tint.Gas);
 
         // ---- スキャン ----
 
@@ -1327,24 +1484,101 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         private void ShowMenu()
         {
-            Open("メニュー", ProductionUiNames.MenuTab);
-            var howTo = Card("遊び方");
-            howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Build, UiClasses.Tint.Primary), "工房モードで建てる", "画面下の一覧から施設を選んで、建てたい場所をタップ", null));
-            howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.TopDown, UiClasses.Tint.Primary), "島を真上から見る", "工房モードの右端のボタンで視点を切り替え、施設や道の配置を確認", null));
-            howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Move, UiClasses.Tint.Primary), "動かす", "施設をタップして、移したい場所をタップして決定", null));
-            howTo.Children().Last().AddToClassList(UiClasses.Row.Last);
-            Action(howTo, "チュートリアルをもう一度", () =>
+            OpenSoft("メニュー", null, ProductionUiNames.MenuTab);
+
+            // 上: 大きなペンギンと島のランク
+            var view = _session.Core.View;
+            var heroCard = SoftCard();
+            var hero = new VisualElement { pickingMode = PickingMode.Ignore };
+            hero.AddToClassList(ProductionUiNames.SoftHero);
+            var mascot = new VisualElement { pickingMode = PickingMode.Ignore };
+            mascot.AddToClassList(ProductionUiNames.SoftHeroMascot);
+            mascot.Add(IslandUi.Icon(UiClasses.Icon.Penguin, UiClasses.Tint.Original));
+            hero.Add(mascot);
+            var heroText = new VisualElement { pickingMode = PickingMode.Ignore };
+            heroText.style.flexShrink = 1;
+            heroText.Add(IslandUi.Text("ペンギンの島", ProductionUiNames.SoftHeroName));
+            if (view != null)
+            {
+                heroText.Add(IslandUi.Text($"島ランク {IslandRank(view).Rank}", ProductionUiNames.SoftHeroRank));
+                heroText.Add(IslandUi.Text($"お魚 {IslandUi.Number(view.Totals.GetValueOrDefault(Item.Fish))}・施設 {view.Nodes.Count} 棟", ProductionUiNames.SoftNote));
+            }
+
+            hero.Add(heroText);
+            heroCard.Add(hero);
+
+            // 押せるタイル (2 列)
+            var tiles = new VisualElement();
+            tiles.AddToClassList(ProductionUiNames.SoftTiles);
+            _content.Add(tiles);
+            SoftTile(tiles, UiClasses.Icon.Help, UiClasses.Tint.Primary, "チュートリアル", "操作しながら、もう一度", () =>
             {
                 Close();
                 SetIndustrialMode(false);
                 _tutorial?.Restart();
-            }, UiClasses.Icon.Help, primary: false);
+            });
+            SoftTile(tiles, UiClasses.Icon.Book, UiClasses.Tint.Gas, "記録", "歩数と受け取った資源", ShowRecord);
+            SoftTile(tiles, UiClasses.Icon.Production, UiClasses.Tint.Point, "生産レポート", "施設の動きと品物", ShowReport);
+            SoftTile(tiles, UiClasses.Icon.Build, UiClasses.Tint.Primary, "ペンギン工房", "建てる・並べ方のボーナス", ShowManagement);
+            SoftTile(tiles, UiClasses.Icon.Undo, UiClasses.Tint.Sub, "読み込み直す", "保存した村をもう一度読む", () => _session.RetryLoad());
+            SoftTile(tiles, UiClasses.Icon.Flag, UiClasses.Tint.Sub, "ライセンス", "使っている素材の表記", ShowLicenses);
 
-            var data = Card("データ");
-            data.Add(IslandUi.Text("村はこの端末の中だけに保存するよ。写真や買い物の明細は保存しないよ", ProductionUiNames.Subtle));
-            Action(data, "保存をやり直す", () => _session.RetryLoad(), UiClasses.Icon.Undo, primary: false);
-            Action(data, "記録を見る", ShowRecord, UiClasses.Icon.Book, primary: false);
-            Action(data, "ライセンス", ShowLicenses, UiClasses.Icon.Help, primary: false);
+            // 遊び方: 絵とひとことの横並び
+            var howTo = SoftCard("遊び方", UiClasses.Icon.Penguin, UiClasses.Tint.Original);
+            var tips = new VisualElement { pickingMode = PickingMode.Ignore };
+            tips.AddToClassList(ProductionUiNames.SoftTips);
+            SoftTip(tips, UiClasses.Icon.Build, "一覧から選んで建てる");
+            SoftTip(tips, UiClasses.Icon.TopDown, "真上から見て並べる");
+            SoftTip(tips, UiClasses.Icon.Move, "タップして動かす");
+            howTo.Add(tips);
+
+            var data = SoftCard("データ", UiClasses.Icon.Lock, UiClasses.Tint.Sub);
+            data.Add(IslandUi.Text("村はこの端末の中だけに保存するよ。写真や買い物の明細は保存しないよ", ProductionUiNames.SoftNote));
+        }
+
+        /// <summary>やわらかいページのカード。見出しの印はデザインシステムのアイコン。</summary>
+        private VisualElement SoftCard(string title = null, string icon = null, string tint = null)
+        {
+            var card = new VisualElement();
+            card.AddToClassList(ProductionUiNames.SoftCard);
+            if (!string.IsNullOrEmpty(title))
+            {
+                var head = new VisualElement { pickingMode = PickingMode.Ignore };
+                head.AddToClassList(ProductionUiNames.SoftCardHead);
+                if (icon != null)
+                {
+                    head.Add(IslandUi.Icon(icon, tint ?? UiClasses.Tint.Primary));
+                }
+
+                head.Add(IslandUi.Text(title, ProductionUiNames.SoftCardTitle));
+                card.Add(head);
+            }
+
+            _content.Add(card);
+            return card;
+        }
+
+        /// <summary>メニューの押せるタイル (大きなアイコンの丸・名前・ひとこと)。</summary>
+        private static void SoftTile(VisualElement parent, string icon, string tint, string name, string sub, Action onClick)
+        {
+            var tile = new Button(onClick);
+            tile.AddToClassList(ProductionUiNames.SoftTile);
+            var circle = new VisualElement { pickingMode = PickingMode.Ignore };
+            circle.AddToClassList(ProductionUiNames.SoftTileCircle);
+            circle.Add(IslandUi.Icon(icon, tint));
+            tile.Add(circle);
+            tile.Add(IslandUi.Text(name, ProductionUiNames.SoftTileName));
+            tile.Add(IslandUi.Text(sub, ProductionUiNames.SoftTileSub));
+            parent.Add(tile);
+        }
+
+        private static void SoftTip(VisualElement parent, string icon, string text)
+        {
+            var tip = new VisualElement { pickingMode = PickingMode.Ignore };
+            tip.AddToClassList(ProductionUiNames.SoftTip);
+            tip.Add(IslandUi.IconBadge(icon, UiClasses.Tint.Primary));
+            tip.Add(IslandUi.Text(text, ProductionUiNames.SoftTipText));
+            parent.Add(tip);
         }
 
         /// <summary>同梱している外部の素材 (アイコン・フォント・ライブラリ) の著作権表示と許諾文。</summary>

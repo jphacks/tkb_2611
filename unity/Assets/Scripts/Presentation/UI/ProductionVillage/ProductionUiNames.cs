@@ -19,7 +19,21 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             Navigation="villageNavigation",HomeTab="villageHomeTab",RecordTab="villageRecordTab",ScanTab="villageScanTab",ManageTab="villageManageTab",MenuTab="villageMenuTab",
             VillageProductionReport="villageProductionReport",
             WorkshopPage="villageWorkshopPage",WorkshopMicro="villageWorkshopMicro",WorkshopTitle="villageWorkshopTitle",WorkshopClose="villageWorkshopClose",WorkshopContent="villageWorkshopContent",
-            Coach="villageCoach",CoachStep="villageCoachStep",CoachTitle="villageCoachTitle",CoachBody="villageCoachBody",CoachNext="villageCoachNext",CoachSkip="villageCoachSkip";
+            Coach="villageCoach",CoachStep="villageCoachStep",CoachTitle="villageCoachTitle",CoachBody="villageCoachBody",CoachNext="villageCoachNext",CoachSkip="villageCoachSkip",
+            SoftPage="villageSoftPage",SoftBack="villageSoftBack",SoftTitle="villageSoftTitle",SoftSub="villageSoftSub",SoftContent="villageSoftContent";
+
+        /// <summary>やわらかい全画面ページ (メニュー・記録) の部品 (ProductionApp.uss)。</summary>
+        public const string SoftCard="village-soft-card",SoftCardHead="village-soft-card__head",SoftCardTitle="village-soft-card__title",
+            SoftHero="village-soft-hero",SoftHeroMascot="village-soft-hero__mascot",SoftHeroName="village-soft-hero__name",SoftHeroRank="village-soft-hero__rank",
+            SoftTiles="village-soft-tiles",SoftTile="village-soft-tile",SoftTileCircle="village-soft-tile__circle",SoftTileName="village-soft-tile__name",SoftTileSub="village-soft-tile__sub",
+            SoftTips="village-soft-tips",SoftTip="village-soft-tip",SoftTipText="village-soft-tip__text",
+            SoftNote="village-soft-note",
+            RecordToday="village-record-today",RecordRing="village-record-ring",RecordRingCenter="village-record-ring__center",RecordSteps="village-record-steps",RecordStepsUnit="village-record-steps__unit",RecordRingHint="village-record-ring__hint",
+            RecordChips="village-record-chips",RecordChip="village-record-chip",RecordChipValue="village-record-chip__value",RecordChipLabel="village-record-chip__label",
+            RecordWeek="village-record-week",RecordWeekEmpty="village-record-week--empty",RecordBarCol="village-record-bar",RecordBarStack="village-record-bar__stack",RecordBarToday="village-record-bar--today",RecordBarLabel="village-record-bar__label",
+            RecordBarGas="village-record-bar__gas",RecordBarElectricity="village-record-bar__electricity",RecordBarWater="village-record-bar__water",RecordBarDot="village-record-bar__dot",
+            RecordDay="village-record-day",RecordLine="village-record-line",RecordLineTitle="village-record-line__title",RecordLineAmount="village-record-line__amount",
+            RecordEmpty="village-record-empty",RecordEmptyMascot="village-record-empty__mascot";
 
         /// <summary>チュートリアルの吹き出しと光らせる枠 (ProductionApp.uss)。</summary>
         public const string CoachClass="village-coach",CoachTopClass="village-coach--top",CoachTargetClass="village-coach-target",CoachTargetOnClass="village-coach-target--on";

@@ -802,3 +802,409 @@
 .village-coach-target--on {
     border-color: var(--color-primary);
 }
+
+/* ============ やわらかい全画面ページ (メニュー・記録) ============
+   ホームの主役のカード (.pp-hero) と同じ手触り: 氷色の地に、白く丸いカードと下の縁の厚み。
+   下のタブはこのページの上に重なるので、本文の下に余白を空ける。 */
+.village-soft-page {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--color-ice-50);
+}
+
+.village-soft-page__bar {
+    flex-direction: row;
+    align-items: center;
+    padding: var(--space-3) var(--space-4) var(--space-2) var(--space-4);
+}
+
+.village-soft-page__back {
+    width: 96px;
+    height: 96px;
+    margin: 0 var(--space-2) 0 0;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    border-width: 0;
+    border-bottom-width: var(--raise-depth);
+    border-bottom-color: var(--color-ice-200);
+    background-color: var(--color-surface-solid);
+}
+
+.village-soft-page__back:hover,
+.village-soft-page__back:active {
+    background-color: var(--color-surface-solid);
+}
+
+.village-soft-page__back:active {
+    border-bottom-width: var(--raise-depth-pressed);
+}
+
+.village-soft-page__back-icon {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    -unity-background-image-tint-color: var(--color-primary);
+}
+
+.village-soft-page__heading {
+    flex-shrink: 1;
+}
+
+.village-soft-page__title {
+    color: var(--color-text);
+    font-size: var(--font-size-headline);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.village-soft-page__sub {
+    color: var(--color-text-sub);
+    font-size: var(--font-size-caption);
+    white-space: normal;
+}
+
+.village-soft-page__body {
+    flex-grow: 1;
+}
+
+.village-soft-page__body .unity-scroll-view__content-container {
+    padding: var(--space-2) var(--space-4) 280px var(--space-4);
+}
+
+/* カード: 白く丸く、下の縁に厚み */
+.village-soft-card {
+    flex-shrink: 0;
+    margin-bottom: var(--space-4);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface-solid);
+    border-bottom-width: var(--raise-depth);
+    border-bottom-color: var(--color-ice-200);
+}
+
+.village-soft-card__head {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--space-3);
+}
+
+.village-soft-card__head > .pp-icon {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    margin-right: var(--space-2);
+}
+
+.village-soft-card__title {
+    color: var(--color-text);
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-heavy);
+}
+
+/* メニューの上: 大きなペンギンと村の名前 */
+.village-soft-hero {
+    flex-direction: row;
+    align-items: center;
+}
+
+.village-soft-hero__mascot {
+    width: 200px;
+    height: 200px;
+    margin-right: var(--space-3);
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    background-color: var(--color-ice-100);
+}
+
+.village-soft-hero__mascot > .pp-icon {
+    width: 160px;
+    height: 160px;
+}
+
+.village-soft-hero__name {
+    color: var(--color-text);
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-heavy);
+    white-space: normal;
+}
+
+.village-soft-hero__rank {
+    align-self: flex-start;
+    margin-top: var(--space-1);
+    padding: 4px var(--space-2);
+    border-radius: var(--radius-pill-sm);
+    background-color: var(--color-accent);
+    color: var(--color-text-rank);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-heavy);
+}
+
+/* タイル: 2 列、大きなアイコンの丸 + 名前 + ひとこと。押すと沈む */
+.village-soft-tiles {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-content: flex-start;
+    flex-shrink: 0;
+}
+
+.village-soft-tile {
+    width: 488px;
+    flex-shrink: 0;
+    margin: 0 0 var(--space-3) 0;
+    padding: var(--space-3);
+    flex-direction: column;
+    align-items: flex-start;
+    border-width: 0;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface-solid);
+    border-bottom-width: var(--raise-depth);
+    border-bottom-color: var(--color-ice-200);
+}
+
+.village-soft-tile:hover,
+.village-soft-tile:active {
+    background-color: var(--color-surface-solid);
+}
+
+.village-soft-tile:active {
+    border-bottom-width: var(--raise-depth-pressed);
+}
+
+.village-soft-tile__circle {
+    width: 112px;
+    height: 112px;
+    margin-bottom: var(--space-2);
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    background-color: var(--color-ice-100);
+}
+
+.village-soft-tile__circle > .pp-icon {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+}
+
+.village-soft-tile__name {
+    color: var(--color-text);
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.village-soft-tile__sub {
+    margin-top: 4px;
+    color: var(--color-text-sub);
+    font-size: var(--font-size-caption);
+    white-space: normal;
+}
+
+/* 遊び方の小さなカード (絵とひとことの横並び) */
+.village-soft-tips {
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.village-soft-tip {
+    width: 30%;
+    align-items: center;
+}
+
+.village-soft-tip > .pp-icon-badge {
+    margin-bottom: var(--space-1);
+}
+
+.village-soft-tip__text {
+    color: var(--color-text);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+.village-soft-note {
+    color: var(--color-text-sub);
+    font-size: var(--font-size-caption);
+    white-space: normal;
+}
+
+/* ---- 記録: 今日 ---- */
+.village-record-today {
+    flex-direction: row;
+    align-items: center;
+}
+
+.village-record-ring {
+    width: 300px;
+    height: 300px;
+    margin-right: var(--space-4);
+    align-items: center;
+    justify-content: center;
+    --ring-track-color: var(--color-ice-100);
+    --ring-fill-color: var(--color-res-gas);
+    --ring-width: 26;
+}
+
+.village-record-ring__center {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+.village-record-steps {
+    color: var(--color-text);
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-num-heavy);
+}
+
+.village-record-steps__unit {
+    color: var(--color-text-sub);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+}
+
+.village-record-ring__hint {
+    flex-shrink: 1;
+    color: var(--color-text);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-bold);
+    white-space: normal;
+}
+
+.village-record-chips {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: var(--space-3);
+}
+
+.village-record-chip {
+    width: 31%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-2) var(--space-1);
+    border-radius: var(--radius-md);
+    background-color: var(--color-ice-50);
+}
+
+.village-record-chip > .pp-icon {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    margin-right: 6px;
+}
+
+.village-record-chip__value {
+    color: var(--color-text);
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-num-heavy);
+}
+
+.village-record-chip__label {
+    margin-left: 4px;
+    color: var(--color-text-sub);
+    font-size: var(--font-size-micro);
+}
+
+/* ---- 記録: この 7 日 ---- */
+.village-record-week {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 300px;
+}
+
+.village-record-week--empty {
+    height: 96px;
+}
+
+.village-record-bar {
+    width: 12%;
+    height: 100%;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.village-record-bar__stack {
+    width: 56px;
+    flex-direction: column-reverse;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    opacity: 0.7;
+}
+
+.village-record-bar--today .village-record-bar__stack {
+    opacity: 1;
+}
+
+.village-record-bar__gas { background-color: var(--color-res-gas); }
+.village-record-bar__electricity { background-color: var(--color-res-electricity); }
+.village-record-bar__water { background-color: var(--color-res-water); }
+
+.village-record-bar__dot {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-ice-200);
+}
+
+.village-record-bar__label {
+    margin-top: var(--space-1);
+    color: var(--color-text-sub);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+}
+
+.village-record-bar--today .village-record-bar__label {
+    color: var(--color-primary);
+}
+
+/* ---- 記録: 履歴 ---- */
+.village-record-day {
+    margin: var(--space-3) 0 var(--space-1) 0;
+    color: var(--color-primary);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.village-record-line {
+    flex-direction: row;
+    align-items: center;
+    padding: var(--space-1) 0;
+    border-bottom-width: 2px;
+    border-bottom-color: var(--color-divider);
+}
+
+.village-record-line > .pp-icon-badge {
+    margin-right: var(--space-2);
+}
+
+.village-record-line__title {
+    flex-grow: 1;
+    color: var(--color-text);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-bold);
+}
+
+.village-record-line__amount {
+    color: var(--color-text);
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-num-heavy);
+}
+
+.village-record-empty {
+    align-items: center;
+    padding: var(--space-3) 0;
+}
+
+.village-record-empty > .village-record-empty__mascot {
+    width: 160px;
+    height: 160px;
+    margin-bottom: var(--space-2);
+}
