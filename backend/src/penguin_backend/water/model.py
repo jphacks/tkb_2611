@@ -142,8 +142,31 @@ class WaterModel(Protocol):
     def read(self, image: bytes) -> WaterReading: ...
 
 
+_PRESENCE_PROMPT = (
+    "この写真に、実物のペットボトル (ボトルの本体とキャップ) は写っていますか。"
+    "無地の画像・文字だけの画像・ペットボトル以外の物なら「いいえ」です。"
+    "「はい」か「いいえ」の一語だけで答えてください。"
+)
+
+# ボトルが写っていないと答えたときの読み取り。2 回目の呼び出しをせずに撮り直しにする
+_NO_BOTTLE = {
+    "bottle_visible": False,
+    "container": "unknown",
+    "label_capacity_ml": 0,
+    "remaining": "unknown",
+    "confidence": 1.0,
+    "is_screen_photo": False,
+}
+
+
 class NovaWaterModel:
-    """Amazon Bedrock の Nova 2 Lite (Converse のツール呼び出しで構造化して答えさせる)。"""
+    """Amazon Bedrock の Nova 2 Lite。
+
+    1 回目はツールを使わない短い問いで、ペットボトルの実物が写っているかだけを聞く。
+    答えの形を強制すると、何も写っていない画像にも項目を埋めて作り話をしたため
+    (合成の画像で確かめた)。
+    写っていれば 2 回目に、Converse のツール呼び出しで構造化して読ませる。
+    """
 
     def __init__(self, client: BedrockRuntimeClient, model_id: str) -> None:
         self._client = client
@@ -151,34 +174,14 @@ class NovaWaterModel:
 
     def read(self, image: bytes) -> WaterReading:
         started = time.monotonic()
-        try:
-            response = self._client.converse(
-                modelId=self._model_id,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            # 写真はインラインで送る (提供元に別に残る機能を使わない)
-                            {"image": {"format": "jpeg", "source": {"bytes": image}}},
-                            {"text": _PROMPT},
-                        ],
-                    }
-                ],
-                toolConfig=_TOOL_CONFIG,  # type: ignore[arg-type]
-                inferenceConfig={"maxTokens": 400, "temperature": 0},
+        if not self._bottle_present(image):
+            logger.info(
+                "water model saw no bottle: %d bytes, %.0f ms",
+                len(image),
+                (time.monotonic() - started) * 1000,
             )
-        except ClientError as error:
-            code = error.response.get("Error", {}).get("Code", "")
-            logger.warning("water model failed: %s", code)
-            if code == "ValidationException":
-                # 送ったもの (ツールの定義など) の誤り。送り直しても直らない
-                raise ApiError("internal", 500) from error
-            raise ApiError("upstream_unavailable", 503) from error
-        except BotoCoreError as error:
-            # 読み込みのタイムアウト・接続の失敗
-            logger.warning("water model failed: %s", type(error).__name__)
-            raise ApiError("upstream_unavailable", 503) from error
-
+            return WaterReading.model_validate(_NO_BOTTLE)
+        response = self._converse(image, _PROMPT, tool=True, max_tokens=400)
         usage = response.get("usage", {})
         logger.info(
             "water model answered: %d bytes, %s input tokens, %s output tokens, %.0f ms",
@@ -201,3 +204,47 @@ class NovaWaterModel:
             # 検証の文には AI の答えが入るので記録しない
             logger.warning("water model answered out of shape: %d problems", error.error_count())
             raise ApiError("upstream_unavailable", 503) from None
+
+    def _bottle_present(self, image: bytes) -> bool:
+        """ペットボトルの実物が写っていると答えたか。
+
+        「はい」で始まるときだけ true (迷う答えは写っていない扱い)。
+        """
+        response = self._converse(image, _PRESENCE_PROMPT, tool=False, max_tokens=10)
+        texts = [
+            block["text"]
+            for block in response["output"].get("message", {}).get("content", [])
+            if "text" in block
+        ]
+        # 答えの文は AI の生の出力なので記録しない
+        return bool(texts) and texts[0].strip().lstrip("「").startswith(("はい", "yes", "Yes"))
+
+    def _converse(self, image: bytes, prompt: str, *, tool: bool, max_tokens: int) -> Any:
+        extra: dict[str, Any] = {"toolConfig": _TOOL_CONFIG} if tool else {}
+        try:
+            return self._client.converse(
+                modelId=self._model_id,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            # 写真はインラインで送る (提供元に別に残る機能を使わない)
+                            {"image": {"format": "jpeg", "source": {"bytes": image}}},
+                            {"text": prompt},
+                        ],
+                    }
+                ],
+                inferenceConfig={"maxTokens": max_tokens, "temperature": 0},
+                **extra,
+            )
+        except ClientError as error:
+            code = error.response.get("Error", {}).get("Code", "")
+            logger.warning("water model failed: %s", code)
+            if code == "ValidationException":
+                # 送ったもの (ツールの定義など) の誤り。送り直しても直らない
+                raise ApiError("internal", 500) from error
+            raise ApiError("upstream_unavailable", 503) from error
+        except BotoCoreError as error:
+            # 読み込みのタイムアウト・接続の失敗
+            logger.warning("water model failed: %s", type(error).__name__)
+            raise ApiError("upstream_unavailable", 503) from error
