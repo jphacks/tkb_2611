@@ -88,9 +88,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             Bind(ProductionUiNames.IndustrialSwitch, () => SetIndustrialMode(!_industrialMode));
             Bind(ProductionUiNames.TopDownToggle, ToggleTopDownCamera);
             Bind(ProductionUiNames.RotateCamera, RotateCamera90);
-            Bind(ProductionUiNames.ZoomIn, () => _world?.CameraController?.Zoom(.85f));
-            Bind(ProductionUiNames.ZoomOut, () => _world?.CameraController?.Zoom(1f/.85f));
-            Bind(ProductionUiNames.FrameCamera, () => _world?.CameraController?.Frame());
+            Bind(ProductionUiNames.ZoomOverview, () => _world?.CameraController?.SetLevel(VillageZoomLevel.Overview));
+            Bind(ProductionUiNames.ZoomDetail, () => _world?.CameraController?.SetLevel(VillageZoomLevel.Detail));
             Bind(ProductionUiNames.InsightBanner, ShowReport);
             Bind(ProductionUiNames.DockCatalogBtn, ShowPlacement);
             Bind(ProductionUiNames.Placement, () => SetIndustrialMode(true));
@@ -154,8 +153,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             ShowResources(view);
             ShowStatus(core);
             ShowPlacementTray();
-            var groupState = _root.Q<Label>(ProductionUiNames.GroupState);
-            if (groupState != null) groupState.text = (view?.GroupViewActive == true ? "施設群" : "個別施設") + "・2本指で拡大・縮小";
+            ShowZoomLevel();
             if (_sheetOpen && _refreshSheet != null && Time.unscaledTime >= _nextSheetRefresh)
             {
                 _nextSheetRefresh = Time.unscaledTime + SheetRefreshSeconds;
@@ -230,6 +228,21 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             _topDownToggle?.EnableInClassList(ProductionUiNames.TacticalBtnActiveClass, topDown);
         }
 
+        /// <summary>全体 | 詳細 の切り替えと、今の段階の説明。施設群の追加生産は全体表示の間だけ動く。</summary>
+        private void ShowZoomLevel()
+        {
+            var level = _world?.CameraController != null ? _world.CameraController.Level : VillageZoomLevel.Overview;
+            _root.Q<Button>(ProductionUiNames.ZoomOverview)?.EnableInClassList(ProductionUiNames.TacticalBtnActiveClass, level == VillageZoomLevel.Overview);
+            _root.Q<Button>(ProductionUiNames.ZoomDetail)?.EnableInClassList(ProductionUiNames.TacticalBtnActiveClass, level == VillageZoomLevel.Detail);
+            var groupState = _root.Q<Label>(ProductionUiNames.GroupState);
+            if (groupState != null)
+            {
+                groupState.text = level == VillageZoomLevel.Overview
+                    ? "全体表示・施設群が追加生産中・2本指で広げると詳細"
+                    : "詳細表示・施設を1棟ずつ編集・2本指で縮めると全体";
+            }
+        }
+
         // ------------------------------------------------------------------
         // ホーム & 空間ステータスバッジ
         // ------------------------------------------------------------------
@@ -263,19 +276,45 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             if (_rankText != null) _rankText.text = $"{rank}";
             if (_rankProgress != null) _rankProgress.value = progress;
 
-            // 工房の操作バーにガス収支を表示
+            // 工房の操作バー: ガスの残りと消費、施設の稼働・停止・配送の数 (生産レポートと同じ数え方)
             if (_tacticalGas != null)
             {
-                _tacticalGas.text = $"🔥 消費 {view.GasPerMinute:0.#}/分 (理論 {view.TheoreticalGasPerMinute:0.#}/分)";
+                _tacticalGas.text = view.Unlimited ? "ガス ∞ (開発用)" : $"ガス {IslandUi.Number(view.Gas)}・消費 {view.GasPerMinute:0.#}/分";
+                _tacticalGas.EnableInClassList(ProductionUiNames.TacticalGasEmptyClass, !view.Unlimited && view.Gas < 1);
             }
 
-            // 左下ボトルネック・連携診断バナー
+            var counts = VillageInsight.Counts(view);
+            var status = _root.Q<Label>(ProductionUiNames.TacticalStatus);
+            if (status != null)
+            {
+                status.text = $"稼働 {counts.Active}/{counts.Total}　停止 {counts.Stopped}　配送中 {counts.Delivering} 便";
+                status.EnableInClassList(ProductionUiNames.TacticalStatusBadClass, counts.Stopped > 0);
+            }
+
+            // 次にやること。ホームの左下と工房モードの操作バーに同じ文を出す (VillageInsight.NextStep)
+            var step = VillageInsight.NextStep(view, _world != null ? _world.Hints : null);
+            var stepText = step.Hint.Length > 0 ? $"{step.Text} — {step.Hint}" : step.Text;
+            var trouble = step.Tone == VillageNextStepTone.Warn || step.Tone == VillageNextStepTone.Bad;
             if (_insightText != null && _insightBanner != null)
             {
-                var synCount = view.Synergies?.Count ?? 0;
-                var prefix = synCount > 0 ? $"✨連携{synCount}件・" : "";
-                _insightText.text = prefix + (view.BottleneckSummary ?? "稼働順調");
-                _insightBanner.EnableInClassList(ProductionUiNames.InsightBannerWarnClass, view.HasBottleneck);
+                _insightText.text = stepText;
+                _insightBanner.EnableInClassList(ProductionUiNames.InsightBannerWarnClass, trouble);
+            }
+
+            var next = _root.Q<Label>(ProductionUiNames.NextStep);
+            if (next != null)
+            {
+                next.text = "▶ " + stepText;
+                next.EnableInClassList(ProductionUiNames.NextStepWarnClass, trouble);
+            }
+
+            // 勧めている施設を、下の施設一覧で光らせる
+            if (_dockScroll != null)
+            {
+                foreach (var slot in _dockScroll.Children())
+                {
+                    slot.EnableInClassList(ProductionUiNames.DockSlotSuggestedClass, step.Build.HasValue && slot.userData is FacilityKind kind && kind == step.Build.Value);
+                }
             }
 
             Resource(_gas, view.Gas, ref _lastGas);
@@ -315,7 +354,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 }
 
                 IslandUi.SetVisible(badge, true);
-                var panelPos = RuntimePanelUtils.ScreenToPanel(_root.panel, new Vector2(screenPos.x, Screen.height - screenPos.y));
+                // 札は spatial layer の中に置くので、パネルの座標をこの層の座標に直す (セーフエリアの余白でずれないように)
+                var panelPos = _spatialLayer.WorldToLocal(RuntimePanelUtils.ScreenToPanel(_root.panel, new Vector2(screenPos.x, Screen.height - screenPos.y)));
                 badge.style.left = panelPos.x - 44f;
                 badge.style.top = panelPos.y - 28f;
 
@@ -469,10 +509,10 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             _dockTabs.Clear();
             var categories = new (string Key, string Label)[]
             {
-                ("all", "すべて(16)"),
-                ("gather", "資源採集"),
-                ("cook", "加工・調理"),
-                ("amp", "⚡増幅・物流")
+                ("all", "すべて"),
+                ("gather", "採集"),
+                ("cook", "加工"),
+                ("amp", "増幅・物流")
             };
             foreach (var cat in categories)
             {
@@ -528,6 +568,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 }
             });
             slot.AddToClassList(ProductionUiNames.DockSlotClass);
+            slot.userData = def.Kind;
 
             var thumb = new VisualElement { pickingMode = PickingMode.Ignore };
             thumb.AddToClassList(UiClasses.Thumb.Root);

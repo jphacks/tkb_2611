@@ -78,7 +78,7 @@ namespace ProjectPenguin.Domain.Village
                 }
             }
         }
-        private IEnumerable<Item> SendableItems(Node n)
+        private static IEnumerable<Item> SendableItems(Node n)
         {
             // Rare group goods go first so a continuously replenished normal output cannot starve them.
             foreach(var def in VillageGroupRules.Definitions)

@@ -21,12 +21,11 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
         private readonly Dictionary<int,Image> _footprints=new Dictionary<int,Image>();
         private readonly Dictionary<int,Image> _zones=new Dictionary<int,Image>();
         private readonly Dictionary<string,Image> _synergies=new Dictionary<string,Image>();
-        private readonly Dictionary<string,Image> _lines=new Dictionary<string,Image>();
-        private readonly Dictionary<string,Image> _chevrons=new Dictionary<string,Image>();
-        private readonly Dictionary<long,Image> _cargo=new Dictionary<long,Image>();
         private GameObject _ghost;
         private FacilityKind _ghostKind;
         public bool IndustrialMode {get;set;}
+        /// <summary>盤面に寝かせた World Space Canvas。案内 (VillageGuideView) もここに描く。</summary>
+        public RectTransform Canvas=>_canvas;
         public Vector3 HarborPosition {get;}=new Vector3(-6.8f,.1f,5.7f);
         public VillageWorldRenderer(Transform parent,Camera camera,VillagePrefabCatalog prefabs,GameObject harbor)
         {
@@ -85,9 +84,10 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
                 }
                 else if(_zones.TryGetValue(n.Id,out var zone))zone.enabled=false;
             }
-            // 2. 並び連携ボーナスのゴールド連結枠 (Synergy Frame)
+            // 2. 成立している施設群の金色の枠。全体表示で追加生産が動いている間は光らせる
             var synKeys=new HashSet<string>();
-            if(view.GroupViewActive&&view.Synergies!=null)
+            var glow=.5f+.5f*Mathf.Sin(Time.unscaledTime*3.2f);
+            if(view.Synergies!=null)
             {
                 foreach(var s in view.Synergies)
                 {
@@ -95,7 +95,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
                     if(!_synergies.TryGetValue(skey,out var sbox))
                         _synergies[skey]=sbox=Rect(ProductionWorldNames.Synergy+skey,_canvas,Vector2.zero,Vector2.zero,new Color(1f,.80f,.18f,.24f));
                     var cx=(s.MinX+s.Width*.5f-12)*Cell;var cy=(s.MinY+s.Height*.5f-12)*Cell;
-                    sbox.color=s.Active?new Color(1f,.80f,.18f,.18f):new Color(.65f,.72f,.75f,.08f);
+                    sbox.color=s.Active?new Color(1f,.80f,.18f,.18f+.16f*glow):view.GroupViewActive?new Color(.95f,.78f,.3f,.14f):new Color(1f,.84f,.3f,.10f);
                     sbox.rectTransform.anchoredPosition=new Vector2(cx,cy);
                     sbox.rectTransform.sizeDelta=new Vector2((s.Width+.35f)*Cell,(s.Height+.35f)*Cell);
                 }
@@ -109,10 +109,11 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
                 if(!_footprints.TryGetValue(n.Id,out var fp))
                     _footprints[n.Id]=fp=Rect(ProductionWorldNames.Footprint+n.Id,_canvas,Vector2.zero,Vector2.one*(n.Size*Cell*.92f),Color.clear);
                 fp.rectTransform.anchoredPosition=Flat(Position(n.X,n.Y,n.Size));
-                var stopped=n.Status=="ガスを待っています"||n.Status=="出力の置き場が満杯";
-                var waiting=n.Status=="材料を待っています";
-                fp.color=stopped?new Color(.95f,.28f,.28f,.34f)
-                    :waiting?new Color(.96f,.65f,.14f,.28f)
+                var stopped=n.Status==VillageInsight.GasWait||n.Status==VillageInsight.Full;
+                var waiting=n.Status==VillageInsight.MaterialWait;
+                var pulse=.55f+.45f*Mathf.Sin(Time.unscaledTime*4f);
+                fp.color=stopped?new Color(.95f,.28f,.28f,.22f+.24f*pulse)
+                    :waiting?new Color(.96f,.65f,.14f,.18f+.14f*pulse)
                     :n.Amplified?new Color(.18f,.83f,.92f,.24f)
                     :IndustrialMode?new Color(.15f,.55f,.75f,.18f):new Color(.2f,.65f,.85f,.08f);
                 var working=running&&n.Status=="生産中"&&n.Progress<1;
@@ -125,47 +126,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
             }
             var selection=view.Nodes.FirstOrDefault(n=>n.Id==selected);_selection.enabled=selection!=null;
             if(selection!=null){_selection.rectTransform.anchoredPosition=Flat(Position(selection.X,selection.Y,selection.Size));_selection.rectTransform.sizeDelta=Vector2.one*selection.Size*Cell;}
-            // 4. コンベア・物流ライン + 方向パルスマーカー
-            var keys=new HashSet<string>();
-            var pulse=Mathf.Repeat(Time.unscaledTime*.85f,1f);
-            foreach(var r in view.Routes)
-            {
-                var key=r.From+":"+r.To;keys.Add(key);var a=view.Nodes.First(n=>n.Id==r.From);var b=view.Nodes.First(n=>n.Id==r.To);
-                var pa=Flat(Position(a.X,a.Y,a.Size));var pb=Flat(Position(b.X,b.Y,b.Size));
-                if(!_lines.TryGetValue(key,out var line))_lines[key]=line=Rect(ProductionWorldNames.Route+key,_canvas,Vector2.zero,Vector2.zero,new Color(.08f,.24f,.34f,.72f));
-                line.color=IndustrialMode?new Color(.96f,.65f,.14f,.78f):new Color(.12f,.58f,.72f,.62f);
-                DrawLine(line,pa,pb,IndustrialMode?.068f:.048f);
-                if(!_chevrons.TryGetValue(key,out var chev))_chevrons[key]=chev=Rect(ProductionWorldNames.Route+"Chev"+key,_canvas,Vector2.zero,new Vector2(.14f,.09f),new Color(1f,.88f,.35f,.92f));
-                chev.rectTransform.anchoredPosition=Vector2.Lerp(pa,pb,pulse);
-                var delta=pb-pa;chev.rectTransform.localRotation=Quaternion.Euler(0,0,Mathf.Atan2(delta.y,delta.x)*Mathf.Rad2Deg);
-            }
-            foreach(var key in _lines.Keys.Where(k=>!keys.Contains(k)).ToArray()){Object.Destroy(_lines[key].gameObject);_lines.Remove(key);}
-            foreach(var key in _chevrons.Keys.Where(k=>!keys.Contains(k)).ToArray()){Object.Destroy(_chevrons[key].gameObject);_chevrons.Remove(key);}
         }
-        public void UpdateCargo(VillageView view)
-        {
-            if(view==null)return;
-            foreach(var id in _cargo.Keys.Where(id=>!view.Cargo.Any(c=>c.Id==id)).ToArray()){Object.Destroy(_cargo[id].gameObject);_cargo.Remove(id);}
-            foreach(var c in view.Cargo)
-            {
-                if(!_cargo.TryGetValue(c.Id,out var icon))_cargo[c.Id]=icon=Rect(ProductionWorldNames.Cargo+c.Id,_canvas,Vector2.zero,Vector2.one*.19f,CargoColor(c.Item));
-                icon.color=CargoColor(c.Item);
-                var a=Flat(Position(c.FromX,c.FromY,view.Nodes.First(n=>n.Id==c.From).Size));var b=Flat(Position(c.ToX,c.ToY,view.Nodes.First(n=>n.Id==c.To).Size));
-                icon.rectTransform.anchoredPosition=Vector2.Lerp(a,b,Mathf.Clamp01((float)(view.AtMs-c.Start)/(c.End-c.Start)));
-            }
-        }
-        private static Color CargoColor(Item item)=>item switch
-        {
-            Item.Fish=>new Color(.18f,.66f,.93f),
-            Item.Surimi=>new Color(.36f,.75f,.75f),
-            Item.Salt=>new Color(.96f,.72f,.18f),
-            Item.Kelp=>new Color(.18f,.80f,.56f),
-            Item.Kamaboko=>new Color(1f,.48f,.56f),
-            Item.Chikuwa=>new Color(.95f,.61f,.07f),
-            Item.DriedFish=>new Color(.90f,.49f,.13f),
-            Item.Oden=>new Color(1f,.82f,.23f),
-            _=>new Color(1f,.62f,.13f)
-        };
         public void Preview(FacilityKind kind,int x,int y,bool valid,bool enabled)
         {
             _grid.SetActive(enabled||IndustrialMode);
@@ -178,22 +139,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
             _preview.color=valid?new Color(.15f,.85f,.5f,.65f):new Color(.95f,.25f,.22f,.65f);
             _preview.rectTransform.anchoredPosition=Flat(Position(x,y,size));_preview.rectTransform.sizeDelta=Vector2.one*size*Cell;
         }
-        private static void DrawLine(Image image,Vector2 a,Vector2 b,float width)
-        {var rt=image.rectTransform;var delta=b-a;rt.pivot=new Vector2(0,.5f);rt.anchoredPosition=a;rt.sizeDelta=new Vector2(delta.magnitude,width);rt.localRotation=Quaternion.Euler(0,0,Mathf.Atan2(delta.y,delta.x)*Mathf.Rad2Deg);}
-        private static Image Rect(string name,Transform parent,Vector2 position,Vector2 size,Color color)
-        {var go=new GameObject(name,typeof(RectTransform),typeof(Image));go.transform.SetParent(parent,false);var rt=(RectTransform)go.transform;rt.anchoredPosition=position;rt.sizeDelta=size;var i=go.GetComponent<Image>();i.color=color;i.raycastTarget=false;return i;}
-        private GameObject Model(GameObject prefab,float width,string name)
-        {
-            var holder=new GameObject(name);holder.transform.SetParent(_parent,false);
-            if(prefab==null)return holder;
-            var instance=Object.Instantiate(prefab,holder.transform);
-            foreach(var b in instance.GetComponentsInChildren<MonoBehaviour>(true))b.enabled=b is ProjectPenguin.Presentation.World.ProductionIslandMotion || b is ProjectPenguin.Presentation.World.ProductionIslandPenguinView;
-            foreach(var a in instance.GetComponentsInChildren<Animator>(true))a.enabled=false;
-            var renderers=instance.GetComponentsInChildren<Renderer>();if(renderers.Length==0)return holder;
-            var bounds=renderers[0].bounds;foreach(var r in renderers.Skip(1))bounds.Encapsulate(r.bounds);
-            instance.transform.localScale*=width/Mathf.Max(.001f,Mathf.Max(bounds.size.x,bounds.size.z));
-            bounds=renderers[0].bounds;foreach(var r in renderers.Skip(1))bounds.Encapsulate(r.bounds);
-            instance.transform.localPosition-=new Vector3(bounds.center.x,bounds.min.y,bounds.center.z);return holder;
-        }
+        private static Image Rect(string name,Transform parent,Vector2 position,Vector2 size,Color color)=>VillageModels.Rect(name,parent,position,size,color);
+        private GameObject Model(GameObject prefab,float width,string name)=>VillageModels.Spawn(prefab,width,_parent,name);
     }
 }

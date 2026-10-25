@@ -4,7 +4,8 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
 {
     /// <summary>
     /// 村を斜め上から見下ろす正投影カメラ。起動時と画面の縦横比が変わったときに、島の幅が画面に収まる寄りを計算する。
-    /// パンは見ている点 (地面の上) を動かし、盤面の外へは出さない。ズームの限界も島の大きさから決める。
+    /// 寄りは「全体」と「詳細」の 2 段階 (<see cref="VillageZoomLevel"/>) だけで、切り替えは短い補間でパッと動かす。
+    /// パンは詳細のときだけ、見ている点 (地面の上) を盤面の中で動かす。
     /// </summary>
     [RequireComponent(typeof(Camera))]
     public sealed class VillageCameraController : MonoBehaviour
@@ -21,10 +22,8 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
         [Tooltip("見ている点を画面の中心からずらす量 (画面の高さに対する割合、+ で島が上へ寄る)。上下の UI に隠れる分の釣り合いを取る")]
         [SerializeField] private float _viewportShift = -.04f;
 
-        [Tooltip("全体表示サイズに対する施設群の開始・解除比率")]
-        [SerializeField] private float _groupEnterRatio = .9f;
-        [SerializeField] private float _groupExitRatio = .8f;
-        public bool GroupViewActive { get; private set; }
+        [Tooltip("全体と詳細を切り替える時間 (秒)")]
+        [SerializeField] private float _switchSeconds = .2f;
 
         private Camera _camera;
         private Vector3 _focus;
@@ -35,8 +34,20 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
         private float _activeYaw;
         private float _targetYaw;
 
+        private float _fromSize, _toSize, _switchT = 1f;
+        private Vector3 _fromFocus, _toFocus;
+
         /// <summary>島全体が収まるときの orthographicSize。</summary>
         public float FitSize => _fitSize;
+
+        /// <summary>今の寄りの段階。切り替え中は行き先の段階。</summary>
+        public VillageZoomLevel Level { get; private set; } = VillageZoomLevel.Overview;
+
+        /// <summary>全体表示の間は施設群の追加生産が動く (村の規則)。</summary>
+        public bool GroupViewActive => VillageZoomPolicy.GroupView(Level);
+
+        /// <summary>段階を切り替えている途中か。</summary>
+        public bool Switching => _switchT < 1f;
 
         /// <summary>真上からの見下ろし視点 (88°) かどうか。</summary>
         public bool IsTopDown { get; private set; }
@@ -55,7 +66,9 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
             var dirty = false;
             if (!Mathf.Approximately(_aspect, _camera.aspect))
             {
-                Frame();
+                _aspect = _camera.aspect;
+                _fitSize = FitSizeFor(_aspect, IslandHalf, _targetPitch, _fill);
+                Jump(VillageZoomPolicy.SizeFor(Level, _fitSize), _focus);
                 dirty = true;
             }
 
@@ -69,11 +82,44 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
                 dirty = true;
             }
 
+            if (Switching)
+            {
+                _switchT = _switchSeconds > 0 ? Mathf.Min(1f, _switchT + Time.unscaledDeltaTime / _switchSeconds) : 1f;
+                var k = VillageZoomPolicy.Ease(_switchT);
+                _camera.orthographicSize = Mathf.Lerp(_fromSize, _toSize, k);
+                _focus = Vector3.Lerp(_fromFocus, _toFocus, k);
+                dirty = true;
+            }
+
             if (dirty)
             {
                 Apply();
             }
         }
+
+        /// <summary>
+        /// 段階を切り替える。詳細へ寄るときは <paramref name="screenPoint"/> (つまんだ中心やホイールの位置) の地面に寄る。
+        /// 全体へ引くときは島の中心に戻す。
+        /// </summary>
+        public void SetLevel(VillageZoomLevel level, Vector2? screenPoint = null)
+        {
+            if (_camera == null) return;
+            var focus = Vector3.zero;
+            if (level == VillageZoomLevel.Detail)
+            {
+                focus = screenPoint.HasValue && Ground(screenPoint.Value, out var ground) ? ground : _focus;
+            }
+
+            Level = level;
+            var size = VillageZoomPolicy.SizeFor(level, _fitSize);
+            _fromSize = _camera.orthographicSize;
+            _fromFocus = _focus;
+            _toSize = size;
+            _toFocus = Clamp(focus, size);
+            _switchT = 0f;
+        }
+
+        public void ToggleLevel(Vector2? screenPoint = null) => SetLevel(VillageZoomPolicy.Toggle(Level), screenPoint);
 
         public void SetTopDown(bool topDown)
         {
@@ -82,8 +128,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
             if (_camera != null)
             {
                 _fitSize = FitSizeFor(_camera.aspect, IslandHalf, _targetPitch, _fill);
-                _camera.orthographicSize = Mathf.Clamp(_camera.orthographicSize, _fitSize * .35f, _fitSize * 1.15f);
-                Apply();
+                Jump(VillageZoomPolicy.SizeFor(Level, _fitSize), _focus);
             }
         }
 
@@ -95,15 +140,14 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
             if (_camera != null) Apply();
         }
 
-        /// <summary>島全体が見える寄りに戻す。</summary>
+        /// <summary>島全体が見える寄りに、補間せずに戻す。</summary>
         public void Frame()
         {
             if (_camera == null) _camera = GetComponent<Camera>();
             _aspect = _camera.aspect;
             _fitSize = FitSizeFor(_aspect, IslandHalf, _targetPitch, _fill);
-            _camera.orthographicSize = _fitSize;
-            _focus = Vector3.zero;
-            Apply();
+            Level = VillageZoomLevel.Overview;
+            Jump(_fitSize, Vector3.zero);
         }
 
         /// <summary>島の半分の幅 (盤面の半分 + 縁取り)。</summary>
@@ -134,9 +178,10 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
             return false;
         }
 
+        /// <summary>詳細のときだけ動かす。全体では島の中心から動かさない。</summary>
         public void Pan(Vector2 from, Vector2 to)
         {
-            if (!Ground(from, out var a) || !Ground(to, out var b))
+            if (Level != VillageZoomLevel.Detail || Switching || !Ground(from, out var a) || !Ground(to, out var b))
             {
                 return;
             }
@@ -145,22 +190,25 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
             Apply();
         }
 
-        public void Zoom(float factor)
+        private void Jump(float size, Vector3 focus)
         {
-            if (!VillageZoomPolicy.ValidFactor(factor) || _camera == null) return;
-            _camera.orthographicSize = Mathf.Clamp(_camera.orthographicSize * factor, _fitSize * .35f, _fitSize * 1.15f);
+            _switchT = 1f;
+            _camera.orthographicSize = size;
+            _focus = focus;
             Apply();
         }
 
-        /// <summary>見ている点を盤面の中に収め、カメラをそこから引いた位置に置く。寄るほど動ける範囲を広げる。</summary>
+        /// <summary>見ている点を盤面の中に収める。寄るほど動ける範囲を広げる。</summary>
+        private Vector3 Clamp(Vector3 focus, float size)
+        {
+            var half = VillageWorldRenderer.Cell * 12;
+            var slack = half * Mathf.Clamp01(1 - size / Mathf.Max(.01f, _fitSize));
+            return new Vector3(Mathf.Clamp(focus.x, -slack, slack), 0, Mathf.Clamp(focus.z, -slack, slack));
+        }
+
         private void Apply()
         {
-            GroupViewActive = VillageZoomPolicy.GroupActive(_camera.orthographicSize, _fitSize, GroupViewActive, _groupEnterRatio, _groupExitRatio);
-            var half = VillageWorldRenderer.Cell * 12;
-            var slack = half * Mathf.Clamp01(1 - _camera.orthographicSize / Mathf.Max(.01f, _fitSize));
-            _focus.x = Mathf.Clamp(_focus.x, -slack, slack);
-            _focus.z = Mathf.Clamp(_focus.z, -slack, slack);
-            _focus.y = 0;
+            _focus = Clamp(_focus, _camera.orthographicSize);
             var shift = transform.up * (_camera.orthographicSize * 2 * _viewportShift);
             transform.position = _focus - transform.forward * Distance - shift;
         }

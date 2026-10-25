@@ -63,6 +63,7 @@ namespace ProjectPenguin.Editor.ProductionIsland
                 var name="Building_"+ids[i]+"_v002";var entry=array.GetArrayElementAtIndex(i);
                 entry.FindPropertyRelative("_kind").enumValueIndex=i;entry.FindPropertyRelative("_prefab").objectReferenceValue=Load<GameObject>($"Assets/3Dmodel/{name}/{name}.prefab");
             }
+            AssignLinkAndItemModels(w.FindProperty("_catalog"));
             w.ApplyModifiedPropertiesWithoutUndo();
             var island=new GameObject("VillageIsland",typeof(MeshFilter),typeof(MeshRenderer));SceneManager.MoveGameObjectToScene(island,scene);
             var islandView=island.AddComponent<VillageIslandView>();var iv=new SerializedObject(islandView);Set(iv,"_material",Load<Material>("Assets/3Dmodel/ProductionIsland_v002/Running.mat"));iv.ApplyModifiedPropertiesWithoutUndo();
@@ -78,6 +79,23 @@ namespace ProjectPenguin.Editor.ProductionIsland
             // All prior scenes were checked clean. Close them without saving; only the copy runs.
             for(var i=SceneManager.sceneCount-1;i>=0;i--){var other=SceneManager.GetSceneAt(i);if(other!=scene)EditorSceneManager.CloseScene(other,true);}
             Selection.activeGameObject=runtime;
+        }
+        /// <summary>つながりの部品 (Link_*) と品物のモデル (Item_*) を村のカタログに入れる。既存のシーンにも同じ処理を使う。</summary>
+        public static void AssignLinkAndItemModels(SerializedProperty catalog)
+        {
+            GameObject Model(string name)=>Load<GameObject>($"Assets/3Dmodel/{name}_v001/{name}_v001.prefab");
+            var links=catalog.FindPropertyRelative("_links");
+            void Link(string field,string name)=>links.FindPropertyRelative(field).objectReferenceValue=Model(name);
+            Link("_arrow","Link_Arrow_Normal");Link("_arrowBlocked","Link_Arrow_Blocked");
+            foreach(var state in new[]{"Free","Connected","Selectable"})
+            {Link("_input"+state,"Link_Port_Input_"+state);Link("_output"+state,"Link_Port_Output_"+state);}
+            var items=((Item[])Enum.GetValues(typeof(Item))).Where(i=>AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/3Dmodel/Item_{i}_v001/Item_{i}_v001.prefab")!=null).ToArray();
+            var array=catalog.FindPropertyRelative("_items");array.arraySize=items.Length;
+            for(var i=0;i<items.Length;i++)
+            {
+                var entry=array.GetArrayElementAtIndex(i);
+                entry.FindPropertyRelative("_item").enumValueIndex=(int)items[i];entry.FindPropertyRelative("_prefab").objectReferenceValue=Model("Item_"+items[i]);
+            }
         }
         private static T Load<T>(string path) where T:UnityEngine.Object=>AssetDatabase.LoadAssetAtPath<T>(path)??throw new InvalidOperationException("参照がありません: "+path);
         private static void Set(SerializedObject o,string name,UnityEngine.Object value)=>o.FindProperty(name).objectReferenceValue=value;

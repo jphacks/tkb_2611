@@ -13,7 +13,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
         [SerializeField] private VillageCameraController _camera;
         private bool _pressed,_panning;
         private Vector2 _start,_last;
-        private float _pinch;
+        private readonly VillagePinch _pinch = new VillagePinch();
         private readonly VillageGestureGate _gesture = new VillageGestureGate();
         private void Update()
         {
@@ -27,14 +27,13 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
                 _pressed=_panning=false;
                 if(_gesture.AllowPinch)
                 {
-                    var d=Vector2.Distance(touches[0].position.ReadValue(),touches[1].position.ReadValue());
-                    if(_pinch>0)_camera.Zoom(_pinch/Mathf.Max(1,d));
-                    _pinch=d;
+                    var a=touches[0].position.ReadValue();var b=touches[1].position.ReadValue();
+                    if(_pinch.Observe(Vector2.Distance(a,b),_camera.Level,out var next))_camera.SetLevel(next,(a+b)*.5f);
                 }
-                else _pinch=0;
+                else _pinch.Reset();
                 return;
             }
-            _pinch=0;
+            _pinch.Reset();
             if(!_navigator.WorldInputEnabled){ResetGesture();return;}
             var touch=Touchscreen.current?.primaryTouch;var useTouch=touch!=null&&(touch.press.isPressed||touch.press.wasReleasedThisFrame);
             if(useTouch&&touch.phase.ReadValue()==UnityEngine.InputSystem.TouchPhase.Canceled){ResetGesture();return;}
@@ -62,7 +61,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
                 else if(Vector3.Distance(ground,_navigator.World.Renderer.HarborPosition)<1.7f)_navigator.ShowSummary(true);
             }
             if(!useTouch&&Mouse.current!=null&&!_navigator.Blocks(point))
-            {var wheel=Mouse.current.scroll.ReadValue().y;if(Mathf.Abs(wheel)>.1f)_camera.Zoom(Mathf.Exp(-wheel*.0015f));}
+            {var next=VillageZoomPolicy.AfterWheel(_camera.Level,Mouse.current.scroll.ReadValue().y);if(next!=_camera.Level&&!_camera.Switching)_camera.SetLevel(next,point);}
         }
         private void Preview(Vector2 point)
         {
@@ -70,7 +69,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
             var size=ProjectPenguin.Domain.Island.IslandCatalog.Get(_navigator.Placement.Kind).Size;
             _navigator.Placement.Preview(Mathf.FloorToInt(ground.x/VillageWorldRenderer.Cell+12-size*.5f),Mathf.FloorToInt(ground.z/VillageWorldRenderer.Cell+12-size*.5f));
         }
-        private void ResetGesture(){_pressed=_panning=false;_pinch=0;_gesture.Interrupt();}
+        private void ResetGesture(){_pressed=_panning=false;_pinch.Reset();_gesture.Interrupt();}
         private void OnDisable()=>ResetGesture();
         private void OnApplicationFocus(bool focused){if(!focused)ResetGesture();}
         private void OnApplicationPause(bool paused){if(paused)ResetGesture();}
