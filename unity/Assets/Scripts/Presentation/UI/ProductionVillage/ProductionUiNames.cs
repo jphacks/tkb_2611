@@ -31,7 +31,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             TacticalRowClass="village-tactical-row",NextStepClass="village-next-step",TacticalStatusClass="village-tactical-status",TacticalStatusBadClass="village-tactical-status--bad",TacticalGasEmptyClass="village-tactical-gas--empty",NextStepWarnClass="village-next-step--warn",GroupStateClass="village-group-state",GroupMarkClass="village-group-mark",GroupMarkWaitingClass="village-group-mark--waiting",SpatialLayerClass="village-spatial-layer",SpatialBadgeClass="village-spatial-badge",SpatialBadgeWarnClass="village-spatial-badge--warn",SpatialBadgeSynergyClass="village-spatial-badge--synergy",
             InsightBannerClass="village-insight-banner",InsightBannerWarnClass="village-insight-banner--warn",
             QuickDockClass="village-quick-dock",DockHeaderClass="village-dock-header",DockTabsClass="village-dock-tabs",DockTabClass="village-dock-tab",DockTabActiveClass="village-dock-tab--active",
-            DockScrollClass="village-dock-scroll",DockSlotClass="village-dock-slot",DockSlotThumbClass="village-dock-slot__thumb",DockSlotNameClass="village-dock-slot__name",
+            DockScrollClass="village-dock-scroll",DockSlotClass="village-dock-slot",DockSlotSuggestedClass="village-dock-slot--suggested",DockSlotThumbClass="village-dock-slot__thumb",DockSlotNameClass="village-dock-slot__name",
             ProductionReportClass="village-production-report";
 
         /// <summary>主役の数字が増えたときに一瞬ふくらませる (Components.uss)。</summary>

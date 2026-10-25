@@ -308,6 +308,15 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 next.EnableInClassList(ProductionUiNames.NextStepWarnClass, trouble);
             }
 
+            // 勧めている施設を、下の施設一覧で光らせる
+            if (_dockScroll != null)
+            {
+                foreach (var slot in _dockScroll.Children())
+                {
+                    slot.EnableInClassList(ProductionUiNames.DockSlotSuggestedClass, step.Build.HasValue && slot.userData is FacilityKind kind && kind == step.Build.Value);
+                }
+            }
+
             Resource(_gas, view.Gas, ref _lastGas);
             Resource(_electricity, view.Electricity, ref _lastElectricity);
             Resource(_water, view.Water, ref _lastWater);
@@ -559,6 +568,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 }
             });
             slot.AddToClassList(ProductionUiNames.DockSlotClass);
+            slot.userData = def.Kind;
 
             var thumb = new VisualElement { pickingMode = PickingMode.Ignore };
             thumb.AddToClassList(UiClasses.Thumb.Root);

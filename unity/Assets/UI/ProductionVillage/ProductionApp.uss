@@ -297,6 +297,13 @@
     border-bottom-color: var(--color-tactical-lip);
 }
 
+/* 「次にやること」が勧めている施設 */
+.village-dock-slot--suggested {
+    border-color: var(--color-tactical-amber);
+    border-width: 4px;
+    background-color: var(--color-tactical-cyan-soft);
+}
+
 .village-dock-slot__thumb {
     width: 88px;
     height: 88px;
