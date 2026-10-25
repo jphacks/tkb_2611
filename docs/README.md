@@ -25,6 +25,7 @@
 | [歩行と効率化の設計案](product-direction/walking-health-concept.md) | 歩行による燃料補給と配置改善を比較する健康促進の補足案 |
 | [物流ゲームのC#構造](product-direction/csharp-architecture.md) | 状態・公開入口・計算・表示・保存の責務と依存関係 |
 | [歩行と効率化の実装計画](product-direction/walking-implementation-plan.md) | 燃料消費、歩数付与、予測、保存復帰、iOS検証の手順 |
+| [生産レポートの設計仕様](production-report/README.md) | 工業モードの生産レポート (全画面) の見た目と数値の決め方。実装方針は [implementation-plan.md](production-report/implementation-plan.md) |
 
 ## backend と API の設計
 
