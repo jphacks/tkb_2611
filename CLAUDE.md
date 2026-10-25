@@ -44,10 +44,11 @@ JPHACKS 2026 (東京B) の提出用リポジトリ。毎日のエコ写真で資
 | 個人に関わる内容の検査 | `python3 scripts/check_personal_info.py --all` (ステージした分は `--staged`) |
 | git のフックを有効にする (clone したら最初に 1 回) | `sh scripts/setup_hooks.sh` |
 | コミット / PR の前の一括検査 | `/verify` |
+| UI のアイコンの書き出し / 検査 (手順は `unity/tools/icons/README.md`) | `python unity/tools/icons/build_icons.py` (`--check` で原本どおりか) / `python scripts/check_svg_icons.py` |
 | Unity の EditMode テスト (Unity の CI は無いので手元で回す) | `"C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Unity.exe" -batchmode -projectPath unity -runTests -testPlatform EditMode -testResults <リポジトリの外>/editmode.xml` |
 | 公開 (preview / 本番) | project-penguin の clone で `uv run --no-project python scripts/deploy_web.py --backend ../tkb_2611/backend` / `--prod` (公開役だけ。`docs/architecture.md`) |
 
-CI (`.github/workflows/ci.yml`) は個人に関わる内容・秘密情報・契約・backend の検査を PR ごとに回す。
+CI (`.github/workflows/ci.yml`) は個人に関わる内容・秘密情報・契約・backend・UI のアイコンの検査を PR ごとに回す。
 
 ## 絶対規則
 
