@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------
 # tkb_2611 (ueco / Project Penguin の backend) - CI
-#   Unity クライアントは Sh1n1230/project-penguin にあり、ここでは回さない。
+#   Unity の Editor のテストはライセンスが要るので、ここでは回さない。UI のアイコンの検査だけ回す。
 # ---------------------------------------------------------------
 name: CI
 
@@ -167,3 +167,21 @@ jobs:
 
       - name: cfn-lint
         run: uv run --no-project --with cfn-lint==1.58.0 cfn-lint --regions ap-northeast-1 -- infra/*.yaml
+
+  # アイコンは白一色で描き、色は USS で付ける。白以外の色や Unity で崩れる要素が混ざると色付けが効かない。
+  # また、アイコンは unity/tools/icons の原本から書き出す。Assets を直接書き換えると原本とずれる。
+  unity-icons:
+    name: UI のアイコンの検査
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: アイコンの決まり
+        run: python scripts/check_svg_icons.py
+
+      - name: アイコンが原本どおりか
+        run: python unity/tools/icons/build_icons.py --check
