@@ -111,6 +111,14 @@
 .village-camera-rail .village-tactical-btn {
     justify-content: center;
     margin: var(--space-1) 0;
+    padding: 0 var(--space-1);
+    white-space: nowrap;
+}
+
+.village-camera-rail .village-tactical-icon {
+    width: 32px;
+    height: 32px;
+    margin-right: 2px;
 }
 
 .village-camera-rail .village-group-state {
@@ -613,6 +621,8 @@
 
 .village-workshop-page .pp-row .pp-badge {
     flex-shrink: 0;
+    height: auto;
+    min-height: 44px;
     margin-left: var(--space-2);
     white-space: normal;
     max-width: 260px;
@@ -663,4 +673,47 @@
 
 .village-workshop-page .pp-cost__value {
     color: var(--ind-yellow);
+}
+
+/* 絵文字の代わりのアイコン (お魚などと同じ SVG)。見出し・札・操作バーで使う */
+.village-card__head {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--space-2);
+}
+
+.village-card__head > .pp-icon {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    margin-right: var(--space-2);
+}
+
+.village-card__head > .village-card__title {
+    margin-bottom: 0;
+}
+
+.village-spatial-badge__icon {
+    width: 32px;
+    height: 32px;
+    margin-right: 4px;
+    -unity-background-image-tint-color: var(--color-primary);
+}
+
+/* USS は :not() を使えないので、状態ごとに上書きする */
+.village-spatial-badge--warn .village-spatial-badge__icon {
+    -unity-background-image-tint-color: var(--color-text-on-primary);
+}
+
+.village-spatial-badge--synergy .village-spatial-badge__icon {
+    -unity-background-image-tint-color: var(--color-text);
+}
+
+.village-tactical-icon {
+    width: 40px;
+    height: 40px;
+    margin-right: var(--space-1);
+}
+
+.village-tactical-btn .village-tactical-icon {
+    -unity-background-image-tint-color: var(--color-text-on-primary);
 }

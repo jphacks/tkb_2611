@@ -21,7 +21,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             WorkshopPage="villageWorkshopPage",WorkshopMicro="villageWorkshopMicro",WorkshopTitle="villageWorkshopTitle",WorkshopClose="villageWorkshopClose",WorkshopContent="villageWorkshopContent";
 
         /// <summary>ProductionApp.uss のクラス。</summary>
-        public const string Hint="village-hint",HintBad="village-hint--bad",Card="village-card",CardTitle="village-card__title",CardActions="village-card__actions",
+        public const string Hint="village-hint",HintBad="village-hint--bad",Card="village-card",CardHead="village-card__head",CardTitle="village-card__title",CardActions="village-card__actions",
             Subtle="village-subtle",Stat="village-stat",Empty="village-empty",EmptyText="village-empty__text",
             Shelf="village-shelf",ShelfRecipe="village-shelf-card__recipe",ShelfCost="village-shelf-card__cost",ShelfSoon="village-shelf-card__soon",
             Facility="village-facility",FacilityThumb="village-facility__thumb",FacilityBody="village-facility__body",FacilityProgress="village-facility__progress",
@@ -29,7 +29,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             RankBadgeClass="village-rank-badge",RankLabelClass="village-rank-label",RankValueClass="village-rank-value",RankProgressClass="village-rank-progress",
             IndustrialSwitchClass="village-industrial-switch",
             TacticalBarClass="village-tactical-bar",TacticalTitleClass="village-tactical-title",TacticalGasClass="village-tactical-gas",TacticalBtnClass="village-tactical-btn",TacticalBtnActiveClass="village-tactical-btn--active",
-            TacticalRowClass="village-tactical-row",NextStepClass="village-next-step",TacticalStatusClass="village-tactical-status",CameraRailClass="village-camera-rail",TacticalStatusBadClass="village-tactical-status--bad",TacticalGasEmptyClass="village-tactical-gas--empty",NextStepWarnClass="village-next-step--warn",GroupStateClass="village-group-state",GroupMarkClass="village-group-mark",GroupMarkWaitingClass="village-group-mark--waiting",SpatialLayerClass="village-spatial-layer",SpatialBadgeClass="village-spatial-badge",SpatialBadgeWarnClass="village-spatial-badge--warn",SpatialBadgeSynergyClass="village-spatial-badge--synergy",
+            TacticalRowClass="village-tactical-row",NextStepClass="village-next-step",TacticalStatusClass="village-tactical-status",CameraRailClass="village-camera-rail",TacticalStatusBadClass="village-tactical-status--bad",TacticalGasEmptyClass="village-tactical-gas--empty",NextStepWarnClass="village-next-step--warn",GroupStateClass="village-group-state",GroupMarkClass="village-group-mark",GroupMarkWaitingClass="village-group-mark--waiting",SpatialLayerClass="village-spatial-layer",SpatialBadgeClass="village-spatial-badge",SpatialBadgeIconClass="village-spatial-badge__icon",SpatialBadgeWarnClass="village-spatial-badge--warn",SpatialBadgeSynergyClass="village-spatial-badge--synergy",
             InsightBannerClass="village-insight-banner",InsightBannerWarnClass="village-insight-banner--warn",
             QuickDockClass="village-quick-dock",DockHeaderClass="village-dock-header",DockTabsClass="village-dock-tabs",DockTabClass="village-dock-tab",DockTabActiveClass="village-dock-tab--active",
             DockScrollClass="village-dock-scroll",DockSlotClass="village-dock-slot",DockSlotSuggestedClass="village-dock-slot--suggested",DockSlotThumbClass="village-dock-slot__thumb",DockSlotNameClass="village-dock-slot__name",

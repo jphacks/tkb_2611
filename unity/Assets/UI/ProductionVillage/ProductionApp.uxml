@@ -50,11 +50,12 @@
             <!-- 工房モードの状態 (ガス・稼働の数・次にやること)。島を隠さないよう薄くする。押すと生産レポート -->
             <ui:Button name="villageTacticalBar" class="village-tactical-bar pp-hidden">
                 <ui:VisualElement class="village-tactical-row" picking-mode="Ignore">
-                    <ui:Label text="⚡ ペンギン工房" class="village-tactical-title" picking-mode="Ignore" />
+                    <ui:VisualElement class="pp-icon pp-icon--build pp-icon--point village-tactical-icon" picking-mode="Ignore" />
+                    <ui:Label text="ペンギン工房" class="village-tactical-title" picking-mode="Ignore" />
                     <ui:Label name="villageTacticalGas" text="ガス 0" class="village-tactical-gas" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <ui:Label name="villageTacticalStatus" text="稼働 0/0　停止 0　配送中 0 便" class="village-tactical-status" picking-mode="Ignore" />
-                <ui:Label name="villageNextStep" text="▶ 村を読み込んでいるよ" class="village-next-step" picking-mode="Ignore" />
+                <ui:Label name="villageNextStep" text="村を読み込んでいるよ" class="village-next-step" picking-mode="Ignore" />
             </ui:Button>
 
             <!-- 工房モードのカメラ操作。右端に縦に並べ、盤面を隠さない -->
@@ -65,7 +66,10 @@
                 <ui:Button name="villageTopDownToggle" class="village-tactical-btn">
                     <ui:Label name="villageTopDownLabel" text="斜め" picking-mode="Ignore" />
                 </ui:Button>
-                <ui:Button name="villageRotateCamera" text="↻ 90°" class="village-tactical-btn" />
+                <ui:Button name="villageRotateCamera" class="village-tactical-btn">
+                    <ui:VisualElement class="pp-icon pp-icon--rotate village-tactical-icon" picking-mode="Ignore" />
+                    <ui:Label text="90°" picking-mode="Ignore" />
+                </ui:Button>
             </ui:VisualElement>
 
             <!-- 読み込みや保存に失敗している間だけ出す。解消するまで消さない -->
@@ -196,7 +200,7 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:Button name="villageWorkshopClose" class="pp-ind-close">
-                        <ui:Label class="pp-ind-close__text" text="✕" />
+                        <ui:VisualElement class="pp-icon pp-icon--close pp-ind-close__icon" picking-mode="Ignore" />
                     </ui:Button>
                 </ui:VisualElement>
                 <ui:VisualElement class="pp-ind-hatch" />

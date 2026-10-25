@@ -312,7 +312,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             var next = _root.Q<Label>(ProductionUiNames.NextStep);
             if (next != null)
             {
-                next.text = "▶ " + stepText;
+                next.text = stepText;
                 next.EnableInClassList(ProductionUiNames.NextStepWarnClass, trouble);
             }
 
@@ -353,6 +353,12 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 {
                     var nodeId = n.Id;
                     badge = new Button(() => ShowFacility(nodeId));
+                    // 札の印は絵文字ではなくアイコン (お魚などと同じ SVG) を使う
+                    var badgeIcon = new VisualElement { pickingMode = PickingMode.Ignore };
+                    badgeIcon.AddToClassList(UiClasses.Icon.Root);
+                    badgeIcon.AddToClassList(ProductionUiNames.SpatialBadgeIconClass);
+                    badge.Add(badgeIcon);
+                    badge.Add(new Label { pickingMode = PickingMode.Ignore });
                     badge.AddToClassList(ProductionUiNames.SpatialBadgeClass);
                     _spatialLayer.Add(badge);
                     _spatialBadges[n.Id] = badge;
@@ -377,10 +383,10 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 var def = IslandCatalog.Get(n.Kind);
                 var recipe = def.Recipes.FirstOrDefault();
                 // 全体表示では止まっている施設の札だけを出す。詳細表示では短い札をすべて出す
-                var label = warn ? (n.Status == VillageInsight.GasWait ? "! ガス不足" : n.Status == VillageInsight.Full ? "! 満杯" : "Zz 材料待")
+                var label = warn ? (n.Status == VillageInsight.GasWait ? "ガス不足" : n.Status == VillageInsight.Full ? "満杯" : "材料待ち")
                     : overview ? ""
-                    : _industrialMode && n.InSynergy ? $"✨ {(int)(n.Progress * 100)}%"
-                    : _industrialMode && n.Amplified ? $"⚡ {(int)(n.Progress * 100)}%"
+                    : _industrialMode && n.InSynergy ? $"施設群 {(int)(n.Progress * 100)}%"
+                    : _industrialMode && n.Amplified ? $"増幅 {(int)(n.Progress * 100)}%"
                     : recipe != null && n.Total > 0 ? $"{IslandCatalog.NameOf(recipe.Output.Item)} ×{n.Total}"
                     : _industrialMode ? def.Name : "";
 
@@ -391,7 +397,20 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 }
 
                 IslandUi.SetVisible(badge, true);
-                badge.text = label;
+                var icon = badge.Q(className: ProductionUiNames.SpatialBadgeIconClass);
+                var iconClass = warn ? (n.Status == VillageInsight.GasWait ? UiClasses.Icon.GasEmpty : n.Status == VillageInsight.Full ? UiClasses.Icon.StorageFull : UiClasses.Icon.MaterialWait)
+                    : _industrialMode && n.InSynergy ? UiClasses.Icon.Production
+                    : _industrialMode && n.Amplified ? UiClasses.Icon.Electricity
+                    : recipe != null && n.Total > 0 ? IslandUi.IconClass(recipe.Output.Item) : null;
+                if (icon.userData as string != iconClass)
+                {
+                    if (icon.userData is string old) icon.RemoveFromClassList(old);
+                    if (iconClass != null) icon.AddToClassList(iconClass);
+                    icon.userData = iconClass;
+                }
+
+                IslandUi.SetVisible(icon, iconClass != null);
+                badge.Q<Label>().text = label;
                 // 隣の札と重なるときは上へずらす (前のフレームの大きさで判定する)
                 var width = float.IsNaN(badge.layout.width) || badge.layout.width <= 0 ? 120f : badge.layout.width;
                 var height = float.IsNaN(badge.layout.height) || badge.layout.height <= 0 ? 44f : badge.layout.height;
@@ -627,7 +646,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             var bad = placement.HasCandidate && placement.Reason.Length > 0;
             _reason.text = placement.Reason.Length > 0 ? placement.Reason
                 : placement.Mode == VillagePlacementMode.Build && !placement.HasCandidate ? "置きたい場所をタップしてね"
-                : placement.HasCandidate ? "ここでよければ ✓" : "";
+                : placement.HasCandidate ? "ここでよければ決定を押してね" : "";
             _reason.EnableInClassList(ProductionUiNames.HintBad, bad);
             IslandUi.SetVisible(_reason, _reason.text.Length > 0);
             IslandUi.SetVisible(_confirm, choosingSpot);
@@ -785,7 +804,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             _activeTab?.AddToClassList(UiClasses.Tab.Active);
         }
 
-        private VisualElement Card(string title = null)
+        /// <summary>見出し付きの節。見出しの印は絵文字ではなく、デザインシステムのアイコン (<paramref name="icon"/>) を使う。</summary>
+        private VisualElement Card(string title = null, string icon = null, string tint = null)
         {
             var card = new VisualElement();
             card.AddToClassList(UiClasses.Card);
@@ -793,7 +813,18 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             card.AddToClassList(ProductionUiNames.Card);
             if (!string.IsNullOrEmpty(title))
             {
-                card.Add(IslandUi.Text(title, ProductionUiNames.CardTitle));
+                if (icon == null)
+                {
+                    card.Add(IslandUi.Text(title, ProductionUiNames.CardTitle));
+                }
+                else
+                {
+                    var head = new VisualElement { pickingMode = PickingMode.Ignore };
+                    head.AddToClassList(ProductionUiNames.CardHead);
+                    head.Add(IslandUi.Icon(icon, tint ?? UiClasses.Tint.Point));
+                    head.Add(IslandUi.Text(title, ProductionUiNames.CardTitle));
+                    card.Add(head);
+                }
             }
 
             _content.Add(card);
@@ -856,7 +887,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             var view = _session.Core.View;
 
             // おすすめ連携図面カード
-            var blueprintCard = Card("📐 施設群の図面 (縮小中に追加生産)");
+            var blueprintCard = Card("施設群の図面 (全体表示の間に追加生産)", UiClasses.Icon.Production);
             blueprintCard.Add(IslandUi.Row(
                 IslandUi.IconBadge(UiClasses.Icon.Kamaboko, UiClasses.Tint.Point),
                 "かまぼこ黄金ライン",
@@ -1005,8 +1036,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 recipeLine.AddToClassList(UiClasses.Recipe.Root);
                 IslandUi.FillRecipe(recipeLine, node.Kind, recipe);
                 top.Add(recipeLine);
-                var bonusText = node.InSynergy ? "✨ 施設群が成立。縮小中の稼働状況は群マークで確認。 " : "";
-                if (node.Amplified) bonusText += "⚡ 増幅エリア速度 +25% 適用中！ ";
+                var bonusText = node.InSynergy ? "施設群が成立しているよ。全体表示の間は追加生産が動く。" : "";
+                if (node.Amplified) bonusText += "増幅器の近くなので、速さが +25%。";
                 top.Add(IslandUi.Text(bonusText + "つくるたびにガスを 1 つかう。近くの施設へ自動でとどけるよ", ProductionUiNames.Subtle));
             }
             else
@@ -1211,7 +1242,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         private static string RecordTitle(string kind)
         {
-            var arrow = kind.IndexOf('→');
+            // 記録の種類は「歩数 (矢印) ガス」の形 (VillageGame の台帳)。表示の文字ではないので符号で書く
+            var arrow = kind.IndexOf('\u2192');
             return arrow > 0 ? kind.Substring(0, arrow).Trim() : kind;
         }
 
@@ -1234,7 +1266,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             OpenPage("WORKSHOP", "ペンギン工房", ProductionUiNames.ManageTab);
             var view = _session.Core.View;
 
-            var modeCard = Card("⚡ ペンギン工房");
+            var modeCard = Card("ペンギン工房", UiClasses.Icon.Build, UiClasses.Tint.Point);
             modeCard.Add(IslandUi.Text("島を真上から見ながら、画面下の一覧から施設を選んで建てられるよ。施設の並べ方や資源を運ぶ道を工夫して、ペンギンたちのものづくりを手伝おう。", ProductionUiNames.Subtle));
             Action(modeCard, "工房モードを開く", () =>
             {
@@ -1243,25 +1275,25 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             }, UiClasses.Icon.Electricity);
             Action(modeCard, "生産レポートを見る", ShowReport, UiClasses.Icon.Production, primary: false);
 
-            var synCard = Card("✨ 施設の並べ方ボーナス");
+            var synCard = Card("施設の並べ方ボーナス", UiClasses.Icon.Production);
             synCard.Add(IslandUi.Row(
                 IslandUi.IconBadge(UiClasses.Icon.Kamaboko, UiClasses.Tint.Point),
                 "かまぼこ黄金ライン",
-                "[漁場] - [塩田] - [漁場] を直線に並べる → かまぼこ追加生成",
+                "[漁場] - [塩田] - [漁場] を直線に並べると、かまぼこを追加で作る",
                 Badge(GroupStatus(view, Item.Kamaboko), UiClasses.Badge.Accent)));
             synCard.Add(IslandUi.Row(
                 IslandUi.IconBadge(UiClasses.Icon.Chikuwa, UiClasses.Tint.Point),
                 "ちくわ3連ライン",
-                "[漁場] × 3 を直線に並べる → ちくわ追加生成",
+                "[漁場] × 3 を直線に並べると、ちくわを追加で作る",
                 Badge(GroupStatus(view, Item.Chikuwa), UiClasses.Badge.Accent)));
             synCard.Add(IslandUi.Row(
                 IslandUi.IconBadge(UiClasses.Icon.DriedFish, UiClasses.Tint.Point),
                 "干物L字ライン",
-                "[塩田] を角にして [漁場] × 2 をL字配置 → 干物追加生成",
+                "[塩田] を角にして [漁場] × 2 をL字に置くと、干物を追加で作る",
                 Badge(GroupStatus(view, Item.DriedFish), UiClasses.Badge.Accent)));
             synCard.Children().Last().AddToClassList(UiClasses.Row.Last);
 
-            var infraCard = Card("🏭 稼働中のインフラ・増幅効果");
+            var infraCard = Card("稼働中の設備と増幅", UiClasses.Icon.Research);
             var dorms = view?.Nodes.Count(n => n.Kind == FacilityKind.Dormitory) ?? 0;
             var labs = view?.Nodes.Count(n => n.Kind == FacilityKind.Research) ?? 0;
             var amps = view?.Nodes.Count(n => n.Kind == FacilityKind.ElectricAmplifier || n.Kind == FacilityKind.WaterAmplifier || n.Kind == FacilityKind.GasAmplifier) ?? 0;
@@ -1281,7 +1313,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             var howTo = Card("遊び方");
             howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Build, UiClasses.Tint.Primary), "工房モードで建てる", "画面下の一覧から施設を選んで、建てたい場所をタップ", null));
             howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.TopDown, UiClasses.Tint.Primary), "島を真上から見る", "工房モード上部のボタンで視点を切り替え、施設や道の配置を確認", null));
-            howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Move, UiClasses.Tint.Primary), "動かす", "施設をタップして、移したい場所をタップして ✓", null));
+            howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Move, UiClasses.Tint.Primary), "動かす", "施設をタップして、移したい場所をタップして決定", null));
             howTo.Children().Last().AddToClassList(UiClasses.Row.Last);
 
             var data = Card("データ");
