@@ -28,9 +28,8 @@ class Settings(BaseSettings):
     # みんなの氷山のテーブル。既定は開発用にする (preview のロールは開発用のテーブルにしか
     # 触れないので、本番のテーブル名は production の環境変数でだけ入れる)。
     community_table: str = "penguin-backend-community-dev"
-    # すれ違いの記録のテーブル。空ならみんなの氷山と同じテーブルに同居させる
-    # (docs/decisions.md の近道)。
-    encounter_table: str | None = None
+    # すれ違いの記録のテーブル。既定はみんなの氷山と同じ理由で開発用にする。
+    encounter_table: str = "penguin-backend-encounters-dev"
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -38,7 +37,3 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
-
-    @property
-    def encounter_table_name(self) -> str:
-        return self.encounter_table or self.community_table

@@ -78,7 +78,8 @@ def community_tables(dynamodb: DynamoDBClient) -> dict[str, str]:
     """infra/backend.yaml と同じ形のテーブルを moto に作る。論理 ID → テーブル名。
 
     例: {"CommunityTable": "penguin-backend-community",
-         "CommunityDevTable": "penguin-backend-community-dev"}
+         "CommunityDevTable": "penguin-backend-community-dev",
+         "EncounterTable": "penguin-backend-encounters", ...}
     """
     return create_tables(dynamodb)
 
