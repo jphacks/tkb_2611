@@ -717,3 +717,88 @@
 .village-tactical-btn .village-tactical-icon {
     -unity-background-image-tint-color: var(--color-text-on-primary);
 }
+
+/* ============ チュートリアル (VillageTutorialPresenter) ============
+   吹き出しは画面の下 (タブの上) に出し、光らせる場所が下にある段では上に出す。吹き出しの外は押せる。 */
+.village-coach {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: flex-end;
+    padding: 0 var(--space-4) 300px var(--space-4);
+}
+
+/* 上に出すときは、右端のカメラの列 (top 640px) にかからないよう、資源の帯のあたりまで上げる */
+.village-coach--top {
+    justify-content: flex-start;
+    padding: 120px var(--space-4) 0 var(--space-4);
+}
+
+.village-coach__card {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface-solid);
+    border-width: 4px;
+    border-color: var(--color-primary);
+    border-bottom-width: 10px;
+    border-bottom-color: var(--color-primary-dark);
+}
+
+.village-coach__head {
+    flex-direction: row;
+    align-items: center;
+}
+
+.village-coach__icon {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+    margin-right: var(--space-2);
+}
+
+.village-coach__heading {
+    flex-shrink: 1;
+}
+
+.village-coach__step {
+    color: var(--color-primary);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-num-bold);
+}
+
+.village-coach__title {
+    color: var(--color-text);
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-heavy);
+    white-space: normal;
+}
+
+.village-coach__body {
+    margin-top: var(--space-2);
+    color: var(--color-text);
+    font-size: var(--font-size-body);
+    white-space: normal;
+}
+
+.village-coach__actions {
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-top: var(--space-3);
+}
+
+.village-coach__skip {
+    margin-right: var(--space-2);
+}
+
+/* 押す場所を脈打つ枠で囲む (presenter が --on を付け外しする) */
+.village-coach-target {
+    border-width: 6px;
+    border-color: var(--color-accent);
+    transition-property: border-color;
+    transition-duration: 0.3s;
+}
+
+.village-coach-target--on {
+    border-color: var(--color-primary);
+}

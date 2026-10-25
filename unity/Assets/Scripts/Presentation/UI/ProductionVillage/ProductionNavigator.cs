@@ -51,6 +51,22 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         public VillagePlacementController Placement => _world.Placement;
         public VillageWorldPresenter World => _world;
 
+        /// <summary>施設の詳細ページの英字の小見出し。チュートリアルが「施設のページが開いた」を見分けるのに使う。</summary>
+        public const string FacilityPage = "FACILITY";
+        public bool IndustrialMode => _industrialMode;
+        /// <summary>開いている工房のページ (英字の小見出し)。開いていなければ null。</summary>
+        public string OpenPageName => _pageOpen ? _pageMicro?.text : null;
+        public bool ReportOpen => _report != null && _report.IsOpen;
+        private VillageTutorialPresenter _tutorial;
+
+        /// <summary>施設一覧のその施設の札。無ければ null。<paramref name="scroll"/> なら見えるところまでスクロールする (チュートリアルで光らせるため)。</summary>
+        public VisualElement DockSlot(FacilityKind kind, bool scroll)
+        {
+            var slot = _dockScroll?.Children().FirstOrDefault(s => s.userData is FacilityKind k && k == kind);
+            if (slot != null && scroll) _dockScroll.ScrollTo(slot);
+            return slot;
+        }
+
         private void Start()
         {
             _root = GetComponent<UIDocument>().rootVisualElement;
@@ -132,6 +148,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             }
 
             RebuildQuickDock();
+            _tutorial = new VillageTutorialPresenter(_root, this, _session);
         }
 
         private void Bind(string name, Action action)
@@ -148,6 +165,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             }
 
             CountUpFish();
+            _tutorial?.Update();
             var core = _session.Core;
             var view = core.View;
             UpdateSpatialBadges(view);
@@ -1008,7 +1026,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             }
 
             var def = IslandCatalog.Get(node.Kind);
-            OpenPage("FACILITY", def.Name, null);
+            OpenPage(FacilityPage, def.Name, null);
             _world.SelectedId = id;
             var top = Card();
             var header = new VisualElement();
@@ -1312,9 +1330,15 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             Open("メニュー", ProductionUiNames.MenuTab);
             var howTo = Card("遊び方");
             howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Build, UiClasses.Tint.Primary), "工房モードで建てる", "画面下の一覧から施設を選んで、建てたい場所をタップ", null));
-            howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.TopDown, UiClasses.Tint.Primary), "島を真上から見る", "工房モード上部のボタンで視点を切り替え、施設や道の配置を確認", null));
+            howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.TopDown, UiClasses.Tint.Primary), "島を真上から見る", "工房モードの右端のボタンで視点を切り替え、施設や道の配置を確認", null));
             howTo.Add(IslandUi.Row(IslandUi.IconBadge(UiClasses.Icon.Move, UiClasses.Tint.Primary), "動かす", "施設をタップして、移したい場所をタップして決定", null));
             howTo.Children().Last().AddToClassList(UiClasses.Row.Last);
+            Action(howTo, "チュートリアルをもう一度", () =>
+            {
+                Close();
+                SetIndustrialMode(false);
+                _tutorial?.Restart();
+            }, UiClasses.Icon.Help, primary: false);
 
             var data = Card("データ");
             data.Add(IslandUi.Text("村はこの端末の中だけに保存するよ。写真や買い物の明細は保存しないよ", ProductionUiNames.Subtle));

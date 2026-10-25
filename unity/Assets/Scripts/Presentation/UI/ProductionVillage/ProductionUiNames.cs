@@ -18,7 +18,11 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             Sheet="villageSheet",Scrim="villageSheetScrim",Title="villageSheetTitle",Close="villageClose",Content="villageSheetContent",
             Navigation="villageNavigation",HomeTab="villageHomeTab",RecordTab="villageRecordTab",ScanTab="villageScanTab",ManageTab="villageManageTab",MenuTab="villageMenuTab",
             VillageProductionReport="villageProductionReport",
-            WorkshopPage="villageWorkshopPage",WorkshopMicro="villageWorkshopMicro",WorkshopTitle="villageWorkshopTitle",WorkshopClose="villageWorkshopClose",WorkshopContent="villageWorkshopContent";
+            WorkshopPage="villageWorkshopPage",WorkshopMicro="villageWorkshopMicro",WorkshopTitle="villageWorkshopTitle",WorkshopClose="villageWorkshopClose",WorkshopContent="villageWorkshopContent",
+            Coach="villageCoach",CoachStep="villageCoachStep",CoachTitle="villageCoachTitle",CoachBody="villageCoachBody",CoachNext="villageCoachNext",CoachSkip="villageCoachSkip";
+
+        /// <summary>チュートリアルの吹き出しと光らせる枠 (ProductionApp.uss)。</summary>
+        public const string CoachClass="village-coach",CoachTopClass="village-coach--top",CoachTargetClass="village-coach-target",CoachTargetOnClass="village-coach-target--on";
 
         /// <summary>ProductionApp.uss のクラス。</summary>
         public const string Hint="village-hint",HintBad="village-hint--bad",Card="village-card",CardHead="village-card__head",CardTitle="village-card__title",CardActions="village-card__actions",
