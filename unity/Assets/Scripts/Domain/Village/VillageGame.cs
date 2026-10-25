@@ -14,9 +14,9 @@ namespace ProjectPenguin.Domain.Village
     public sealed class VillageNodeView
     {
         public int Id {get; internal set;} public FacilityKind Kind {get; internal set;}
-        public int Level {get; internal set;} public int Capacity {get; internal set;}
+        public int Effort {get; internal set;} public int Capacity {get; internal set;}
         public double ProductionSeconds {get; internal set;}
-        public VillageUpgradeView Upgrade {get; internal set;}
+        public VillageEffortView EffortSettings {get; internal set;}
         public int X {get; internal set;} public int Y {get; internal set;} public int Total {get; internal set;}
         public int Size=>IslandCatalog.Get(Kind).Size;
         public double Progress {get; internal set;} public string Status {get; internal set;}
@@ -81,7 +81,7 @@ namespace ProjectPenguin.Domain.Village
     {
         private sealed class Node
         {
-            internal int Id,X,Y,Level=1;internal FacilityKind Kind;
+            internal int Id,X,Y,Effort;internal FacilityKind Kind;
             internal readonly Dictionary<Item,int> Stock=new Dictionary<Item,int>();
             internal long Started,Finish;internal string Status="待機";
             internal int Held(Item item)=>Stock.TryGetValue(item,out var n)?n:0;
@@ -123,15 +123,15 @@ namespace ProjectPenguin.Domain.Village
         internal static int CoverageRadiusOf(FacilityKind kind)=>
             kind==FacilityKind.ElectricAmplifier||kind==FacilityKind.WaterAmplifier||kind==FacilityKind.GasAmplifier||kind==FacilityKind.IceHouse||kind==FacilityKind.Sorter?6:0;
         private bool IsAmplified(Node target)=>AmplifierBonus(target)>0;
-        private int NodeCapacity(Node n)=>(int)(VillageUpgradeRules.BaseCapacity(n.Kind,n.Level)*CoolingMultiplier(n));
-        private int OutputCap(Node n)=>(int)(6*VillageUpgradeRules.Speed(n.Level)*CoolingMultiplier(n));
+        private int NodeCapacity(Node n)=>(int)((n.Kind==FacilityKind.Warehouse||n.Kind==FacilityKind.Sorter?20:12)*CoolingMultiplier(n));
+        private int OutputCap(Node n)=>(int)(6*CoolingMultiplier(n));
         private double NodeSpeedMultiplier(Node n)
         {
             var mult=1.0;
             mult+=AmplifierBonus(n);
-            mult+=_nodes.Where(a=>a.Kind==FacilityKind.Dormitory).Sum(a=>VillageUpgradeRules.Dormitory(a.Level));
-            mult+=_nodes.Where(a=>a.Kind==FacilityKind.Research).Sum(a=>VillageUpgradeRules.Research(a.Level));
-            return mult*VillageUpgradeRules.Speed(n.Level);
+            mult+=.10*_nodes.Count(a=>a.Kind==FacilityKind.Dormitory);
+            mult+=.15*_nodes.Count(a=>a.Kind==FacilityKind.Research);
+            return mult*VillageEffortRules.Speed(n.Effort);
         }
         private string Placement(FacilityKind kind,int x,int y,int ignore)
         {
@@ -203,10 +203,9 @@ namespace ProjectPenguin.Domain.Village
             }
             return routes;
         }
-        /// <summary>送り元 a から自動配送が届くマンハッタン距離。近く (6 以内) に仕分け所があれば、最も高いレベルの仕分け所の配送距離 (Lv1 で 12)、なければ 8。</summary>
+        /// <summary>送り元 a から自動配送が届くマンハッタン距離。近く (6 以内) に仕分け所があれば、配送距離 12、なければ 8。</summary>
         private static int ReachOf(Node a,IReadOnlyCollection<Node> all)=>all
-            .Where(s=>s.Kind==FacilityKind.Sorter&&Math.Abs(s.X-a.X)+Math.Abs(s.Y-a.Y)<=6)
-            .Select(s=>VillageUpgradeRules.DeliveryRange(s.Level)).DefaultIfEmpty(8).Max();
+            .Any(s=>s.Kind==FacilityKind.Sorter&&Math.Abs(s.X-a.X)+Math.Abs(s.Y-a.Y)<=6)?12:8;
         /// <summary>a から b へ自動配送の道ができるか (配送の規則の唯一の判定)。</summary>
         private static bool Links(Node a,Node b,IReadOnlyCollection<Node> all)=>
             a.Id!=b.Id&&RecipeOf(a)!=null&&Math.Abs(a.X-b.X)+Math.Abs(a.Y-b.Y)<=ReachOf(a,all)&&SendableItems(a).Any(i=>Accepts(b,i));
@@ -245,7 +244,7 @@ namespace ProjectPenguin.Domain.Village
                 var consumed=_unlimited?0:r.Inputs.Sum(i=>i.Count);
                 if(n.Held(r.Output.Item)+r.Output.Count>OutputCap(n)||n.Stock.Values.Sum()-consumed+arrivals+r.Output.Count>NodeCapacity(n)){n.Status="出力の置き場が満杯";continue;}
                 if(!_unlimited&&r.Inputs.Any(i=>n.Held(i.Item)<i.Count)){n.Status="材料を待っています";continue;}
-                if(!Pay(1)){n.Status="ガスを待っています";continue;}
+                if(!Pay(VillageEffortRules.Gas(n.Effort))){n.Status="ガスを待っています";continue;}
                 if(!_unlimited)foreach(var input in r.Inputs){n.Stock[input.Item]=n.Held(input.Item)-input.Count;RecordUsed(input.Item,input.Count);}
                 var effectiveSpeed=_speed*NodeSpeedMultiplier(n);
                 n.Started=_at;n.Finish=_at+(long)Math.Max(100,r.Seconds*1000/effectiveSpeed);n.Status="生産中";
@@ -286,7 +285,7 @@ namespace ProjectPenguin.Domain.Village
                 var r=RecipeOf(n);if(r==null)continue;
                 var cyclesPerMin=60.0/Math.Max(0.1,r.Seconds)*_speed*NodeSpeedMultiplier(n);
                 rates[r.Output.Item].TheoreticalMakePerMinute+=r.Output.Count*cyclesPerMin;
-                theoGasPerMin+=cyclesPerMin;
+                theoGasPerMin+=cyclesPerMin*VillageEffortRules.Gas(n.Effort);
                 foreach(var inp in r.Inputs)
                     rates[inp.Item].TheoreticalUsePerMinute+=inp.Count*cyclesPerMin;
             }
@@ -333,7 +332,7 @@ namespace ProjectPenguin.Domain.Village
                 ProducedLastMinute=_history.Sum(e=>(long)e.Made),
                 BottleneckSummary=bottleneckSummary,HasBottleneck=hasBottleneck,
                 Nodes=Array.AsReadOnly(_nodes.Select(n=>new VillageNodeView{Id=n.Id,Kind=n.Kind,X=n.X,Y=n.Y,Total=n.Stock.Values.Sum(),
-                    Level=n.Level,Capacity=NodeCapacity(n),Upgrade=UpgradeView(n),
+                    Effort=n.Effort,Capacity=NodeCapacity(n),EffortSettings=EffortView(n),
                     ProductionSeconds=RecipeOf(n)==null?0:Math.Max(.1,RecipeOf(n).Seconds/(_speed*NodeSpeedMultiplier(n))),
                     Status=n.Status,Amplified=IsAmplified(n),InSynergy=synergyNodeIds.Contains(n.Id),CoverageRadius=CoverageRadiusOf(n.Kind),
                     Progress=n.Finish>0?Math.Min(1,(_at-n.Started)/(double)(n.Finish-n.Started)):0,

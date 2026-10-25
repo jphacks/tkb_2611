@@ -9,6 +9,7 @@ namespace ProjectPenguin.Domain.Village
     {
         public long At, Requested, NextCargo = 1, Produced;
         public int NextId = 1, DeliveryMs = 1500;
+        public int EffortSchema;
         public double Speed = 1, Gas, Electricity, Water, Spent;
         public bool Unlimited;
         public VillageGroupProgressState GroupProgress = new VillageGroupProgressState();
@@ -33,7 +34,8 @@ namespace ProjectPenguin.Domain.Village
     [Serializable] public sealed class VillageNodeState
     {
         public int Id, X, Y;
-        public int Level = 1;
+        public int Level = 1; // Legacy saves only; effort saves use EffortSchema.
+        public int Effort;
         public FacilityKind Kind;
         public long Started, Finish;
         public int[] Stock = new int[8];

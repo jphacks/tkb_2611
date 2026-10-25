@@ -14,10 +14,10 @@ using UnityEngine.SceneManagement;
 
 namespace ProjectPenguin.Tests.PlayMode
 {
-    public sealed class VillageUpgradeFlowTests
+    public sealed class VillageEffortFlowTests
     {
         [UnityTest]
-        public IEnumerator FacilityButtonsPreviewCancelUpgradeAndRefreshInTheRealVillageScene()
+        public IEnumerator FacilityButtonsRaiseAndResetEffortInTheRealVillageScene()
         {
 #if UNITY_EDITOR
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode("Assets/Scenes/ProductionVillageHome.unity", new LoadSceneParameters(LoadSceneMode.Single));
@@ -36,25 +36,22 @@ namespace ProjectPenguin.Tests.PlayMode
             var nav = Object.FindFirstObjectByType<ProductionNavigator>(); nav.ShowFacility(id);
             yield return null;
             var root = nav.GetComponent<UIDocument>().rootVisualElement;
-            root.Q<ScrollView>(ProductionUiNames.Content).ScrollTo(root.Q(className: ProductionUiNames.Upgrade));
+            root.Q<ScrollView>(ProductionUiNames.Content).ScrollTo(root.Q(className: ProductionUiNames.Effort));
             yield return null;
-            ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "village-upgrade-preview.png"));
+            ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "village-effort.png"));
+            yield return null;
             var electric = core.View.Electricity;
-            Click(root.Q<Button>(VillageUpgradePanel.UpgradeButtonName)); yield return null;
-            ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "village-upgrade-confirm.png"));
-            Assert.That(core.View.Nodes.Single(n => n.Id == id).Level, Is.EqualTo(1));
+            Click(root.Q<Button>(VillageEffortPanel.IncreaseButtonName)); yield return null;
+            Assert.That(core.View.Nodes.Single(n => n.Id == id).Effort, Is.EqualTo(1));
             Assert.That(core.View.Electricity, Is.EqualTo(electric));
-            Click(root.Q<Button>(VillageUpgradePanel.CancelButtonName)); yield return null;
-            Assert.That(core.View.Electricity, Is.EqualTo(electric));
-            Click(root.Q<Button>(VillageUpgradePanel.UpgradeButtonName)); yield return null;
-            Click(root.Q<Button>(VillageUpgradePanel.ConfirmButtonName)); yield return null;
-            Assert.That(core.View.Nodes.Single(n => n.Id == id).Level, Is.EqualTo(2));
-            Assert.That(core.View.Electricity, Is.EqualTo(electric - 10));
             nav.Close(); nav.ShowFacility(id); yield return null;
-            Assert.That(root.Query<Label>(className: ProductionUiNames.FacilityLevel).First().text, Does.Contain("Lv 2"));
+            Assert.That(root.Query<Label>(className: ProductionUiNames.FacilityEffort).First().text, Does.Contain("エフォート 1"));
             Assert.That(core.Resources(0, 0, 0, false, now), Is.True);
             nav.ShowFacility(id); yield return null;
-            Assert.That(root.Q<Button>(VillageUpgradePanel.UpgradeButtonName).enabledSelf, Is.False);
+            Click(root.Q<Button>(VillageEffortPanel.ResetButtonName)); yield return null;
+            Assert.That(core.View.Nodes.Single(n => n.Id == id).Effort, Is.Zero);
+            Assert.That(root.Q<Button>(VillageEffortPanel.DecreaseButtonName).enabledSelf, Is.False);
+            Assert.That(root.Q<Button>(VillageEffortPanel.IncreaseButtonName).enabledSelf, Is.True);
             LogAssert.NoUnexpectedReceived();
 #else
             Assert.Ignore("Editor scene verification"); yield break;

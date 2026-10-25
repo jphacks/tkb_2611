@@ -12,6 +12,8 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
         public const float Cell=.65f;
         private const float ModelScale=.86f;
         private readonly Transform _parent;
+        private readonly Camera _camera;
+        private readonly Dictionary<int,VillageEffortFlame> _flames=new Dictionary<int,VillageEffortFlame>();
         private readonly VillagePrefabCatalog _prefabs;
         private readonly RectTransform _canvas;
         private readonly GameObject _grid,_subtleGrid,_tacticalFrame;
@@ -31,7 +33,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
         public Vector3 HarborPosition {get;}=new Vector3(-6.8f,.1f,5.7f);
         public VillageWorldRenderer(Transform parent,Camera camera,VillagePrefabCatalog prefabs,GameObject harbor)
         {
-            _parent=parent;_prefabs=prefabs;
+            _parent=parent;_prefabs=prefabs;_camera=camera;
             var root=new GameObject(ProductionWorldNames.WorldCanvas,typeof(RectTransform),typeof(Canvas));root.transform.SetParent(parent,false);
             root.GetComponent<Canvas>().renderMode=RenderMode.WorldSpace;root.GetComponent<Canvas>().worldCamera=camera;
             _canvas=(RectTransform)root.transform;_canvas.sizeDelta=Vector2.one*24*Cell;_canvas.position=new Vector3(0,.035f,0);_canvas.rotation=Quaternion.Euler(90,0,0);
@@ -70,6 +72,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
         {
             foreach(var id in _models.Keys.Where(id=>!view.Nodes.Any(n=>n.Id==id&&n.Kind==_kinds[id])).ToArray())
             {
+                if(_flames.TryGetValue(id,out var flame)){Object.Destroy(flame.Root);_flames.Remove(id);}
                 Object.Destroy(_models[id]);_models.Remove(id);_kinds.Remove(id);_working.Remove(id);
                 if(_footprints.TryGetValue(id,out var fp)){Object.Destroy(fp.gameObject);_footprints.Remove(id);_statusBars.Remove(id);}
                 if(_zones.TryGetValue(id,out var zn)){Object.Destroy(zn.gameObject);_zones.Remove(id);}
@@ -104,7 +107,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
                 }
             }
             foreach(var k in _synergies.Keys.Where(k=>!synKeys.Contains(k)).ToArray()){Object.Destroy(_synergies[k].gameObject);_synergies.Remove(k);}
-            // 3. 足元の面は強化レベル、手前の細い帯は稼働状態。
+            // 3. エフォートは屋根上の炎の数と大きさ。足元は共通色、細い帯は稼働状態。
             foreach(var n in view.Nodes)
             {
                 if(!_models.TryGetValue(n.Id,out var model)){_models[n.Id]=model=Model(_prefabs.Get(n.Kind),n.Size*Cell*ModelScale,ProductionWorldNames.Facility+n.Id);_kinds[n.Id]=n.Kind;}
@@ -115,7 +118,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
                     _statusBars[n.Id]=Rect("Status",fp.transform,new Vector2(0,-n.Size*Cell*.43f),new Vector2(n.Size*Cell*.72f,.07f),Color.clear);
                 }
                 fp.rectTransform.anchoredPosition=Flat(Position(n.X,n.Y,n.Size));
-                fp.color=VillageLevelColors.Tile(n.Level);
+                fp.color=new Color32(144,197,216,180);
                 var stopped=n.Status==VillageInsight.GasWait||n.Status==VillageInsight.Full;
                 var waiting=n.Status==VillageInsight.MaterialWait;
                 var pulse=.55f+.45f*Mathf.Sin(Time.unscaledTime*4f);
@@ -123,6 +126,8 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
                     :waiting?new Color(.96f,.65f,.14f,.6f+.35f*pulse)
                     :n.Amplified?new Color(.18f,.83f,.92f,.95f):Color.clear;
                 var working=running&&n.Status=="生産中"&&n.Progress<1;
+                if(n.Effort>0&&!_flames.ContainsKey(n.Id))_flames[n.Id]=new VillageEffortFlame(_parent,model,_camera,n.Id);
+                if(_flames.TryGetValue(n.Id,out var effortFlame))effortFlame.Render(model.transform.position,n.Effort,working,_camera,Time.unscaledTime);
                 if(!_working.TryGetValue(n.Id,out var previous)||previous!=working)
                 {
                     _working[n.Id]=working;

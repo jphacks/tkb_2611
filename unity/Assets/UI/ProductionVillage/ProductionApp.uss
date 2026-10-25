@@ -497,23 +497,6 @@
     margin-top: var(--space-2);
 }
 
-.village-facility__level { font-size: var(--font-size-label); -unity-font-definition: var(--font-heavy); color: var(--color-primary-dark); margin-bottom: var(--space-1); }
-.village-upgrade { background-color: var(--color-ice-50); border-width: 2px; border-color: var(--color-ice-200); }
-.village-upgrade__header { flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: var(--space-2); }
-.village-upgrade__level { font-size: var(--font-size-title); -unity-font-definition: var(--font-heavy); color: var(--color-primary-dark); }
-.village-upgrade__grid { flex-direction: row; margin-bottom: var(--space-2); }
-.village-upgrade__stage { flex-grow: 1; flex-basis: 0; padding: var(--space-2); border-radius: var(--radius-sm); background-color: var(--color-surface-solid); }
-.village-upgrade__stage--next { margin-left: var(--space-2); background-color: var(--color-eco-soft); }
-.village-upgrade__caption { font-size: var(--font-size-caption); color: var(--color-text-sub); margin-bottom: var(--space-1); }
-.village-upgrade__effect { font-size: var(--font-size-body); color: var(--color-text); white-space: normal; -unity-font-definition: var(--font-bold); }
-.village-upgrade__cost { flex-direction: row; align-items: center; margin-top: var(--space-1); }
-.village-upgrade__cost > .pp-icon { margin-right: var(--space-1); }
-.village-upgrade__hint { font-size: var(--font-size-caption); color: var(--color-primary-dark); white-space: normal; margin-bottom: var(--space-2); }
-.village-upgrade__hint--warning { color: var(--color-danger); }
-.village-upgrade > .pp-btn { margin-top: var(--space-1); margin-bottom: var(--space-2); }
-.village-upgrade__confirm { background-color: var(--color-surface-solid); border-radius: var(--radius-sm); padding: var(--space-2); margin-bottom: var(--space-2); }
-.village-upgrade__actions { flex-direction: row; margin-top: var(--space-2); }
-.village-upgrade__actions > .pp-btn { flex-grow: 1; flex-basis: 0; margin-right: var(--space-1); }
 
 /* 品物のカードの並び (生産量・港・施設の在庫) */
 .village-items {
@@ -536,3 +519,13 @@
     right: 0;
     bottom: 0;
 }
+
+.village-effort { background-color: var(--color-ice-50); border-width: 2px; border-color: var(--color-ice-200); }
+.village-effort__header { flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+.village-effort__value, .village-facility__effort { color: var(--color-tactical-cyan); -unity-font-style: bold; font-size: var(--font-size-body); }
+.village-effort__effect { white-space: normal; font-size: var(--font-size-body); margin-top: var(--space-2); }
+.village-effort__hint { white-space: normal; color: var(--color-text-sub); margin-top: var(--space-2); }
+.village-effort__actions { flex-direction: row; align-items: center; flex-wrap: wrap; margin-top: var(--space-2); }
+.village-effort__actions > .pp-btn { margin-right: var(--space-2); margin-bottom: var(--space-2); }
+
+.village-effort__flame { width: 36px; height: 42px; margin-right: var(--space-1); background-image: url("project://database/Assets/UI/ProductionVillage/EffortFlame.svg"); -unity-background-scale-mode: scale-to-fit; }
