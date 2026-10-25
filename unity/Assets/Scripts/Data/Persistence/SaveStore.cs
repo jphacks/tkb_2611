@@ -275,6 +275,11 @@ namespace ProjectPenguin.Data.Persistence
                 }
 
                 var read = ReadCandidate(candidate.Key, validate);
+                if (read.Status == SaveLoadStatus.TooNew)
+                {
+                    _blockedByNewerFile = true;
+                    return new SaveLoadResult(SaveLoadStatus.TooNew, null, read.StoredVersion, false, "written by a newer app version");
+                }
                 if (read.Ok)
                 {
                     return new SaveLoadResult(candidate.Value, read.Payload, read.StoredVersion, read.Migrated, details + read.Detail);

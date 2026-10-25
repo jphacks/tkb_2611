@@ -9,6 +9,13 @@ namespace ProjectPenguin.Tests.EditMode
     /// </summary>
     public sealed class BuildEntryTests
     {
+        [Test]
+        public void IosStartsTheNewFactoryWithoutChangingTheLegacyWebScenes()
+        {
+            Assert.That(ProjectBuilder.ScenesFor(new BuildRequest { Kind = BuildKind.IosXcode }),
+                Is.EqualTo(new[] { "Assets/Scenes/FactoryGame.unity" }));
+            Assert.That(ProjectBuilder.ScenesFor(new BuildRequest { Kind = BuildKind.WebGL }), Is.EqualTo(ProjectBuilder.EnabledScenes()));
+        }
         private static BuildRequest ParseIos(params string[] args) => BuildEntry.Parse(BuildKind.IosXcode, args);
 
         [Test]

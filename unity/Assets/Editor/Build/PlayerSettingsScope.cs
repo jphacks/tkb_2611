@@ -27,6 +27,7 @@ namespace ProjectPenguin.Editor.Build
         private readonly bool _webGLNameFilesAsHashes;
         private readonly bool _webGLDataCaching;
         private readonly string _webGLEmscriptenArgs;
+        private readonly UIOrientation _orientation;
 
         public PlayerSettingsScope()
         {
@@ -45,6 +46,7 @@ namespace ProjectPenguin.Editor.Build
             _webGLNameFilesAsHashes = PlayerSettings.WebGL.nameFilesAsHashes;
             _webGLDataCaching = PlayerSettings.WebGL.dataCaching;
             _webGLEmscriptenArgs = PlayerSettings.WebGL.emscriptenArgs;
+            _orientation = PlayerSettings.defaultInterfaceOrientation;
         }
 
         public void Dispose()
@@ -69,6 +71,7 @@ namespace ProjectPenguin.Editor.Build
             PlayerSettings.WebGL.nameFilesAsHashes = _webGLNameFilesAsHashes;
             PlayerSettings.WebGL.dataCaching = _webGLDataCaching;
             PlayerSettings.WebGL.emscriptenArgs = _webGLEmscriptenArgs;
+            PlayerSettings.defaultInterfaceOrientation = _orientation;
 
             // BuildPlayer はビルド中の値で ProjectSettings.asset を保存する。メモリ上で戻すだけだと
             // 次に Editor が保存するまでディスクにビルド時の値 (ビルド番号・署名など) が残り、

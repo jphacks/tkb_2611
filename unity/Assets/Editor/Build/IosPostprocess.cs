@@ -35,6 +35,7 @@ namespace ProjectPenguin.Editor.Build
             plist.ReadFromFile(plistPath);
             plist.root.SetString("NSMotionUsageDescription", MotionUsageDescription);
             plist.root.SetString("NSBluetoothAlwaysUsageDescription", BluetoothUsageDescription);
+            plist.root.SetString("NSCameraUsageDescription", "商品のバーコードを読み取り、水の記録を作るためにカメラを使います。画像は保存・送信しません。");
             plist.WriteToFile(plistPath);
 
             var projectPath = PBXProject.GetPBXProjectPath(output);
@@ -42,6 +43,11 @@ namespace ProjectPenguin.Editor.Build
             project.ReadFromFile(projectPath);
             project.AddFrameworkToProject(project.GetUnityFrameworkTargetGuid(), "CoreMotion.framework", false);
             project.AddFrameworkToProject(project.GetUnityFrameworkTargetGuid(), "CoreBluetooth.framework", false);
+            foreach (var framework in new[] { "AVFoundation.framework", "PhotosUI.framework", "Vision.framework" })
+                project.AddFrameworkToProject(project.GetUnityFrameworkTargetGuid(), framework, false);
+            var records = project.FindFileGuidByProjectPath("Libraries/Plugins/iOS/PenguinFactoryRecords.mm");
+            if (!string.IsNullOrEmpty(records))
+                project.SetCompileFlagsForFile(project.GetUnityFrameworkTargetGuid(), records, new System.Collections.Generic.List<string> { "-fobjc-arc" });
             project.WriteToFile(projectPath);
         }
     }
