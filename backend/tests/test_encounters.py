@@ -121,7 +121,7 @@ def test_records_expire_after_two_days(
 ) -> None:
     report(client, A, B)
 
-    items = dynamodb.scan(TableName=community_tables["CommunityDevTable"])["Items"]
+    items = dynamodb.scan(TableName=community_tables["EncounterDevTable"])["Items"]
 
     expected = int((NOON + timedelta(days=2)).timestamp())
     assert [item["pk"]["S"].split("#")[0] for item in items] == ["enc"]
@@ -137,15 +137,16 @@ def test_many_reports_from_one_token_are_not_limited(client: TestClient) -> None
     assert all(report(client, A, peer).status_code == 200 for peer in peers)
 
 
-def test_dedicated_table_can_be_configured(
+def test_records_stay_out_of_the_community_tables(
     make: Callable[..., TestClient], dynamodb: DynamoDBClient, community_tables: dict[str, str]
 ) -> None:
-    client = make(encounter_table=community_tables["CommunityTable"])
+    client = make(encounter_table=community_tables["EncounterTable"])
 
     report(client, A, B)
 
-    assert dynamodb.scan(TableName=community_tables["CommunityTable"])["Count"] == 1
-    assert dynamodb.scan(TableName=community_tables["CommunityDevTable"])["Count"] == 0
+    assert dynamodb.scan(TableName=community_tables["EncounterTable"])["Count"] == 1
+    for table in ("EncounterDevTable", "CommunityTable", "CommunityDevTable"):
+        assert dynamodb.scan(TableName=community_tables[table])["Count"] == 0
 
 
 def test_reporting_yourself_is_invalid(client: TestClient) -> None:

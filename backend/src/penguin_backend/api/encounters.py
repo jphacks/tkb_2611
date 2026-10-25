@@ -50,7 +50,7 @@ async def report_encounter(request: Request) -> JSONResponse:
     clients = await run_in_threadpool(clients_of, request)
     store = EncounterStore(
         clients.dynamodb,
-        settings.encounter_table_name,
+        settings.encounter_table,
         clock=clock,
     )
     matched = await run_in_threadpool(store.report, day, report.self_token, report.peer_token)
