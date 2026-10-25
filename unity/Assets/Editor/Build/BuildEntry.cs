@@ -75,6 +75,9 @@ namespace ProjectPenguin.Editor.Build
 
         // ---- 実行 -------------------------------------------------------------
 
+        /// <summary>ビルド先を切り替えた後、再読み込みの後に続けるメニューのビルド (Kind と Development)。</summary>
+        private const string PendingMenuBuildKey = "ProjectPenguin.Build.PendingMenuBuild";
+
         private static void RunFromMenu(BuildRequest request)
         {
             // 未保存のシーンはビルドに含まれない。取りこぼしを防ぐため先に確認する。
@@ -82,6 +85,26 @@ namespace ProjectPenguin.Editor.Build
             {
                 return;
             }
+
+            if (EditorUserBuildSettings.activeBuildTarget != request.Target)
+            {
+                // clone した直後は iOS ではない。切り替えるとスクリプトがコンパイルし直されるので、
+                // 再読み込みの後 (ResumePendingMenuBuild) に、切り替え先のスクリプトでビルドを続ける。
+                SessionState.SetString(PendingMenuBuildKey, $"{request.Kind}|{request.Development}");
+                if (!EditorUserBuildSettings.SwitchActiveBuildTarget(request.Group, request.Target))
+                {
+                    SessionState.EraseString(PendingMenuBuildKey);
+                    EditorUtility.DisplayDialog("ビルドできません",
+                        $"{request.Target} へ切り替えられませんでした。Unity Hub で該当プラットフォームのビルドモジュールを追加してください。", "OK");
+                    return;
+                }
+
+                // ここで続けない。再読み込みの前に走ると、切り替え前のスクリプトでビルドしてしまう。
+                Debug.Log($"[Build] ビルド先を {request.Target} に切り替えました。スクリプトのコンパイルが終わったら {request.Label} のビルドを続けます。");
+                return;
+            }
+
+            SessionState.EraseString(PendingMenuBuildKey);
 
             try
             {
@@ -96,6 +119,41 @@ namespace ProjectPenguin.Editor.Build
                 // 入力不備はダイアログで直接伝える。Console だけだと気付かれない。
                 EditorUtility.DisplayDialog("ビルドできません", e.Message, "OK");
             }
+        }
+
+        [InitializeOnLoadMethod]
+        private static void ScheduleResume()
+        {
+            if (!Application.isBatchMode && !string.IsNullOrEmpty(SessionState.GetString(PendingMenuBuildKey, string.Empty)))
+            {
+                EditorApplication.delayCall += ResumePendingMenuBuild;
+            }
+        }
+
+        private static void ResumePendingMenuBuild()
+        {
+            var pending = SessionState.GetString(PendingMenuBuildKey, string.Empty);
+            if (string.IsNullOrEmpty(pending))
+            {
+                return;
+            }
+
+            SessionState.EraseString(PendingMenuBuildKey);
+            var parts = pending.Split('|');
+            if (parts.Length != 2 || !Enum.TryParse(parts[0], out BuildKind kind) || !bool.TryParse(parts[1], out var development))
+            {
+                return;
+            }
+
+            var request = new BuildRequest { Kind = kind, Development = development };
+            if (EditorUserBuildSettings.activeBuildTarget != request.Target)
+            {
+                // ここでもう一度切り替えると、再読み込みのたびに切り替えを繰り返すので止める。
+                Debug.LogError($"[Build] ビルド先が {request.Target} になっていないので、{request.Label} のビルドを続けませんでした。メニューから選び直してください。");
+                return;
+            }
+
+            RunFromMenu(request);
         }
 
         private static void RunFromCommandLine(BuildKind kind)

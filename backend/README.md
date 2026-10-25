@@ -24,6 +24,7 @@ uv run uvicorn penguin_backend.app:app --reload   # http://localhost:8000/api/v1
 |---|---|
 | `PENGUIN_AWS_ROLE_ARN` | Vercel の OIDC で借りる IAM ロール (`../infra/backend.yaml` の `VercelBackendRoleArn`)。AI のキーは置かない。手元では空のままにし、`AWS_PROFILE` の認証情報を使う |
 | `PENGUIN_COMMUNITY_TABLE` | みんなの氷山のテーブル。本番は `penguin-backend-community`、手元と preview は `penguin-backend-community-dev` |
+| `PENGUIN_ENCOUNTER_TABLE` | すれ違いの記録のテーブル。本番は `penguin-backend-encounters`、手元と preview は `penguin-backend-encounters-dev` |
 | `PENGUIN_CORS_ORIGINS` | 手元で Web ビルドを別のポートから開いて呼ぶときだけ、許可する配信元をカンマ区切りで渡す (例: `http://localhost:8090`)。本番は空 |
 
 public リポジトリなので、実キーのコミットは回復できない事故になります (履歴に残る)。

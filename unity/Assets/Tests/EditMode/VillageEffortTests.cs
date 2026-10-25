@@ -4,6 +4,7 @@ using System.Linq;
 using NUnit.Framework;
 using ProjectPenguin.Data;
 using ProjectPenguin.Domain.Island;
+using ProjectPenguin.Domain.Encounter;
 using ProjectPenguin.Domain.Village;
 using ProjectPenguin.Systems;
 using UnityEngine;
@@ -130,6 +131,29 @@ namespace ProjectPenguin.Tests.EditMode
             foreach (var bad in new[] { -1, 4 }) { s.Nodes[0].Effort = bad; Assert.Throws<ArgumentException>(() => VillageGame.Restore(s)); }
             s.Nodes[0].Effort = 0; s.EffortSchema = 2; Assert.Throws<ArgumentException>(() => VillageGame.Restore(s));
             s.EffortSchema = 0; s.Nodes[0].Level = 6; Assert.Throws<ArgumentException>(() => VillageGame.Restore(s));
+        }
+
+        [Test]
+        public void SaveKeepsEffortWarehouseAndEncountersWithFreeResourcesEnabled()
+        {
+            var game = Game(); var fish = game.Place(FacilityKind.Fishery, 0, 0).Id;
+            var warehouse = game.Place(FacilityKind.Warehouse, 3, 0).Id;
+            game.SetEffort(fish, 3); game.SetWarehouseCapacity(warehouse, 80); game.SetFreeResources(true);
+            Assert.That(game.BeginEncounterDay(297).Success, Is.True);
+            Assert.That(game.ObservePeer(EncounterToken.Create(), 1000).Success, Is.True);
+            var gas = game.CreateView().Gas; game.AdvanceTo(100);
+            var restored = VillageGame.Restore(JsonUtility.FromJson<VillageState>(JsonUtility.ToJson(game.Export())));
+            Assert.That(restored.CreateView().FreeResources, Is.True);
+            Assert.That(Node(restored, fish).Effort, Is.EqualTo(3));
+            Assert.That(Node(restored, warehouse).Capacity, Is.EqualTo(80));
+            Assert.That(restored.EncounterDay, Is.EqualTo(297));
+            Assert.That(restored.EncounterSelfToken, Is.EqualTo(game.EncounterSelfToken));
+            Assert.That(restored.EncountersSeen, Is.EqualTo(1));
+            Assert.That(restored.TakeEncounterReport(1000, out var report).Success, Is.True);
+            Assert.That(report, Is.Not.Null);
+            restored.AdvanceTo(1100);
+            Assert.That(restored.CreateView().Gas, Is.EqualTo(gas));
+            Assert.That(restored.CreateView().Produced, Is.EqualTo(1));
         }
 
         private sealed class FailingStore : IProductionVillageStore

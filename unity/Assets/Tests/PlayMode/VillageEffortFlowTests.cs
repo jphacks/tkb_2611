@@ -17,7 +17,7 @@ namespace ProjectPenguin.Tests.PlayMode
     public sealed class VillageEffortFlowTests
     {
         [UnityTest]
-        public IEnumerator FacilityButtonsRaiseAndResetEffortInTheRealVillageScene()
+        public IEnumerator FacilityButtonsChangeEffortAndWarehouseCapacityInTheRealVillageScene()
         {
 #if UNITY_EDITOR
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode("Assets/Scenes/ProductionVillageHome.unity", new LoadSceneParameters(LoadSceneMode.Single));
@@ -36,7 +36,9 @@ namespace ProjectPenguin.Tests.PlayMode
             var nav = Object.FindFirstObjectByType<ProductionNavigator>(); nav.ShowFacility(id);
             yield return null;
             var root = nav.GetComponent<UIDocument>().rootVisualElement;
-            root.Q<ScrollView>(ProductionUiNames.Content).ScrollTo(root.Q(className: ProductionUiNames.Effort));
+            var effortCard = root.Q(className: ProductionUiNames.Effort);
+            var scroll = effortCard.GetFirstAncestorOfType<ScrollView>();
+            Assert.That(scroll, Is.Not.Null); scroll.ScrollTo(effortCard);
             yield return null;
             ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "village-effort.png"));
             yield return null;
@@ -52,6 +54,20 @@ namespace ProjectPenguin.Tests.PlayMode
             Assert.That(core.View.Nodes.Single(n => n.Id == id).Effort, Is.Zero);
             Assert.That(root.Q<Button>(VillageEffortPanel.DecreaseButtonName).enabledSelf, Is.False);
             Assert.That(root.Q<Button>(VillageEffortPanel.IncreaseButtonName).enabledSelf, Is.True);
+            Assert.That(core.Resources(1000, 1000, 1000, false, now), Is.True);
+            placed = false;
+            for (var y = 0; y < 22 && !placed; y += 2)
+                for (var x = 0; x < 22 && !placed; x += 2)
+                    if (core.CanPlace(FacilityKind.Warehouse, x, y).Length == 0) placed = core.Place(FacilityKind.Warehouse, x, y, now);
+            Assert.That(placed, Is.True);
+            var warehouse = core.View.Nodes.Max(n => n.Id);
+            nav.ShowFacility(warehouse); yield return null;
+            var input = root.Q<IntegerField>(VillageWarehousePanel.InputName);
+            Assert.That(input, Is.Not.Null); input.value = 200;
+            Click(root.Q<Button>(VillageWarehousePanel.SaveButtonName)); yield return null;
+            Assert.That(core.View.Nodes.Single(n => n.Id == warehouse).WarehouseBaseCapacity, Is.EqualTo(200));
+            nav.Close(); nav.ShowFacility(warehouse); yield return null;
+            Assert.That(root.Q<IntegerField>(VillageWarehousePanel.InputName).value, Is.EqualTo(200));
             LogAssert.NoUnexpectedReceived();
 #else
             Assert.Ignore("Editor scene verification"); yield break;

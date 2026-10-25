@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  Project Penguin backend foundation. DynamoDB tables for the community goal (prod and dev) with
-  maximum on-demand throughput, least-privilege managed policies for Nova 2 Lite photo judging and
+  Project Penguin backend foundation. DynamoDB tables for the community goal and for encounter
+  reports (prod and dev) with maximum on-demand throughput, least-privilege managed policies for Nova 2 Lite photo judging and
   table access, IAM roles that the Vercel Functions assume through Vercel OIDC (production and
   preview are separate, no long-lived access keys), and alarms that email the owner on unusual usage.
   Decisions: project-penguin docs/adr/0001, 0002, 0003. Deployed only by the account owner.
@@ -11,7 +11,7 @@ Metadata:
     AWSAgentToolkit: aws-cloudformation@3
   com.aws.cloudformation.Context:
     why: >-
-      Hack Day の backend (Vercel の FastAPI) が写真判定とみんなの氷山に使う AWS 側の土台。
+      Hack Day の backend (Vercel の FastAPI) が写真判定・みんなの氷山・すれ違いの相互確認に使う AWS 側の土台。
       開発者グループ (project-penguin の infra/account.yaml) はここが出す管理ポリシーを import して付ける。
     must:
       - アカウント ID・Vercel のチーム名を文字で書かない (このリポジトリは public)。チーム名はパラメータで渡す
@@ -29,6 +29,7 @@ Metadata:
           - ProdMaxReadRequestUnits
           - ProdMaxWriteRequestUnits
           - DevMaxRequestUnits
+          - EncounterMaxRequestUnits
           - JudgeInvocationsPerHourAlarm
 
 Parameters:
@@ -61,6 +62,12 @@ Parameters:
   DevMaxRequestUnits:
     Type: Number
     Description: 開発用のテーブルの読み書きの上限 (手元の確認と preview だけなので小さく)
+    Default: 100
+    MinValue: 1
+  # すれ違いの報告は 1 回 UpdateItem 1 つ (1 書き込み単位)。読み込みは使わない
+  EncounterMaxRequestUnits:
+    Type: Number
+    Description: 本番のすれ違いのテーブルの読み書きの上限 (1 秒あたりの要求単位)
     Default: 100
     MinValue: 1
   JudgeInvocationsPerHourAlarm:
@@ -130,6 +137,62 @@ Resources:
         - { Key: managed-by, Value: cloudformation }
         - { Key: environment, Value: development }
 
+  EncounterTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: >-
+          本番のすれ違いの相互確認。enc#<day>#<小さい方のトークン>#<大きい方> に、報告したトークンの集合 seen を
+          ADD する (backend/src/penguin_backend/encounters.py)。記録は TTL で 2 日で消える使い捨てなので、
+          スタックと一緒に消してよい
+        must:
+          - 位置・端末の ID を入れない。残すのはトークンの組と seen と ttl だけ (.claude/rules/privacy.md)
+    Properties:
+      TableName: !Sub "${AWS::StackName}-encounters"
+      BillingMode: PAY_PER_REQUEST
+      # 報告の口は認証が無いので、叩き続けられたときの費用の天井にする
+      OnDemandThroughput:
+        MaxReadRequestUnits: !Ref EncounterMaxRequestUnits
+        MaxWriteRequestUnits: !Ref EncounterMaxRequestUnits
+      AttributeDefinitions:
+        - { AttributeName: pk, AttributeType: S }
+      KeySchema:
+        - { AttributeName: pk, KeyType: HASH }
+      TimeToLiveSpecification: { AttributeName: ttl, Enabled: true }
+      PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
+      SSESpecification: { SSEEnabled: true }
+      Tags:
+        - { Key: project, Value: penguin }
+        - { Key: managed-by, Value: cloudformation }
+        - { Key: environment, Value: production }
+
+  EncounterDevTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: 手元の開発と Vercel の preview のすれ違いの記録。本番と同じ形で、中身は捨ててよい
+    Properties:
+      TableName: !Sub "${AWS::StackName}-encounters-dev"
+      BillingMode: PAY_PER_REQUEST
+      OnDemandThroughput:
+        MaxReadRequestUnits: !Ref DevMaxRequestUnits
+        MaxWriteRequestUnits: !Ref DevMaxRequestUnits
+      AttributeDefinitions:
+        - { AttributeName: pk, AttributeType: S }
+      KeySchema:
+        - { AttributeName: pk, KeyType: HASH }
+      TimeToLiveSpecification: { AttributeName: ttl, Enabled: true }
+      PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
+      SSESpecification: { SSEEnabled: true }
+      Tags:
+        - { Key: project, Value: penguin }
+        - { Key: managed-by, Value: cloudformation }
+        - { Key: environment, Value: development }
+
   NovaInvokePolicy:
     Type: AWS::IAM::ManagedPolicy
     Metadata:
@@ -160,7 +223,9 @@ Resources:
     Type: AWS::IAM::ManagedPolicy
     Metadata:
       com.aws.cloudformation.Context:
-        why: 開発者グループが開発用テーブルだけを読み書きする。本番のテーブルは Vercel のロールだけが触る
+        why: >-
+          開発者グループが開発用テーブル (みんなの氷山とすれ違い) だけを読み書きする。本番のテーブルは Vercel のロールだけが触る。
+          Description を変えると置き換えになり、infra/account.yaml が import する Export の値が変わるので変えない
     Properties:
       Description: Read and write the development community table only
       PolicyDocument:
@@ -177,7 +242,9 @@ Resources:
               - dynamodb:Query
               - dynamodb:Scan
               - dynamodb:DescribeTable
-            Resource: !GetAtt CommunityDevTable.Arn
+            Resource:
+              - !GetAtt CommunityDevTable.Arn
+              - !GetAtt EncounterDevTable.Arn
           - Sid: ListTablesForConsole
             Effect: Allow
             Action: dynamodb:ListTables
@@ -220,6 +287,41 @@ Resources:
             Action: [dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:BatchGetItem, dynamodb:GetItem]
             Resource: !GetAtt CommunityDevTable.Arn
 
+  EncounterReportPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: production のロールが、本番のすれ違いのテーブルに報告を ADD する (UpdateItem の ALL_NEW で成立を読む)
+        must:
+          - 消す・Scan する権限を足さない
+          - 開発用のテーブルを足さない (preview 用は EncounterReportDevPolicy)
+    Properties:
+      Description: Record encounter reports in the production encounter table
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: ReportEncounters
+            Effect: Allow
+            Action: dynamodb:UpdateItem
+            Resource: !GetAtt EncounterTable.Arn
+
+  EncounterReportDevPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: preview のロールが、開発用のすれ違いのテーブルで本番と同じ報告をする
+        must:
+          - 本番のテーブルを足さない (preview は PR ごとに公開され、誰のコードでも動く)
+    Properties:
+      Description: Record encounter reports in the development encounter table
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: ReportEncounters
+            Effect: Allow
+            Action: dynamodb:UpdateItem
+            Resource: !GetAtt EncounterDevTable.Arn
+
   VercelOidcProvider:
     Type: AWS::IAM::OIDCProvider
     Metadata:
@@ -244,7 +346,7 @@ Resources:
           preview は VercelPreviewRole を使う (Vercel の PENGUIN_AWS_ROLE_ARN を環境ごとに分けて入れる)
         must:
           - sub は完全一致で、このプロジェクトの production だけに限る
-          - 付ける権限は Nova の呼び出しと本番のテーブルの数え上げだけ
+          - 付ける権限は Nova の呼び出しと、本番のテーブルの数え上げ・すれ違いの報告だけ
     Properties:
       Description: Assumed by the production Vercel Functions of the Project Penguin backend via OIDC
       MaxSessionDuration: 3600
@@ -271,6 +373,7 @@ Resources:
       ManagedPolicyArns:
         - !Ref NovaInvokePolicy
         - !Ref CommunityCountPolicy
+        - !Ref EncounterReportPolicy
       Tags:
         - { Key: project, Value: penguin }
         - { Key: managed-by, Value: cloudformation }
@@ -311,6 +414,7 @@ Resources:
       ManagedPolicyArns:
         - !Ref NovaInvokePolicy
         - !Ref CommunityCountDevPolicy
+        - !Ref EncounterReportDevPolicy
       Tags:
         - { Key: project, Value: penguin }
         - { Key: managed-by, Value: cloudformation }
@@ -415,6 +519,25 @@ Resources:
       TreatMissingData: notBreaching
       AlarmActions: [!Ref AlertTopic]
 
+  EncounterWriteCappedAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: 本番のすれ違いのテーブルの書き込みが上限 (EncounterMaxRequestUnits) で絞られ始めた。すれ違いが成立しなくなっている
+    Properties:
+      AlarmDescription: Writes on the production encounter table are throttled by the maximum on-demand throughput
+      Namespace: AWS/DynamoDB
+      MetricName: WriteMaxOnDemandThroughputThrottleEvents
+      Dimensions:
+        - { Name: TableName, Value: !Ref EncounterTable }
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
 Outputs:
   CommunityTableName:
     Description: 本番のみんなの氷山のテーブル (Vercel の production の PENGUIN_COMMUNITY_TABLE)
@@ -422,6 +545,12 @@ Outputs:
   CommunityDevTableName:
     Description: 開発用のテーブル (手元と Vercel の preview の PENGUIN_COMMUNITY_TABLE)
     Value: !Ref CommunityDevTable
+  EncounterTableName:
+    Description: 本番のすれ違いのテーブル (Vercel の production の PENGUIN_ENCOUNTER_TABLE)
+    Value: !Ref EncounterTable
+  EncounterDevTableName:
+    Description: 開発用のすれ違いのテーブル (手元と Vercel の preview の PENGUIN_ENCOUNTER_TABLE)
+    Value: !Ref EncounterDevTable
   VercelBackendRoleArn:
     Description: Vercel の production の PENGUIN_AWS_ROLE_ARN に入れるロール
     Value: !GetAtt VercelBackendRole.Arn

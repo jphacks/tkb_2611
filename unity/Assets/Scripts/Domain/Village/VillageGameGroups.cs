@@ -16,7 +16,7 @@ namespace ProjectPenguin.Domain.Village
             NodeCapacity(n)-n.Stock.Values.Sum()-_cargo.Count(c=>c.To==n.Id)-(n.Finish>0&&RecipeOf(n)!=null?RecipeOf(n).Output.Count:0));
         private bool GroupRunning(Node n)
         {
-            var r=RecipeOf(n);if(r==null||!_unlimited&&_gas<1)return false;
+            var r=RecipeOf(n);if(r==null||PaysResources&&_gas<1)return false;
             if(n.Finish>_at)return true;
             return (_unlimited||r.Inputs.All(i=>n.Held(i.Item)>=i.Count))&&n.Held(r.Output.Item)+r.Output.Count<=OutputCap(n)&&
                 n.Stock.Values.Sum()-(_unlimited?0:r.Inputs.Sum(i=>i.Count))+_cargo.Count(c=>c.To==n.Id)+r.Output.Count<=NodeCapacity(n);
@@ -49,7 +49,7 @@ namespace ProjectPenguin.Domain.Village
                         NodeIds=Array.AsReadOnly(nodes.Select(n=>n.Id).OrderBy(id=>id).ToArray()),MinX=candidate.X,MinY=candidate.Y,
                         Width=nodes.Max(n=>n.X+n.Size)-candidate.X,Height=nodes.Max(n=>n.Y+n.Size)-candidate.Y,
                         Active=active,BonusPerMinute=active?VillageGroupRules.ItemsPerMinute:0,
-                        Status=!_groupViewActive?"縮小すると追加生産":!running?"施設の稼働待ち":!room?"中心施設の空き待ち":"追加生産中"});
+                        Status=!_groupViewActive?"全体表示で追加生産":!running?"施設の稼働待ち":!room?"中心施設の空き待ち":"追加生産中"});
                 }
             }
             return result;

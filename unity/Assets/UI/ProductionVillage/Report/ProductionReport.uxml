@@ -18,7 +18,7 @@
                     <ui:Button name="pp-report-tab-items" class="pp-ind-seg__item" text="品目" />
                 </ui:VisualElement>
                 <ui:Button name="pp-report-close" class="pp-ind-close">
-                    <ui:Label class="pp-ind-close__text" text="✕" />
+                    <ui:VisualElement class="pp-icon pp-icon--close pp-ind-close__icon" picking-mode="Ignore" />
                 </ui:Button>
             </ui:VisualElement>
 

@@ -43,12 +43,36 @@ namespace ProjectPenguin.Tests.EditMode
         {var g=Game();var s=g.Export();s.Nodes[0].Stock[0]=20;s.Ledger.MaxSteps=9000;Assert.That(g.CreateView().Nodes[0].Total,Is.Zero);Assert.That(g.Records.MaxSteps,Is.Zero);}
         [Test] public void HealthReceiptsAreIdempotentAcrossRestoreAndDayRollover()
         {
-            var g=Game();Assert.That(g.AcceptSteps(5,1500,5).Success,Is.True);var gas=g.CreateView().Gas;
+            var g=Game();var start=g.CreateView().Gas;Assert.That(g.AcceptSteps(5,1500,5).Success,Is.True);var gas=g.CreateView().Gas;
+            Assert.That(gas,Is.EqualTo(start+1500*VillageGame.GasPerStep));
             g=VillageGame.Restore(g.Export());g.AcceptSteps(5,1000,5);g.AcceptSteps(5,1500,5);Assert.That(g.CreateView().Gas,Is.EqualTo(gas));
-            Assert.That(g.AcceptSteps(5,2000,6).Success,Is.False);g.AcceptSteps(6,500,6);Assert.That(g.CreateView().Gas,Is.EqualTo(gas+1));
+            Assert.That(g.AcceptSteps(5,2000,6).Success,Is.False);g.AcceptSteps(6,500,6);Assert.That(g.CreateView().Gas,Is.EqualTo(gas+500*VillageGame.GasPerStep));
             Assert.That(g.AcceptWater("water",6,6,true).Success,Is.True);Assert.That(g.AcceptWater("other",6,6,true).Success,Is.False);
             Assert.That(g.AcceptScreen("screen",5,120,6,true,true).Success,Is.True);Assert.That(g.AcceptScreen("water",5,120,6,true,true).Success,Is.False);
             Assert.That(g.AcceptWater("late",5,6,true).Success,Is.False);
+        }
+        [Test] public void FreeResourcesKeepGasElectricityWaterButStillNeedMaterials()
+        {
+            var g=new VillageGame(false);g.SetResources(0,0,0);
+            Assert.That(g.Place(FacilityKind.Fishery,2,2).Success,Is.False);
+            g.SetFreeResources(true);
+            Assert.That(g.Place(FacilityKind.Fishery,2,2).Success,Is.True);
+            Assert.That(g.Place(FacilityKind.Preparation,8,8).Success,Is.True);
+            g.AdvanceTo(60000);var v=g.CreateView();
+            Assert.That(v.Gas,Is.Zero);Assert.That(v.Electricity,Is.Zero);Assert.That(v.Water,Is.Zero);
+            Assert.That(v.Produced,Is.GreaterThan(0));Assert.That(v.GasPerMinute,Is.GreaterThan(0));
+            Assert.That(v.FreeResources,Is.True);Assert.That(v.ResourcesUnlimited,Is.True);Assert.That(v.Unlimited,Is.False);
+            // 届かない場所のさばき場は、資源無限でも材料が来るまで動かない (開発用の無制限とは違う)。
+            Assert.That(v.Nodes.Single(n=>n.Kind==FacilityKind.Preparation).Status,Is.EqualTo(VillageInsight.MaterialWait));
+            var restored=VillageGame.Restore(g.Export());Assert.That(restored.FreeResources,Is.True);
+            restored.SetFreeResources(false);Assert.That(restored.Place(FacilityKind.Warehouse,14,14).Success,Is.False);
+        }
+        [Test] public void StepsGrantOnlyTheNewStepsOfTheDay()
+        {
+            var g=Game();var start=g.CreateView().Gas;
+            g.AcceptSteps(5,1,5);Assert.That(g.CreateView().Gas,Is.EqualTo(start+2));
+            g.AcceptSteps(5,1001,5);Assert.That(g.CreateView().Gas,Is.EqualTo(start+2002));
+            Assert.That(g.Records.Entries.Count(e=>e.Kind=="歩数 → ガス"),Is.EqualTo(2));
         }
         [Test,Timeout(3000)] public void LongOfflineAndSplitTimeProduceSameResult()
         {

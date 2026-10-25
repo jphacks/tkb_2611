@@ -62,10 +62,31 @@ namespace ProjectPenguin.Domain.Encounter
         public EncounterSpecies Species { get; }
     }
 
+    /// <summary><see cref="EncounterLedger"/> の保存の形。トークンは端末の保存にだけ入れ、画面にもログにも出さない。</summary>
+    [Serializable]
+    public sealed class EncounterLedgerState
+    {
+        public int Day = -1;
+        public string SelfToken;
+        public int GrantedToday;
+        public List<EncounterPeerState> Peers = new List<EncounterPeerState>();
+    }
+
+    [Serializable]
+    public sealed class EncounterPeerState
+    {
+        public string Token;
+        /// <summary>次に報告してよい時刻 (ミリ秒)。保存して読み直すなら、端末の UTC のように再起動で戻らない時計を渡す。</summary>
+        public long NextReportAtMs;
+        public bool Matched;
+        public bool Dropped;
+    }
+
     /// <summary>
     /// すれ違いの台帳。アプリの 1 日 (AppCalendar.AppDay、03:00 JST 区切り。契約の day と同じ) ごとに、
     /// 自分のトークン・見た相手・確認待ち・成立した組・獲得した数を持つ。時刻は外から渡す (端末の時計を読まない)。
-    /// 試作ではメモリにだけ持つ。再起動するとその日の数も戻る (unity/docs/health-factory-prototype.md)。
+    /// 健康の工場の試作はメモリにだけ持つ (再起動するとその日の数も戻る、unity/docs/health-factory-prototype.md)。
+    /// 村のホームは <see cref="Export"/> と <see cref="Restore"/> で村の保存に入れる。
     /// </summary>
     public sealed class EncounterLedger
     {
@@ -138,6 +159,18 @@ namespace ProjectPenguin.Domain.Encounter
         /// <summary>BLE で見た相手のトークンを入れる。入れたら、すぐ報告の候補になる。</summary>
         public EncounterObservation Observe(string peerToken, long nowMs)
         {
+            var check = Check(peerToken);
+            if (check == EncounterObservation.Accepted)
+            {
+                _peers.Add(new Peer { Token = peerToken, NextReportAtMs = nowMs });
+            }
+
+            return check;
+        }
+
+        /// <summary><see cref="Observe"/> が受け付けるかを、台帳を変えずに確かめる。</summary>
+        public EncounterObservation Check(string peerToken)
+        {
             if (Day < 0)
             {
                 return EncounterObservation.NoDay;
@@ -163,8 +196,21 @@ namespace ProjectPenguin.Domain.Encounter
                 return EncounterObservation.Full;
             }
 
-            _peers.Add(new Peer { Token = peerToken, NextReportAtMs = nowMs });
             return EncounterObservation.Accepted;
+        }
+
+        /// <summary>今送る報告があるかを、台帳を変えずに確かめる (<see cref="NextReport"/> の前に軽く調べるため)。</summary>
+        public bool HasReportDue(long nowMs)
+        {
+            foreach (var p in _peers)
+            {
+                if (!p.Matched && !p.Dropped && p.NextReportAtMs <= nowMs)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -227,6 +273,50 @@ namespace ProjectPenguin.Domain.Encounter
 
             GrantedToday++;
             return new EncounterResultView(EncounterOutcome.Granted, EncounterPenguins.Draw(pairId));
+        }
+
+        /// <summary>保存の形に写す (台帳とは切り離した写し)。</summary>
+        public EncounterLedgerState Export()
+        {
+            var state = new EncounterLedgerState { Day = Day, SelfToken = SelfToken, GrantedToday = GrantedToday };
+            foreach (var p in _peers)
+            {
+                state.Peers.Add(new EncounterPeerState { Token = p.Token, NextReportAtMs = p.NextReportAtMs, Matched = p.Matched, Dropped = p.Dropped });
+            }
+
+            return state;
+        }
+
+        /// <summary>保存から戻す。null (この項目が無い古い保存) なら空の台帳。形が違えば <see cref="ArgumentException"/>。</summary>
+        public static EncounterLedger Restore(EncounterLedgerState state, Func<string> newToken = null)
+        {
+            var ledger = new EncounterLedger(newToken);
+            if (state == null || state.Day < 0)
+            {
+                return ledger;
+            }
+
+            if (!EncounterToken.IsValid(state.SelfToken) || state.GrantedToday < 0 || state.GrantedToday > PenguinsPerDay
+                || state.Peers == null || state.Peers.Count > MaxPeersPerDay)
+            {
+                throw new ArgumentException("すれ違いの台帳が不正です");
+            }
+
+            ledger.Day = state.Day;
+            ledger.SelfToken = state.SelfToken;
+            ledger.GrantedToday = state.GrantedToday;
+            foreach (var p in state.Peers)
+            {
+                if (p == null || !EncounterToken.IsValid(p.Token) || p.Token == state.SelfToken || ledger.FindPeer(p.Token) != null
+                    || p.NextReportAtMs < 0 || p.Matched && p.Dropped)
+                {
+                    throw new ArgumentException("すれ違いの相手の記録が不正です");
+                }
+
+                ledger._peers.Add(new Peer { Token = p.Token, NextReportAtMs = p.NextReportAtMs, Matched = p.Matched, Dropped = p.Dropped });
+            }
+
+            return ledger;
         }
 
         /// <summary>今日の台帳の、その報告の相手。日が替わった後に届いた前の日の結果は null。</summary>

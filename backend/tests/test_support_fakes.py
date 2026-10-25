@@ -60,6 +60,8 @@ def test_tables_follow_the_iac_template(
     assert community_tables == {
         "CommunityTable": "penguin-backend-community",
         "CommunityDevTable": "penguin-backend-community-dev",
+        "EncounterTable": "penguin-backend-encounters",
+        "EncounterDevTable": "penguin-backend-encounters-dev",
     }
     for logical_id, name in community_tables.items():
         spec = table_specs()[logical_id]

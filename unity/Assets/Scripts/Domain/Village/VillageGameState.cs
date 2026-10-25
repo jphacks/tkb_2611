@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using ProjectPenguin.Domain.Encounter;
 using ProjectPenguin.Domain.Island;
 
 namespace ProjectPenguin.Domain.Village
@@ -22,15 +23,17 @@ namespace ProjectPenguin.Domain.Village
             if((long)n.Stock.Values.Sum()+_cargo.Count(c=>c.To==id)+pending+count>capacity)return Result(false,"容量または入庫・加工の予約を超えます");
             n.Stock[item]=n.Held(item)+count;return Result(true,"品物を投入しました");
         }
+        /// <summary>1 歩でガスが入る量。審査で遊べるよう、歩いた分がすぐ工場を動かせる量にしている。</summary>
+        public const int GasPerStep=2;
         public VillageResult AcceptSteps(int day,int steps,int today)
         {
             if(day<0||day!=today||day<_ledger.LastStepDay||steps<0||steps>172800)return Result(false,"対象日または歩数が不正です");
             var previous=day==_ledger.LastStepDay?_ledger.MaxSteps:0;
-            var maximum=Math.Max(steps,previous);var amount=maximum/500-previous/500;
+            var maximum=Math.Max(steps,previous);var amount=(maximum-previous)*GasPerStep;
             if(!Finite(_gas+amount)||_gas+amount>int.MaxValue)return Result(false,"資源の上限です");
             _ledger.LastStepDay=day;_ledger.MaxSteps=maximum;_gas+=amount;
             if(amount>0)_ledger.Entries.Add(new HealthRecordEntry{Id="steps:"+day+":"+maximum,Kind="歩数 → ガス",Day=day,Amount=amount});
-            return Result(true,amount>0?$"ガス +{amount}":"受領済み、または次の500歩まで待機");
+            return Result(true,amount>0?$"ガス +{amount}":"今日の歩数は受け取り済みです");
         }
         public VillageResult AcceptWater(string id,int day,int today,bool confirmed)
         {
@@ -55,7 +58,7 @@ namespace ProjectPenguin.Domain.Village
         {
             return new VillageState{EffortSchema=1,At=_at,Requested=_requested,NextId=_nextId,NextCargo=_nextCargo,Produced=_produced,
                 GroupProgress=new VillageGroupProgressState{ElapsedMs=_groupElapsed,Tick=_groupTick,Chikuwa=GroupProgressOf(Item.Chikuwa),Kamaboko=GroupProgressOf(Item.Kamaboko),DriedFish=GroupProgressOf(Item.DriedFish)},
-                DeliveryMs=_deliveryMs,Speed=_speed,Gas=_gas,Electricity=_electricity,Water=_water,Spent=_spent,Unlimited=_unlimited,Ledger=_ledger.Copy(),
+                DeliveryMs=_deliveryMs,Speed=_speed,Gas=_gas,Electricity=_electricity,Water=_water,Spent=_spent,Unlimited=_unlimited,FreeResources=_freeResources,Ledger=_ledger.Copy(),Encounters=_encounters.Export(),
                 Nodes=_nodes.Select(n=>new VillageNodeState{Id=n.Id,Kind=n.Kind,Effort=n.Effort,WarehouseCapacity=n.WarehouseCapacity,X=n.X,Y=n.Y,Started=n.Started,Finish=n.Finish,
                     Stock=Enum.GetValues(typeof(Item)).Cast<Item>().Select(i=>n.Held(i)).ToArray()}).ToList(),
                 Cargo=_cargo.Select(c=>new VillageCargoState{Id=c.Id,From=c.From,To=c.To,Item=c.Item,FromX=c.FromX,FromY=c.FromY,ToX=c.ToX,ToY=c.ToY,Start=c.Start,End=c.End}).ToList(),
@@ -102,7 +105,8 @@ namespace ProjectPenguin.Domain.Village
                 }
             }
             if(s.Ledger.LastStepDay< -1||s.Ledger.MaxSteps<0||s.Ledger.MaxSteps>172800||s.Ledger.Entries.Any(e=>e==null||string.IsNullOrWhiteSpace(e.Id)||e.Id.Length>128||string.IsNullOrWhiteSpace(e.Kind)||e.Day<0||!Finite(e.Amount)||e.Amount<0)||s.Ledger.Entries.GroupBy(e=>e.Id).Any(a=>a.Count()>1))throw new ArgumentException("受領台帳が不正です");
-            g._nextId=s.NextId;g._nextCargo=s.NextCargo;g._ledger=s.Ledger.Copy();return g;
+            g._encounters=EncounterLedger.Restore(s.Encounters);
+            g._nextId=s.NextId;g._nextCargo=s.NextCargo;g._ledger=s.Ledger.Copy();g._freeResources=s.FreeResources;return g;
         }
     }
 }

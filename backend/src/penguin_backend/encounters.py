@@ -7,8 +7,7 @@ enc#<day>#<小さい方のトークン>#<大きい方> の seen (報告したト
 トークンごとの報告の数には上限を設けない (docs/decisions.md)。トークンは誰でも名乗れるので、
 上限は攻撃する人を止められず、他人のトークンを拾った人が持ち主を止められてしまうため。
 
-近道: 記録はみんなの氷山のテーブルに接頭辞で同居させる (docs/decisions.md)。テーブル名は
-Settings.encounter_table_name から受け取るので、専用のテーブルに移すときにコードは変えない。
+記録はすれ違い専用のテーブル (infra/backend.yaml の EncounterTable) に置く。
 トークンは端末やユーザーと結び付かない乱数だが、ログには出さない (.claude/rules/privacy.md)。
 """
 

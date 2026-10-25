@@ -31,6 +31,22 @@ namespace ProjectPenguin.Tests.EditMode
             Assert.That(store.Json,Is.EqualTo(original));Assert.That(debug.Writes,Is.GreaterThan(1));
             var restart=new ProductionVillageSessionCore(store,debug,()=>throw new Exception("initial settings must not overwrite save"),true);restart.Open(10000);Assert.That(restart.View.Gas,Is.EqualTo(100));
         }
+        [Test] public void FreeResourcesWorkInReleaseAndKeepProductSaveUntouched()
+        {
+            var store=new ProductionVillageMemoryStore();var debug=new ProductionVillageMemoryStore(true);
+            var core=new ProductionVillageSessionCore(store,debug,ProductionVillageStateTests.Game,false);core.Open(10000);
+            Assert.That(core.SetFreeResources(true,10000),Is.True);Assert.That(core.FreeResources,Is.True);
+            var electricity=core.View.Electricity;var water=core.View.Water;var gas=core.View.Gas;
+            Assert.That(core.Place(ProjectPenguin.Domain.Island.FacilityKind.Fishery,20,20,10000),Is.True);
+            core.Tick(60000);
+            Assert.That(core.View.Electricity,Is.EqualTo(electricity));Assert.That(core.View.Water,Is.EqualTo(water));Assert.That(core.View.Gas,Is.EqualTo(gas));
+            // 資源無限でも、リリース相当では開発用の操作は開かない。
+            Assert.That(core.Resources(9,9,9,false,10000),Is.False);Assert.That(core.Forward(1,10000),Is.False);
+            core.Save(10000);
+            var product=store.Load();Assert.That(product.State.FreeResources,Is.False);Assert.That(product.State.Nodes.Count,Is.EqualTo(3));
+            Assert.That(core.SetFreeResources(false,10000),Is.True);Assert.That(core.FreeResources,Is.False);Assert.That(core.View.Nodes.Count,Is.EqualTo(3));
+            Assert.That(core.SetFreeResources(true,10000),Is.True);Assert.That(core.View.Nodes.Count,Is.EqualTo(4));
+        }
         [Test] public void ReleaseEquivalentRefusesEveryDevelopmentEntry()
         {
             var core=new ProductionVillageSessionCore(new MemoryStore(),new MemoryStore(),ProductionVillageStateTests.Game,false);core.Open(10000);

@@ -28,7 +28,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
 
         private static readonly Color ReachFill=new Color(.18f,.78f,.92f,.07f),ReachEdge=new Color(.18f,.78f,.92f,.55f),
             InLink=new Color(.35f,.86f,1f,.9f),OutLink=new Color(1f,.78f,.22f,.95f),Gold=new Color(1f,.8f,.18f,1f);
-        private const float Dash=.16f,Gap=.1f,DashWidth=.07f,EdgeWidth=.035f;
+        private const float Dash=.22f,Gap=.12f,DashWidth=.12f,EdgeWidth=.05f;
 
         private readonly RectTransform _canvas;
         private readonly Transform _root;

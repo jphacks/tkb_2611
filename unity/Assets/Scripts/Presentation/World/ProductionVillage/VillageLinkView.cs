@@ -64,7 +64,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
                 if(overview&&selected!=0&&!related)continue;
 
                 // 2. 道の矢印。送れない道 (受け取り側が満杯・送り元がガス切れ) は止まった赤い矢印にする
-                var blocked=b.Status==VillageInsight.Full||a.Status==VillageInsight.GasWait&&!view.Unlimited;
+                var blocked=b.Status==VillageInsight.Full||a.Status==VillageInsight.GasWait&&!view.ResourcesUnlimited;
                 var dir=pb-pa;var length=dir.magnitude;if(length<.05f)continue;dir/=length;
                 var spacing=ArrowSpacing*scale;
                 var shift=blocked||!running?0:Mathf.Repeat(time*ArrowSpeed,spacing);

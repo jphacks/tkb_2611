@@ -6,9 +6,11 @@
 |---|---|
 | `penguin-backend-community` (DynamoDB) | 本番のみんなの氷山。提出の記録を条件付き Put で 1 回だけ通し、通ったときだけ 10 分割のカウンタに ADD する |
 | `penguin-backend-community-dev` (DynamoDB) | 手元の開発と Vercel の preview 用 |
+| `penguin-backend-encounters` (DynamoDB) | 本番のすれ違いの相互確認。トークンの組と報告したトークンの集合だけを置き、TTL で 2 日で消える。使い捨てなので、スタックを消すと一緒に消える |
+| `penguin-backend-encounters-dev` (DynamoDB) | すれ違いの、手元の開発と Vercel の preview 用 |
 | Nova 2 Lite の呼び出しの管理ポリシー | Bedrock は `jp.amazon.nova-2-lite-v1:0` だけ (写真を国内で処理する) |
 | Vercel 用のロール (production・preview) と OIDC プロバイダー | Vercel Functions が `x-vercel-oidc-token` でロールを借りる。長く使えるアクセスキーは作らない。preview のロールは開発用のテーブルにしか触れない |
-| アラーム (SNS でメール) | Nova の呼び出しが 1 時間の目安を超えた・絞られた、本番のテーブルが上限で絞られた、のどれかでオーナーに届く |
+| アラーム (SNS でメール) | Nova の呼び出しが 1 時間の目安を超えた・絞られた、本番のテーブル (みんなの氷山・すれ違い) が上限で絞られた、のどれかでオーナーに届く |
 
 選んだ理由と検証の結果は、project-penguin の `docs/adr/0001`・`0002`・`0003` にある。
 
@@ -70,8 +72,11 @@ project-penguin の `infra/account.yaml` (開発者グループ) は、このス
    |---|---|---|
    | `PENGUIN_AWS_ROLE_ARN` | `VercelBackendRoleArn` | `VercelPreviewRoleArn` |
    | `PENGUIN_COMMUNITY_TABLE` | `CommunityTableName` | `CommunityDevTableName` |
+   | `PENGUIN_ENCOUNTER_TABLE` | `EncounterTableName` | `EncounterDevTableName` |
 
    あわせて、Vercel のプロジェクトの設定で OIDC (Secure Backend Access with OIDC Federation、発行者は Team) を有効にする。
+
+   `PENGUIN_ENCOUNTER_TABLE` は、backend を上げ直す前に入れる。backend の既定は開発用のテーブルで、production のロールはそこに書けないため、入れ忘れるとすれ違いの報告が 500 になる。分ける前にみんなの氷山のテーブルへ書いた記録 (`enc#`) は TTL の 2 日で消えるので、移さない。切り替えた日に片方だけ報告していた組は、もう片方が報告し直しても成立しない。
 
 ## 片付け
 

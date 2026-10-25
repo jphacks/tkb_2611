@@ -97,6 +97,13 @@
     -unity-text-align: middle-center;
 }
 
+/* 閉じる印は文字の ✕ ではなく、デザインシステムのアイコン (close.svg) を使う */
+.pp-ind-close__icon {
+    width: 48px;
+    height: 48px;
+    -unity-background-image-tint-color: var(--ind-navy);
+}
+
 .pp-ind-hatch {
     height: 10px;
     margin: 0 var(--space-6);
