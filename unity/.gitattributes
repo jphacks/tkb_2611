@@ -67,9 +67,10 @@
 
 # ---------------------------------------------------------------
 # バイナリ
-#   3D モデル・テクスチャ・音声などは Git LFS を使わずに、そのまま入れる (docs/decisions.md)。
-#   jphacks の org の LFS には実体が無く、clone した人がビルドできなくなるため。
+#   3D モデル・テクスチャ・音声などは、基本は Git LFS を使わずに、そのまま入れる (docs/decisions.md)。
+#   取り込みのときの素材は jphacks の org の LFS に実体が無く、clone した人がビルドできなかったため。
 #   改行の変換と差分・マージの対象から外す (binary)。
+#   例外は下の「Git LFS で入れたもの」。ここに足すのは、実体を jphacks の LFS に上げたものだけ。
 # ---------------------------------------------------------------
 # 3D モデル
 *.fbx   binary
@@ -127,3 +128,12 @@ Assets/TextMesh[[:space:]]Pro/** linguist-vendored
 # 外部のエージェント用スキル (skills-lock.json で管理)
 .agents/skills/** linguist-vendored
 .claude/skills/** linguist-vendored
+
+# ---------------------------------------------------------------
+# Git LFS で入れたもの (実体は jphacks の org の LFS にある)
+#   上のバイナリの指定より後に書き、この行の指定を優先させる。
+#   clone する人は git-lfs が要る (README の「iOS 版をビルドして遊ぶ」)。
+#   既に実体で入っているファイルをここに足すと、全員の手元で「変更あり」になるので足さない。
+# ---------------------------------------------------------------
+Assets/UI/Fonts/Oxanium-Bold.ttf      filter=lfs diff=lfs merge=lfs -text
+Assets/UI/Fonts/Oxanium-ExtraBold.ttf filter=lfs diff=lfs merge=lfs -text
