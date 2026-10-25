@@ -1,8 +1,12 @@
 """水の写真を AI に読ませる。読み取りの中身は提供元を知らない WaterReading で受け渡す。
 
-AI に答えさせるのは容器・ラベルに書いてある容量・水位・確信度・画面の撮影らしさだけ。
+AI に答えさせるのは、見えているものの一文・ボトルの実物が見えるか・容器・
+ラベルの容量の表示の書き写し・残りの段階・確信度・画面の撮影らしさだけ。
 容量はラベルの表示からだけ読ませ、形や大きさから推し量らせない。
-ml と decision はサーバーが決める (decide.py)。
+何も写っていない画像にも「500ml のペットボトル」と答える作り話を防ぐため、
+先に見えているものを書かせ、容量はサーバーが書き写しの文字から読み直す (decide.py)。
+ml と decision はサーバーが決める。
+見えているものの一文と書き写しは AI の生の出力なので、記録にも応答にも出さない。
 写真と AI の生の出力は、ログ・例外の文に入れない (.claude/rules/privacy.md)。記録するのは数だけ。
 """
 
@@ -13,7 +17,7 @@ import time
 from typing import TYPE_CHECKING, Any, Literal, Protocol, get_args
 
 from botocore.exceptions import BotoCoreError, ClientError
-from pydantic import BaseModel, ValidationError, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from penguin_backend.errors import ApiError
 
@@ -23,19 +27,34 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# AI に選ばせる容器。容量は container に入れず label_capacity_ml で答えさせる
+# AI に選ばせる容器。容量は container に入れず label_text と label_capacity_ml で答えさせる
 ReadContainer = Literal["pet_bottle", "unknown"]
 _CONTAINERS: tuple[str, ...] = get_args(ReadContainer)
+
+# 残りの量の段階。0〜1 の数字で答えさせると、空のボトルを満杯と答えるなど
+# ぶれが大きかった (合成の画像で確かめた)。
+# 割合への直し方は table.REMAINING_RATIO
+ReadRemaining = Literal["empty", "little", "quarter", "half", "three_quarters", "full", "unknown"]
+_REMAINING: tuple[str, ...] = get_args(ReadRemaining)
 TOOL_NAME = "estimate"
 
 _PROMPT = (
-    "写真に写っている飲み物の容器を見て、estimate を呼んでください。"
-    "container は、ペットボトルなら pet_bottle、それ以外・見分けられないときは unknown。"
-    "label_capacity_ml は、ラベルやキャップに印刷された内容量の表示を読んだ値 (ml)。"
-    "「500ml」なら 500、「2L」なら 2000、「1.5L」なら 1500。"
-    "表示が写っていない・読めないときは 0。ボトルの形や大きさから推し量ってはいけません。"
-    "fill_ratio は容器の容量に対する、中に残っている液体の割合 (0〜1)。"
-    "is_screen_photo は、画面や印刷物に映ったものを撮った写真なら true。"
+    "写真を見て estimate を呼んでください。"
+    "推測で埋めず、写真に実際に見えていることだけを答えてください。"
+    "seen は、写真に写っているものを短い一文で。"
+    "bottle_visible は、実物のペットボトル (ボトルの本体とキャップ) が写っていれば true。"
+    "無地の画像・文字だけの画像・ペットボトル以外の物なら false。"
+    "container は、bottle_visible が true のときだけ pet_bottle、それ以外は unknown。"
+    "label_text は、ラベルやキャップに印刷された内容量の表示を、"
+    "写真のとおりに書き写したもの (例: 500ml、2L)。"
+    "表示が見えない・読めないときは空の文字列。見えていない数字を書いてはいけません。"
+    "label_capacity_ml は label_text を ml にした値 (2L なら 2000)。label_text が空なら 0。"
+    "ボトルの形や大きさから容量を推し量ってはいけません。"
+    "remaining は、ボトルの中に残っている液体の量。empty は空 (底に数滴まで)、little は 1 割ほど、"
+    "quarter は 4 分の 1、half は半分、three_quarters は 4 分の 3、full は満杯。"
+    "見分けられなければ unknown。"
+    "confidence は、答え全体の確かさ (0〜1)。"
+    "is_screen_photo は、画面・印刷物・絵に映ったものを撮った写真なら true。"
 )
 
 _TOOL_CONFIG: dict[str, Any] = {
@@ -48,16 +67,23 @@ _TOOL_CONFIG: dict[str, Any] = {
                     "json": {
                         "type": "object",
                         "required": [
+                            "seen",
+                            "bottle_visible",
                             "container",
+                            "label_text",
                             "label_capacity_ml",
-                            "fill_ratio",
+                            "remaining",
                             "confidence",
                             "is_screen_photo",
                         ],
+                        # 見えているもの → ボトルか → ラベル → 残り、の順に答えさせる
                         "properties": {
+                            "seen": {"type": "string", "maxLength": 200},
+                            "bottle_visible": {"type": "boolean"},
                             "container": {"type": "string", "enum": list(_CONTAINERS)},
+                            "label_text": {"type": "string", "maxLength": 40},
                             "label_capacity_ml": {"type": "integer", "minimum": 0},
-                            "fill_ratio": {"type": "number", "minimum": 0, "maximum": 1},
+                            "remaining": {"type": "string", "enum": list(_REMAINING)},
                             "confidence": {"type": "number", "minimum": 0, "maximum": 1},
                             "is_screen_photo": {"type": "boolean"},
                         },
@@ -75,14 +101,19 @@ def _clamp(value: float) -> float:
 
 
 class WaterReading(BaseModel):
-    """AI の答えを検証したもの。知らない容器は unknown、割合と確信度は 0〜1 に収める。
+    """AI の答えを検証したもの。知らない容器・残りは unknown、確信度は 0〜1 に収める。
 
-    label_capacity_ml はラベルから読んだそのままの値。使える範囲かどうかは decide.py が決める。
+    label_text と label_capacity_ml はラベルから読んだそのままの値。
+    使えるかどうかは decide.py が決める。
+    seen と label_text は AI の生の出力なので、記録にも応答にも出さない (repr にも出さない)。
     """
 
+    seen: str = Field(default="", repr=False)
+    bottle_visible: bool
     container: ReadContainer
+    label_text: str = Field(default="", repr=False)
     label_capacity_ml: int
-    fill_ratio: float
+    remaining: ReadRemaining
     confidence: float
     is_screen_photo: bool
 
@@ -91,7 +122,17 @@ class WaterReading(BaseModel):
     def _unknown_outside_the_choices(cls, value: object) -> object:
         return value if value in _CONTAINERS else "unknown"
 
-    @field_validator("fill_ratio", "confidence", mode="after")
+    @field_validator("remaining", mode="before")
+    @classmethod
+    def _unknown_outside_the_levels(cls, value: object) -> object:
+        return value if value in _REMAINING else "unknown"
+
+    @field_validator("seen", "label_text", mode="before")
+    @classmethod
+    def _text_or_empty(cls, value: object) -> object:
+        return value[:200] if isinstance(value, str) else ""
+
+    @field_validator("confidence", mode="after")
     @classmethod
     def _within_unit(cls, value: float) -> float:
         return _clamp(value)
@@ -124,7 +165,7 @@ class NovaWaterModel:
                     }
                 ],
                 toolConfig=_TOOL_CONFIG,  # type: ignore[arg-type]
-                inferenceConfig={"maxTokens": 200, "temperature": 0},
+                inferenceConfig={"maxTokens": 400, "temperature": 0},
             )
         except ClientError as error:
             code = error.response.get("Error", {}).get("Code", "")

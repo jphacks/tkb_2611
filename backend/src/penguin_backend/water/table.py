@@ -9,6 +9,17 @@ from typing import Final
 CAPACITY_MIN_ML: Final = 100
 CAPACITY_MAX_ML: Final = 2000
 
+# AI が答えた残りの段階を、容量に対する割合に直す。段階の名前は model.ReadRemaining。
+# little (1 割ほど) はアプリの「空とみなす」上限 (残り 15%) の内側に入るように 0.1 にする。
+REMAINING_RATIO: Final[dict[str, float]] = {
+    "empty": 0.0,
+    "little": 0.1,
+    "quarter": 0.25,
+    "half": 0.5,
+    "three_quarters": 0.75,
+    "full": 1.0,
+}
+
 # これより確信度が低い読み取りは retake にする。
 # 近道: 根拠となる評価 (写真セットでの確信度ごとの正解率) がまだ無い仮の値。
 # 評価をしたら、その表を出典としてここに書き、値を決め直す。
@@ -28,6 +39,7 @@ def detail_capacity(capacity_ml: int) -> str:
 
 RETAKE_HINT: Final = "ペットボトル全体が入るように撮ってね"
 RETAKE_HINT_CAPACITY: Final = "ラベルの容量 (500ml・2L など) が写るように撮ってね"
+RETAKE_HINT_REMAINING: Final = "ボトルの中の水の高さが見えるように撮ってね"
 COMMENT_ACCEPT: Final = "水分補給、いいね"
 COMMENT_RETAKE: Final = "うーん、よく見えなかったよ"
 COMMENT_RETAKE_CAPACITY: Final = "何ml のボトルか読めなかったよ"
