@@ -1,0 +1,87 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="Onboarding.uss" />
+    <ui:VisualElement name="root" class="onboarding">
+        <ui:VisualElement class="onboarding__safe pp-safe-area">
+            <!-- 上半分は透かして、後ろの 3D の島 (小屋の氷山とペンギン) を見せる -->
+            <ui:VisualElement class="onboarding__hero" picking-mode="Ignore">
+                <ui:Label text="ペンギンの島" class="pp-title-chip onboarding__logo" />
+            </ui:VisualElement>
+            <ui:VisualElement class="onboarding__card">
+            <ui:VisualElement class="onboarding__dots">
+                <ui:VisualElement name="dot0" class="onboarding__dot onboarding__dot--active" />
+                <ui:VisualElement name="dot1" class="onboarding__dot" />
+                <ui:VisualElement name="dot2" class="onboarding__dot" />
+                <ui:VisualElement name="dot3" class="onboarding__dot" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="page0" class="onboarding__page">
+                <ui:VisualElement class="pp-avatar onboarding__avatar">
+                    <ui:VisualElement class="pp-avatar__image pp-icon pp-icon--penguin pp-icon--original" />
+                </ui:VisualElement>
+                <ui:Label text="ペンギンの島へようこそ！" class="pp-text-headline pp-text-heavy pp-text-center onboarding__title" />
+                <ui:Label text="この島にはペンギンたちが住んでいるみたい。でも、足もとの氷が少しずつ溶けていっちゃってる…" class="pp-text-sub pp-text-center onboarding__text" />
+                <ui:Label text="島の名前" class="pp-section-title" />
+                <ui:TextField name="islandName" max-length="12" class="pp-text-field" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="page1" class="onboarding__page pp-hidden">
+                <ui:Label text="氷を守ろう" class="pp-text-headline pp-text-heavy pp-text-center onboarding__title" />
+                <ui:VisualElement class="pp-card pp-elevated onboarding__rule">
+                    <ui:VisualElement class="pp-icon-badge pp-icon-badge--eco">
+                        <ui:VisualElement class="pp-icon pp-icon--snowflake pp-icon--eco" />
+                    </ui:VisualElement>
+                    <ui:Label text="エコだと思ったら何でもいい。1 日 1 枚写真を撮ると、氷が増える" class="pp-text-bold onboarding__rule-text" />
+                </ui:VisualElement>
+                <ui:VisualElement class="pp-card pp-elevated onboarding__rule">
+                    <ui:VisualElement class="pp-icon-badge">
+                        <ui:VisualElement class="pp-icon pp-icon--warning pp-icon--point" />
+                    </ui:VisualElement>
+                    <ui:Label text="休むと氷が少し溶けて、島の端が沈む（記録すれば浮かぶ）" class="pp-text-bold onboarding__rule-text" />
+                </ui:VisualElement>
+                <ui:VisualElement class="pp-card pp-elevated onboarding__rule">
+                    <ui:VisualElement class="pp-icon-badge">
+                        <ui:VisualElement class="pp-icon pp-icon--penguin pp-icon--original" />
+                    </ui:VisualElement>
+                    <ui:Label text="ペンギンはいなくならない。いつでも戻っておいで" class="pp-text-bold onboarding__rule-text" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="page2" class="onboarding__page pp-hidden">
+                <ui:Label text="写真でインフラが手に入る" class="pp-text-headline pp-text-heavy pp-text-center onboarding__title" />
+                <ui:VisualElement class="pp-card pp-elevated onboarding__rule">
+                    <ui:VisualElement class="pp-icon-badge">
+                        <ui:VisualElement class="pp-icon pp-icon--camera pp-icon--primary" />
+                    </ui:VisualElement>
+                    <ui:Label text="電気・ガス・水道にまつわるエコ → そのインフラが手に入る" class="pp-text-bold onboarding__rule-text" />
+                </ui:VisualElement>
+                <ui:VisualElement class="pp-card pp-elevated onboarding__rule">
+                    <ui:VisualElement class="pp-icon-badge">
+                        <ui:VisualElement class="pp-icon pp-icon--snowflake pp-icon--res-water" />
+                    </ui:VisualElement>
+                    <ui:Label text="インフラで氷室を建てると、氷が溶けにくくなる" class="pp-text-bold onboarding__rule-text" />
+                </ui:VisualElement>
+                <ui:VisualElement class="pp-card pp-elevated onboarding__rule">
+                    <ui:VisualElement class="pp-icon-badge">
+                        <ui:VisualElement class="pp-icon pp-icon--penguin pp-icon--original" />
+                    </ui:VisualElement>
+                    <ui:Label text="氷が大きいと、ペンギンのやる気が上がって施設がよく働く" class="pp-text-bold onboarding__rule-text" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="page3" class="onboarding__page pp-hidden">
+                <ui:VisualElement class="pp-avatar onboarding__avatar">
+                    <ui:VisualElement class="pp-avatar__image pp-icon pp-icon--penguin pp-icon--original" />
+                </ui:VisualElement>
+                <ui:Label text="さっそく始めよう！" class="pp-text-headline pp-text-heavy pp-text-center onboarding__title" />
+                <ui:Label text="まずは今日のエコ写真を撮ろう。手に入ったインフラで氷室を建てると、氷が溶けにくくなるよ。" class="pp-text-sub pp-text-center onboarding__text" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="onboarding__footer">
+                <ui:Button name="onboardingNext" text="次へ" class="pp-btn pp-btn--accent pp-btn--block" />
+                <ui:Button name="onboardingLater" text="あとで撮る" class="pp-btn pp-btn--ghost pp-btn--block onboarding__later pp-hidden" />
+            </ui:VisualElement>
+            <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

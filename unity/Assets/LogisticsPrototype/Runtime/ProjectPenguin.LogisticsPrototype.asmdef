@@ -1,0 +1,6 @@
+{
+  "name": "ProjectPenguin.LogisticsPrototype",
+  "rootNamespace": "ProjectPenguin.LogisticsPrototype",
+  "references": ["ProjectPenguin.Domain", "Unity.ugui", "Unity.InputSystem"],
+  "autoReferenced": false
+}

@@ -1,0 +1,23 @@
+{
+  "startingGas": 0,
+  "startingElectric": 0,
+  "startingWater": 0,
+  "buildBase": 2,
+  "buildIncrement": 1,
+  "expandWater": 3,
+  "maxBlocks": 64,
+  "maxEffort": 3,
+  "comboRadius": 1,
+  "comboPercent": 25,
+  "effortPercent": 100,
+  "effortGas": 1,
+  "largeWarehouseMultiplier": 2,
+  "zoomUnlockStage": 2,
+  "stagePoints": [0, 1000, 10000, 100000],
+  "stepsPerGas": 500,
+  "screenMinutesPerElectric": 120,
+  "waterPerRecord": 3,
+  "tickMs": 1000,
+  "maxAdvanceMs": 120000,
+  "offlineProduction": false
+}

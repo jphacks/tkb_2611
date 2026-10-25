@@ -18,11 +18,12 @@ Vercel (1 つのプロジェクト、東京 hnd1)
 
 - **Web ビルドと API が同じ配信元**なので、本番では CORS が要らない。手元で別のポートから呼ぶときだけ `PENGUIN_CORS_ORIGINS` で許可する。
 - Unity は起動時に `penguin-config.json` を 1 回読み、`api_base_url` (`/api`)・`judge` (`http` / `mock`)・`community`・`quests`・`demo_mode` で動きを決める。**当日変えてよいのはこのファイルだけ**で、Unity のビルドは作り直さない。
+- iOS 版 (`unity/`) は、同じ `/api/*` を `penguin-config.json` の `api_base_url` (絶対 URL) で呼ぶ。Web ビルドは 2026-10-25 から凍結している。
 - 関数は状態を持てない。みんなの氷山のように数を共有するものは外部の保存先に置く (保存するのは件数と節目だけ、`.claude/rules/privacy.md`)。
 
 ## 契約
 
-やり取りはすべて `api/openapi.yaml` にある。Unity 側の受け口 (`PenguinApiClient`・`HttpEcoPhotoJudge` など) は project-penguin の `Assets/Scripts/Backend/` にあり、契約の例 (`api/examples/`) を全部通すテストで守られている。
+やり取りはすべて `api/openapi.yaml` にある。Unity 側の受け口 (`PenguinApiClient`・`HttpEcoPhotoJudge` など) は `unity/Assets/Scripts/Backend/` (元は project-penguin) にあり、契約の例 (`api/examples/`) を全部通すテストで守られている。
 
 | | パス | Unity 側 | 当日 backend が作るもの |
 |---|---|---|---|
@@ -31,7 +32,7 @@ Vercel (1 つのプロジェクト、東京 hnd1)
 | みんなの氷山 | `GET /v1/community/goal` | `HttpCommunityGoalSource` | 集計・節目の判定・ずる対策 |
 | お題 | `GET /v1/quests`、`POST /v1/quests/{id}/redeem` | `HttpQuestSource` | お題の配信、QR・合言葉の照合 |
 | 水の写真 (1.2.0) | `POST /v1/water/estimate` | iOS ネイティブ (project-penguin) | Nova 2 Lite で容器と水位を読み、量と decision をサーバーで決める (`water/`) |
-| すれ違い (1.2.0) | `POST /v1/encounters` | iOS ネイティブ (project-penguin) | 両方の報告がそろったときだけ成立にする相互確認 (`encounters.py`、DynamoDB) |
+| すれ違い (1.2.0) | `POST /v1/encounters` | iOS 版 (`unity/`) | 両方の報告がそろったときだけ成立にする相互確認 (`encounters.py`、DynamoDB) |
 
 クライアントが解釈せずに並べるもの (`checks` の行、`message`、`comment`) は、当日に中身を増やしても画面がそのまま追従する。**画面に「backend が確かめたこと」を見せる口**なので、審査で差分を見せるときに使う。
 

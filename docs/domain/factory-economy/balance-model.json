@@ -1,0 +1,41 @@
+{
+  "status": "proposal",
+  "window_seconds": 600,
+  "energy_order": ["gas", "electric", "water"],
+  "energy_tiers": {"gas": 0, "electric": 0, "water": 0},
+  "logistics": {"warehouse": {"label": "倉庫", "facility_tier": 0, "produces_items": false}},
+  "resources": {
+    "fish": {"label": "魚", "tier": 1, "points": 1},
+    "kelp": {"label": "海藻", "tier": 1, "points": 2},
+    "salt": {"label": "塩", "tier": 1, "points": 2},
+    "surimi": {"label": "すり身", "tier": 2, "points": 4},
+    "dried": {"label": "干物", "tier": 2, "points": 6},
+    "kamaboko": {"label": "かまぼこ", "tier": 3, "points": 12},
+    "chikuwa": {"label": "ちくわ", "tier": 3, "points": 8},
+    "gift": {"label": "海鮮ギフト", "tier": 3, "points": 28},
+    "research": {"label": "研究成果", "tier": 3, "points": 32},
+    "oden": {"label": "おでん", "tier": 4, "points": 44}
+  },
+  "recipes": [
+    {"id": "fishery", "label": "漁場", "facility_tier": 1, "seconds": 20, "inputs": {}, "output": "fish", "yield": 4, "energy": [1, 0, 0]},
+    {"id": "kelp_farm", "label": "海藻場", "facility_tier": 1, "seconds": 20, "inputs": {}, "output": "kelp", "yield": 2, "energy": [0, 0, 1]},
+    {"id": "saltworks", "label": "製塩所", "facility_tier": 1, "seconds": 20, "inputs": {}, "output": "salt", "yield": 4, "energy": [1, 0, 1]},
+    {"id": "preparation", "label": "さばき場", "facility_tier": 2, "seconds": 20, "inputs": {"fish": 2}, "output": "surimi", "yield": 2, "energy": [0, 1, 0]},
+    {"id": "drying", "label": "干物場", "facility_tier": 2, "seconds": 30, "inputs": {"fish": 2, "salt": 1}, "output": "dried", "yield": 2, "energy": [1, 0, 0]},
+    {"id": "kamaboko", "label": "かまぼこ工場", "facility_tier": 3, "seconds": 40, "inputs": {"surimi": 2}, "output": "kamaboko", "yield": 2, "energy": [0, 1, 1]},
+    {"id": "chikuwa", "label": "ちくわ工場", "facility_tier": 3, "seconds": 40, "inputs": {"surimi": 2}, "output": "chikuwa", "yield": 2, "energy": [1, 0, 0]},
+    {"id": "gift", "label": "海鮮ギフト工房", "facility_tier": 3, "seconds": 40, "inputs": {"dried": 2, "kelp": 1}, "output": "gift", "yield": 1, "energy": [0, 1, 0]},
+    {"id": "research", "label": "海洋研究所", "facility_tier": 3, "seconds": 60, "inputs": {"surimi": 2, "kelp": 1}, "output": "research", "yield": 1, "energy": [0, 2, 0]},
+    {"id": "oden", "label": "おでん工房", "facility_tier": 4, "seconds": 60, "inputs": {"kamaboko": 1, "chikuwa": 1, "kelp": 1}, "output": "oden", "yield": 1, "energy": [1, 0, 1]}
+  ],
+  "profiles": {
+    "balanced": [20, 20, 20],
+    "gas_scarce": [5, 20, 20],
+    "electric_scarce": [20, 5, 20],
+    "water_scarce": [20, 20, 5],
+    "no_gas": [0, 20, 20],
+    "no_electric": [20, 0, 20],
+    "no_water": [20, 20, 0],
+    "empty": [0, 0, 0]
+  }
+}

@@ -1,0 +1,192 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <!-- 見た目は PanelSettings の PenguinTheme (Tokens / Components / Game / Thumbnails) に任せ、ここはレイアウトだけを読む -->
+    <ui:Style src="ProductionApp.uss" />
+    <ui:VisualElement name="villageApp" class="village-app" picking-mode="Ignore">
+        <ui:VisualElement class="village-safe pp-safe-area" picking-mode="Ignore">
+            <!-- 左上: ポケスリ風の主役カード (島ランクバッジ + お魚 + 進捗バー)。右上: 工業モード切替ピル -->
+            <ui:VisualElement name="villageHeader" class="village-header" picking-mode="Ignore">
+                <ui:VisualElement name="villageHero" class="pp-hero">
+                    <ui:VisualElement name="villageRankBadge" class="village-rank-badge" picking-mode="Ignore">
+                        <ui:VisualElement class="pp-icon pp-icon--sm pp-icon--crown" picking-mode="Ignore" />
+                        <ui:Label text="RANK" class="village-rank-label" picking-mode="Ignore" />
+                        <ui:Label name="villageRankText" text="1" class="village-rank-value" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="pp-hero__badge" picking-mode="Ignore">
+                        <ui:VisualElement class="pp-icon pp-icon--fish pp-icon--res-fish" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="pp-hero__body" picking-mode="Ignore">
+                        <ui:Label name="villageFish" text="0" class="pp-hero__value" picking-mode="Ignore" />
+                        <ui:VisualElement class="pp-hero__meta" picking-mode="Ignore">
+                            <ui:Label text="お魚" class="pp-hero__label" picking-mode="Ignore" />
+                            <ui:Label name="villageFishRate" text="+0/分" class="pp-hero__rate pp-hidden" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:ProgressBar name="villageRankProgress" low-value="0" high-value="1" value="0.5" class="pp-progress pp-progress--eco village-rank-progress" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="village-header__spacer" picking-mode="Ignore" />
+                <ui:Label name="villageProfile" text="開発用" class="pp-badge pp-badge--accent pp-hidden" picking-mode="Ignore" />
+                <ui:Button name="villageIndustrialSwitch" class="pp-btn pp-btn--raised village-industrial-switch">
+                    <ui:VisualElement class="pp-btn__icon pp-icon pp-icon--electricity" picking-mode="Ignore" />
+                    <ui:Label name="villageIndustrialSwitchLabel" text="工業モード" picking-mode="Ignore" />
+                </ui:Button>
+            </ui:VisualElement>
+
+            <!-- 脇役の資源。0 になったものは赤くする -->
+            <ui:VisualElement name="villageResources" class="pp-resource-bar village-resources" picking-mode="Ignore">
+                <ui:VisualElement name="villageGasBox" class="pp-resource" picking-mode="Ignore">
+                    <ui:VisualElement class="pp-resource__icon pp-icon pp-icon--gas pp-icon--res-gas" picking-mode="Ignore" />
+                    <ui:Label name="villageGas" text="0" class="pp-resource__value" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="villageElectricityBox" class="pp-resource" picking-mode="Ignore">
+                    <ui:VisualElement class="pp-resource__icon pp-icon pp-icon--electricity pp-icon--res-electricity" picking-mode="Ignore" />
+                    <ui:Label name="villageElectricity" text="0" class="pp-resource__value" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="villageWaterBox" class="pp-resource pp-resource--last" picking-mode="Ignore">
+                    <ui:VisualElement class="pp-resource__icon pp-icon pp-icon--water pp-icon--res-water" picking-mode="Ignore" />
+                    <ui:Label name="villageWater" text="0" class="pp-resource__value" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- エンドフィールド風: 集成工業モード上部タクティカルバー (見下ろし視点 90° 切替 & 90° 回転) -->
+            <ui:VisualElement name="villageTacticalBar" class="village-tactical-bar pp-hidden">
+                <ui:VisualElement class="village-tactical-row">
+                    <ui:Label text="⚡ 集成工業" class="village-tactical-title" picking-mode="Ignore" />
+                    <ui:Label name="villageTacticalGas" text="ガス 0/分" class="village-tactical-gas" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement class="village-tactical-row">
+                    <ui:Button name="villageTopDownToggle" class="village-tactical-btn">
+                        <ui:Label name="villageTopDownLabel" text="見下ろし OFF" picking-mode="Ignore" />
+                    </ui:Button>
+                    <ui:Button name="villageRotateCamera" text="90°回転" class="village-tactical-btn" />
+                    <ui:Button name="villageZoomIn" text="拡大" class="village-tactical-btn" />
+                    <ui:Button name="villageZoomOut" text="縮小" class="village-tactical-btn" />
+                    <ui:Button name="villageFrameCamera" text="全体" class="village-tactical-btn" />
+                </ui:VisualElement>
+                <ui:Label name="villageGroupState" text="施設群・2本指で拡大・縮小" class="village-group-state" picking-mode="Ignore" />
+            </ui:VisualElement>
+
+            <!-- 読み込みや保存に失敗している間だけ出す。解消するまで消さない -->
+            <ui:VisualElement name="villageError" class="pp-banner village-error pp-hidden">
+                <ui:VisualElement class="pp-icon pp-icon--warning pp-icon--danger" picking-mode="Ignore" />
+                <ui:Label name="villageErrorText" class="pp-banner__text" picking-mode="Ignore" />
+                <ui:Button name="villageRetry" text="もう一度" class="pp-pill pp-pill--primary" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- 上の帯と下のタブの間。島が見える場所で、タッチは世界へ通す -->
+        <ui:VisualElement class="village-stage" picking-mode="Ignore">
+            <!-- 3D 施設の頭上に浮かぶ空間ステータスバッジ・回収バブル層 -->
+            <ui:VisualElement name="villageSpatialLayer" class="village-spatial-layer" picking-mode="Ignore" />
+
+            <!-- 左下: ボトルネック・並び連携ライブ診断ピル (タップで協約核心レポートを開く) -->
+            <ui:Button name="villageInsightBanner" class="village-insight-banner">
+                <ui:VisualElement class="pp-icon pp-icon--production pp-icon--primary" picking-mode="Ignore" />
+                <ui:Label name="villageInsightText" text="稼働状況を診断中..." class="pp-text-caption pp-text-bold" picking-mode="Ignore" />
+            </ui:Button>
+
+            <!-- 右下: 丸い道具と、1 つだけの大きな「建てる」 -->
+            <ui:VisualElement name="villageTools" class="village-tools" picking-mode="Ignore">
+                <ui:Button name="villageMove" class="pp-tool pp-tool--raised">
+                    <ui:VisualElement class="pp-tool__circle" picking-mode="Ignore">
+                        <ui:VisualElement class="pp-icon pp-icon--move pp-icon--primary" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label text="動かす" class="pp-tool__label" picking-mode="Ignore" />
+                </ui:Button>
+                <ui:Button name="villageProduction" class="pp-tool pp-tool--raised">
+                    <ui:VisualElement class="pp-tool__circle" picking-mode="Ignore">
+                        <ui:VisualElement class="pp-icon pp-icon--production pp-icon--eco" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label text="コア効率" class="pp-tool__label" picking-mode="Ignore" />
+                </ui:Button>
+                <ui:Button name="villageHarbor" class="pp-tool pp-tool--raised">
+                    <ui:VisualElement class="pp-tool__circle" picking-mode="Ignore">
+                        <ui:VisualElement class="pp-icon pp-icon--boat pp-icon--point" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label text="出荷港" class="pp-tool__label" picking-mode="Ignore" />
+                </ui:Button>
+                <ui:Button name="villagePlacement" class="pp-btn pp-btn--raised village-build">
+                    <ui:VisualElement class="pp-btn__icon pp-icon pp-icon--build" picking-mode="Ignore" />
+                    <ui:Label text="建てる" picking-mode="Ignore" />
+                </ui:Button>
+            </ui:VisualElement>
+
+            <!-- エンドフィールド風: 盤面を隠さない下部クイック建設ドック -->
+            <ui:VisualElement name="villageQuickDock" class="village-quick-dock pp-hidden">
+                <ui:VisualElement class="village-dock-header">
+                    <ui:VisualElement name="villageDockTabs" class="village-dock-tabs" />
+                    <ui:Button name="villageDockCatalogBtn" text="一覧・図面" class="village-tactical-btn" />
+                </ui:VisualElement>
+                <ui:ScrollView name="villageDockScroll" mode="Horizontal" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="village-dock-scroll" />
+            </ui:VisualElement>
+
+            <!-- 置き場所を選ぶ間: 理由 (置けないときは赤) と、✕・建物の絵・✓ -->
+            <ui:VisualElement name="villagePlacementTray" class="village-tray pp-hidden" picking-mode="Ignore">
+                <ui:Label name="villagePlacementReason" class="village-hint" picking-mode="Ignore" />
+                <ui:VisualElement class="pp-place-bar" picking-mode="Ignore">
+                    <ui:Button name="villageCancel" class="pp-round-button pp-round-button--small pp-round-button--cancel">
+                        <ui:VisualElement class="pp-round-button__icon pp-icon pp-icon--close" picking-mode="Ignore" />
+                    </ui:Button>
+                    <ui:VisualElement name="villagePlacementThumb" class="pp-place-bar__thumb pp-thumb" picking-mode="Ignore" />
+                    <ui:Button name="villageConfirm" class="pp-round-button pp-round-button--small pp-round-button--primary">
+                        <ui:VisualElement class="pp-round-button__icon pp-icon pp-icon--check" picking-mode="Ignore" />
+                    </ui:Button>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="villageToastLayer" class="pp-toast-layer village-toasts" picking-mode="Ignore" />
+        </ui:VisualElement>
+
+        <!-- 下のタブ。スキャンは中央の大きな丸 -->
+        <ui:VisualElement name="villageNavigation" class="pp-tab-bar village-navigation">
+            <ui:VisualElement class="pp-tab-bar__tabs">
+                <ui:Button name="villageHomeTab" class="pp-tab pp-tab--active">
+                    <ui:VisualElement class="pp-tab__icon pp-icon--home" picking-mode="Ignore" />
+                    <ui:Label text="ホーム" class="pp-tab__label" picking-mode="Ignore" />
+                </ui:Button>
+                <ui:Button name="villageRecordTab" class="pp-tab">
+                    <ui:VisualElement class="pp-tab__icon pp-icon--book" picking-mode="Ignore" />
+                    <ui:Label text="記録" class="pp-tab__label" picking-mode="Ignore" />
+                </ui:Button>
+                <ui:Button name="villageScanTab" class="pp-tab">
+                    <ui:VisualElement class="pp-tab__fab" picking-mode="Ignore">
+                        <ui:VisualElement class="pp-tab__icon pp-icon--camera" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label text="スキャン" class="pp-tab__label" picking-mode="Ignore" />
+                </ui:Button>
+                <ui:Button name="villageManageTab" class="pp-tab">
+                    <ui:VisualElement class="pp-tab__icon pp-icon--penguin" picking-mode="Ignore" />
+                    <ui:Label text="工業・図面" class="pp-tab__label" picking-mode="Ignore" />
+                </ui:Button>
+                <ui:Button name="villageMenuTab" class="pp-tab">
+                    <ui:VisualElement class="pp-tab__icon pp-icon--menu" picking-mode="Ignore" />
+                    <ui:Label text="メニュー" class="pp-tab__label" picking-mode="Ignore" />
+                </ui:Button>
+            </ui:VisualElement>
+            <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+        </ui:VisualElement>
+
+        <!-- 下から出るシート。暗幕を押しても閉じる -->
+        <ui:VisualElement name="villageSheet" class="pp-sheet pp-sheet--closed pp-hidden">
+            <ui:VisualElement name="villageSheetScrim" class="pp-sheet__scrim" />
+            <ui:VisualElement class="pp-sheet__panel village-sheet__panel">
+                <ui:VisualElement class="pp-sheet__handle" picking-mode="Ignore" />
+                <ui:VisualElement class="pp-sheet__header">
+                    <ui:Label name="villageSheetTitle" class="pp-sheet__title" picking-mode="Ignore" />
+                    <ui:Button name="villageClose" class="pp-icon-button village-sheet__close">
+                        <ui:VisualElement class="pp-icon pp-icon--close pp-icon--sub" picking-mode="Ignore" />
+                    </ui:Button>
+                </ui:VisualElement>
+                <ui:ScrollView name="villageSheetContent" class="pp-sheet__body village-sheet__body" />
+                <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- タクティカル全画面生産レポート (集成工業モード) -->
+        <ui:Template name="ProductionReport" src="Report/ProductionReport.uxml" />
+        <ui:Instance template="ProductionReport" name="villageProductionReport" class="village-production-report" picking-mode="Ignore" />
+
+        <!-- 水分補給のペットボトルを撮る全画面のカメラ。開くまで隠してある -->
+        <ui:Template name="VillageWaterCamera" src="VillageWaterCamera.uxml" />
+        <ui:Instance template="VillageWaterCamera" name="villageWaterCamera" class="village-water-camera pp-hidden" />
+    </ui:VisualElement>
+</ui:UXML>

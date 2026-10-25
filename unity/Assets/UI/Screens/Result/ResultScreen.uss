@@ -1,0 +1,72 @@
+/* 解析結果画面のレイアウトだけを書く。見た目は DesignSystem のコンポーネントに任せる */
+
+.result__safe {
+    flex-grow: 1;
+}
+
+.result__scroll {
+    flex-grow: 1;
+}
+
+.result__content {
+    padding: 0 var(--space-4) var(--space-4) var(--space-4);
+}
+
+.result__summary {
+    flex-direction: row;
+    align-items: center;
+}
+
+.result__summary-body {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: var(--space-3);
+}
+
+.result__category {
+    margin-top: var(--space-1);
+}
+
+.result__items {
+    padding-top: var(--space-1);
+    padding-bottom: var(--space-1);
+}
+
+.result__total {
+    margin-top: var(--space-4);
+    align-items: center;
+}
+
+.result__total-value {
+    flex-direction: row;
+    align-items: flex-end;
+    margin-top: var(--space-1);
+}
+
+.result__total-unit {
+    margin: 0 0 var(--space-2) var(--space-1);
+}
+
+.result__compare {
+    flex-direction: row;
+    align-items: center;
+    margin-top: var(--space-3);
+}
+
+.result__compare-body {
+    flex-grow: 1;
+    margin-left: var(--space-3);
+}
+
+.result__footer {
+    flex-shrink: 0;
+    padding: var(--space-3) var(--space-4) var(--space-4) var(--space-4);
+}
+
+.result__speech {
+    margin: var(--space-3) var(--space-6) 0 0;
+}
+
+.result__tip {
+    white-space: normal;
+}

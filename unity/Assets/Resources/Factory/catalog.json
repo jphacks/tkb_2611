@@ -1,0 +1,448 @@
+{
+  "version": 2,
+  "status": "proposal",
+  "growth": [
+    1,
+    3,
+    10,
+    30,
+    100
+  ],
+  "storage": 3000,
+  "relay": 30,
+  "warehouseRelay": 300,
+  "dailyBirds": 10,
+  "pityAfter": 20,
+  "resources": [
+    {
+      "id": "fish",
+      "label": "魚",
+      "tier": 1,
+      "points": 1
+    },
+    {
+      "id": "kelp",
+      "label": "海藻",
+      "tier": 1,
+      "points": 2
+    },
+    {
+      "id": "salt",
+      "label": "塩",
+      "tier": 1,
+      "points": 2
+    },
+    {
+      "id": "surimi",
+      "label": "すり身",
+      "tier": 2,
+      "points": 4
+    },
+    {
+      "id": "dried",
+      "label": "干物",
+      "tier": 2,
+      "points": 6
+    },
+    {
+      "id": "kamaboko",
+      "label": "かまぼこ",
+      "tier": 3,
+      "points": 12
+    },
+    {
+      "id": "chikuwa",
+      "label": "ちくわ",
+      "tier": 3,
+      "points": 8
+    },
+    {
+      "id": "gift",
+      "label": "海鮮ギフト",
+      "tier": 3,
+      "points": 28
+    },
+    {
+      "id": "research",
+      "label": "研究成果",
+      "tier": 3,
+      "points": 32
+    },
+    {
+      "id": "oden",
+      "label": "おでん",
+      "tier": 4,
+      "points": 300
+    }
+  ],
+  "recipes": [
+    {
+      "id": "fishery",
+      "label": "漁場",
+      "tier": 1,
+      "durationMs": 10000,
+      "inputs": [],
+      "output": "fish",
+      "yieldAmount": 100,
+      "energy": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "kelp_farm",
+      "label": "海藻場",
+      "tier": 1,
+      "durationMs": 10000,
+      "inputs": [],
+      "output": "kelp",
+      "yieldAmount": 100,
+      "energy": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "saltworks",
+      "label": "製塩所",
+      "tier": 1,
+      "durationMs": 10000,
+      "inputs": [],
+      "output": "salt",
+      "yieldAmount": 100,
+      "energy": [
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "preparation",
+      "label": "さばき場",
+      "tier": 2,
+      "durationMs": 20000,
+      "inputs": [
+        {
+          "id": "fish",
+          "amount": 100
+        }
+      ],
+      "output": "surimi",
+      "yieldAmount": 100,
+      "energy": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "drying",
+      "label": "干物場",
+      "tier": 2,
+      "durationMs": 20000,
+      "inputs": [
+        {
+          "id": "fish",
+          "amount": 100
+        },
+        {
+          "id": "salt",
+          "amount": 100
+        }
+      ],
+      "output": "dried",
+      "yieldAmount": 100,
+      "energy": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "kamaboko",
+      "label": "かまぼこ工場",
+      "tier": 3,
+      "durationMs": 30000,
+      "inputs": [
+        {
+          "id": "surimi",
+          "amount": 1000
+        }
+      ],
+      "output": "kamaboko",
+      "yieldAmount": 100,
+      "energy": [
+        0,
+        2,
+        1
+      ]
+    },
+    {
+      "id": "chikuwa",
+      "label": "ちくわ工場",
+      "tier": 3,
+      "durationMs": 30000,
+      "inputs": [
+        {
+          "id": "surimi",
+          "amount": 1000
+        }
+      ],
+      "output": "chikuwa",
+      "yieldAmount": 100,
+      "energy": [
+        2,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "gift",
+      "label": "海鮮ギフト工房",
+      "tier": 3,
+      "durationMs": 30000,
+      "inputs": [
+        {
+          "id": "dried",
+          "amount": 1000
+        },
+        {
+          "id": "kelp",
+          "amount": 1000
+        }
+      ],
+      "output": "gift",
+      "yieldAmount": 100,
+      "energy": [
+        0,
+        2,
+        0
+      ]
+    },
+    {
+      "id": "research",
+      "label": "海洋研究所",
+      "tier": 3,
+      "durationMs": 30000,
+      "inputs": [
+        {
+          "id": "surimi",
+          "amount": 1000
+        },
+        {
+          "id": "kelp",
+          "amount": 1000
+        }
+      ],
+      "output": "research",
+      "yieldAmount": 100,
+      "energy": [
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "id": "oden",
+      "label": "おでん工房",
+      "tier": 4,
+      "durationMs": 60000,
+      "inputs": [
+        {
+          "id": "kamaboko",
+          "amount": 10000
+        },
+        {
+          "id": "chikuwa",
+          "amount": 10000
+        },
+        {
+          "id": "kelp",
+          "amount": 10000
+        }
+      ],
+      "output": "oden",
+      "yieldAmount": 100,
+      "energy": [
+        5,
+        0,
+        5
+      ]
+    }
+  ],
+  "penguins": [
+    {
+      "id": "adelie",
+      "label": "アデリー",
+      "target": "fish",
+      "multiplicative": false,
+      "percent": 20,
+      "stage": 1,
+      "weight": 1400
+    },
+    {
+      "id": "chinstrap",
+      "label": "ヒゲ",
+      "target": "kelp",
+      "multiplicative": false,
+      "percent": 20,
+      "stage": 1,
+      "weight": 1000
+    },
+    {
+      "id": "galapagos",
+      "label": "ガラパゴス",
+      "target": "salt",
+      "multiplicative": false,
+      "percent": 20,
+      "stage": 1,
+      "weight": 800
+    },
+    {
+      "id": "western_rockhopper",
+      "label": "ミナミイワトビ",
+      "target": "gas",
+      "multiplicative": false,
+      "percent": 10,
+      "stage": 1,
+      "weight": 1000
+    },
+    {
+      "id": "king",
+      "label": "オウサマ",
+      "target": "electric",
+      "multiplicative": false,
+      "percent": 10,
+      "stage": 1,
+      "weight": 800
+    },
+    {
+      "id": "magellanic",
+      "label": "マゼラン",
+      "target": "water",
+      "multiplicative": false,
+      "percent": 10,
+      "stage": 1,
+      "weight": 1000
+    },
+    {
+      "id": "little",
+      "label": "コビト",
+      "target": "surimi",
+      "multiplicative": false,
+      "percent": 30,
+      "stage": 2,
+      "weight": 800
+    },
+    {
+      "id": "humboldt",
+      "label": "フンボルト",
+      "target": "dried",
+      "multiplicative": false,
+      "percent": 30,
+      "stage": 2,
+      "weight": 600
+    },
+    {
+      "id": "gentoo",
+      "label": "ジェンツー",
+      "target": "fish",
+      "multiplicative": true,
+      "percent": 10,
+      "stage": 2,
+      "weight": 400
+    },
+    {
+      "id": "african",
+      "label": "ケープ",
+      "target": "water",
+      "multiplicative": true,
+      "percent": 5,
+      "stage": 2,
+      "weight": 300
+    },
+    {
+      "id": "northern_rockhopper",
+      "label": "キタイワトビ",
+      "target": "electric",
+      "multiplicative": true,
+      "percent": 5,
+      "stage": 2,
+      "weight": 300
+    },
+    {
+      "id": "emperor",
+      "label": "コウテイ",
+      "target": "gas",
+      "multiplicative": true,
+      "percent": 5,
+      "stage": 2,
+      "weight": 200
+    },
+    {
+      "id": "macaroni",
+      "label": "マカロニ",
+      "target": "kamaboko",
+      "multiplicative": false,
+      "percent": 50,
+      "stage": 3,
+      "weight": 400
+    },
+    {
+      "id": "royal",
+      "label": "ロイヤル",
+      "target": "chikuwa",
+      "multiplicative": false,
+      "percent": 50,
+      "stage": 3,
+      "weight": 300
+    },
+    {
+      "id": "yellow_eyed",
+      "label": "キンメ",
+      "target": "gift",
+      "multiplicative": false,
+      "percent": 50,
+      "stage": 3,
+      "weight": 300
+    },
+    {
+      "id": "fiordland",
+      "label": "キマユ",
+      "target": "research",
+      "multiplicative": false,
+      "percent": 50,
+      "stage": 3,
+      "weight": 200
+    },
+    {
+      "id": "snares",
+      "label": "ハシブト",
+      "target": "gift",
+      "multiplicative": true,
+      "percent": 15,
+      "stage": 3,
+      "weight": 100
+    },
+    {
+      "id": "eastern_rockhopper",
+      "label": "ヒガシイワトビ（仮称）",
+      "target": "oden",
+      "multiplicative": false,
+      "percent": 100,
+      "stage": 4,
+      "weight": 80
+    },
+    {
+      "id": "erect_crested",
+      "label": "マユダチ",
+      "target": "oden",
+      "multiplicative": true,
+      "percent": 20,
+      "stage": 4,
+      "weight": 20
+    }
+  ]
+}

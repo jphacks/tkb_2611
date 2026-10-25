@@ -1,0 +1,81 @@
+# ---------------------------------------------------------------
+# Project Penguin - エディタ / IDE 共通のコード規約
+#   Rider・Visual Studio・VS Code・dotnet format が共通で読む。
+#   CLAUDE.md にスタイル詳細を書かず、ここで機械的に強制する。
+# ---------------------------------------------------------------
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{json,yml,yaml,md}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.py]
+indent_size = 4
+max_line_length = 100
+
+[Makefile]
+indent_style = tab
+
+# Unity が生成する YAML は手で触らない。整形もしない。
+# 拡張子の一覧は .claude/hooks/guard_write.py の UNITY_YAML と .gitattributes にそろえる。
+[*.{unity,prefab,asset,meta,mat,anim,controller,overrideController,mask,playable,signal,terrainlayer,physicMaterial,physicsMaterial2D,lighting,spriteatlas,spriteatlasv2,mixer,renderTexture,preset,giparams,shadervariants,guiskin,fontsettings,flare,brush}]
+trim_trailing_whitespace = false
+insert_final_newline = false
+
+# ---------------------------------------------------------------
+# C#
+# ---------------------------------------------------------------
+[*.cs]
+indent_size = 4
+
+# using
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+csharp_using_directive_placement = outside_namespace:warning
+
+# 命名規約
+dotnet_naming_rule.private_fields_underscore.severity = warning
+dotnet_naming_rule.private_fields_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_underscore.style = underscore_camel_case
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_style.underscore_camel_case.required_prefix = _
+dotnet_naming_style.underscore_camel_case.capitalization = camel_case
+
+dotnet_naming_rule.public_members_pascal.severity = warning
+dotnet_naming_rule.public_members_pascal.symbols = public_members
+dotnet_naming_rule.public_members_pascal.style = pascal_case
+dotnet_naming_symbols.public_members.applicable_kinds = property,method,field,event
+dotnet_naming_symbols.public_members.applicable_accessibilities = public
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+dotnet_naming_rule.interfaces_prefixed_i.severity = warning
+dotnet_naming_rule.interfaces_prefixed_i.symbols = interfaces
+dotnet_naming_rule.interfaces_prefixed_i.style = i_prefix
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+dotnet_naming_style.i_prefix.required_prefix = I
+dotnet_naming_style.i_prefix.capitalization = pascal_case
+
+# 波括弧は必ず付ける (1 行の if でも省略しない)
+csharp_prefer_braces = true:warning
+
+# var は型が右辺から自明なときだけ
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# 未使用の値・パラメータを警告として拾う
+dotnet_diagnostic.IDE0059.severity = warning
+dotnet_diagnostic.IDE0060.severity = suggestion
+
+# public メンバーは readonly / private set を優先
+dotnet_style_readonly_field = true:warning

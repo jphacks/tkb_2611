@@ -1,0 +1,19 @@
+{
+  "schema_version": 2,
+  "event_id": "classroom-example",
+  "content_version": "classroom-v1",
+  "personal_version": 2,
+  "phase": "explanation",
+  "answered_count": 1,
+  "personal_points": 0,
+  "question": null,
+  "pending_answer": {
+    "answer_id": "0123456789abcdef0123456789abcdef",
+    "attempt_id": "0123456789abcdef0123456789abcdef",
+    "attempt_seq": 1,
+    "correct": true,
+    "explanation": "使わない照明を消すと電気の使用を減らせます。",
+    "source_url": "https://www.enecho.meti.go.jp/category/saving_and_new/saving/",
+    "points_pending": 2
+  }
+}

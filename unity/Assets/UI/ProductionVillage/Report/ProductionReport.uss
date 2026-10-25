@@ -1,0 +1,55 @@
+/*
+ * Project Penguin - Production Report Screen USS
+ * すべてのセレクタは .pp-report-root または .pp-industrial 配下に限定。
+ * 生色は一切禁止 (var(--ind-*) / var(--color-*) トークンのみ使用)。
+ */
+
+.pp-report-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 200;
+}
+
+.pp-report-empty {
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-heavy);
+    color: var(--ind-sub);
+    -unity-text-align: middle-center;
+    padding: var(--space-8) var(--space-6);
+    margin-top: var(--space-6);
+}
+
+.pp-report-icon {
+    width: 60px;
+    height: 60px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.pp-report-bar-track {
+    width: 100%;
+    height: 6px;
+    background-color: var(--color-surface-glass);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.pp-report-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+}
+
+.pp-report-bar-fill--prod {
+    background-color: var(--ind-yellow);
+}
+
+.pp-report-bar-fill--cons {
+    background-color: var(--ind-cyan);
+}
+
+.pp-report-bar-fill--bad {
+    background-color: var(--ind-bad);
+}

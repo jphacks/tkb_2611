@@ -1,0 +1,16 @@
+.raid__header { margin: var(--space-2) var(--space-3); color: var(--raid-scene-text); flex-shrink: 0; }
+.raid__scroll { flex-grow: 1; flex-shrink: 1; min-height: 0; background-color: var(--raid-snow-surface); border-top-left-radius: var(--raid-sheet-radius); border-top-right-radius: var(--raid-sheet-radius); }
+.raid { flex-grow: 1; min-height: 0; background-color: var(--raid-storm-sky); }
+.raid__content { padding: var(--space-3) var(--space-4); }
+.raid__scene-title { color: var(--raid-scene-text); white-space: normal; margin: 0 var(--space-4) var(--space-2); flex-shrink: 0; }
+.raid__shared { padding: var(--space-2) var(--space-4); color: var(--raid-scene-text); flex-shrink: 0; }
+.raid__rescue-view { width: 100%; height: var(--raid-view-height); flex-shrink: 0; }
+.raid__section { margin-top: var(--space-4); margin-bottom: var(--space-3); }
+.raid__wrap { white-space: normal; flex-shrink: 1; margin-bottom: var(--space-3); }
+.raid__action { margin-top: var(--space-3); }
+.raid__option { margin-top: var(--space-3); white-space: normal; height: auto; min-height: var(--control-height-lg); padding: var(--space-3); }
+.raid__milestones { flex-direction: row; justify-content: space-around; margin: var(--space-3) 0; }
+.raid__milestone { padding: var(--space-2); }
+.raid--venue .raid__content { padding: var(--space-6); }
+.raid--venue .raid__rescue-view { height: var(--raid-venue-view-height); }
+.raid--reading .raid__milestones { display: none; }

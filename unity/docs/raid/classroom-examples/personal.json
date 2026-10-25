@@ -1,0 +1,30 @@
+{
+  "schema_version": 2,
+  "event_id": "classroom-example",
+  "content_version": "classroom-v1",
+  "personal_version": 1,
+  "phase": "answering",
+  "answered_count": 0,
+  "personal_points": 0,
+  "question": {
+    "attempt_id": "0123456789abcdef0123456789abcdef",
+    "attempt_seq": 1,
+    "question_id": "lights",
+    "prompt": "使わない部屋の照明は？",
+    "options": [
+      {
+        "id": "off",
+        "text": "消す"
+      },
+      {
+        "id": "on",
+        "text": "つける"
+      },
+      {
+        "id": "wait",
+        "text": "そのまま"
+      }
+    ]
+  },
+  "pending_answer": null
+}

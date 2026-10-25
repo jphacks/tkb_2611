@@ -1,0 +1,94 @@
+/* はじめての起動の案内。全画面に重ね、上は 3D の島を透かし、下の白い札に案内を出す (島へのタッチは受け付けない) */
+
+.onboarding {
+    flex-grow: 1;
+    background-color: rgba(14, 26, 38, 0.12);
+}
+
+.onboarding__hero {
+    flex-grow: 1;
+    align-items: center;
+    padding-top: var(--space-4);
+}
+
+.onboarding__logo {
+    font-size: var(--font-size-headline);
+    height: 128px;
+}
+
+.onboarding__card {
+    flex-shrink: 0;
+    min-height: 1180px;
+    padding-top: var(--space-2);
+    border-top-left-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-lg);
+    background-color: var(--color-surface-solid);
+    border-top-width: 10px;
+    border-top-color: var(--color-ice-200);
+}
+
+/* .pp-safe-area は SafeAreaApplier が padding を上書きするので、横の余白は子の margin で取る */
+.onboarding__safe {
+    flex-grow: 1;
+}
+
+.onboarding__dots {
+    flex-direction: row;
+    justify-content: center;
+    margin: var(--space-3) 0 var(--space-4) 0;
+}
+
+.onboarding__dot {
+    width: 24px;
+    height: 24px;
+    margin: 0 var(--space-1);
+    border-radius: var(--radius-full);
+    background-color: var(--color-ice-200);
+}
+
+.onboarding__dot--active {
+    background-color: var(--color-primary);
+}
+
+.onboarding__page {
+    flex-grow: 1;
+    justify-content: center;
+    margin: 0 var(--space-5);
+}
+
+.onboarding__avatar {
+    align-self: center;
+    margin-bottom: var(--space-3);
+}
+
+.onboarding__title {
+    margin-bottom: var(--space-3);
+    white-space: normal;
+}
+
+.onboarding__text {
+    margin-bottom: var(--space-4);
+    white-space: normal;
+}
+
+.onboarding__rule {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--space-2);
+}
+
+.onboarding__rule-text {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: var(--space-3);
+    white-space: normal;
+}
+
+.onboarding__footer {
+    margin: 0 var(--space-5);
+    padding: var(--space-3) 0 var(--space-4) 0;
+}
+
+.onboarding__later {
+    margin-top: var(--space-2);
+}

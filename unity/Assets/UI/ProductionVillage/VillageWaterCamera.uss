@@ -1,0 +1,64 @@
+/* 村の「水を撮る」カメラのレイアウトだけを書く。見た目は DesignSystem のコンポーネントに任せる */
+
+.water-camera {
+    flex-grow: 1;
+    background-color: var(--color-camera-bg);
+}
+
+/* カメラ映像の表示領域。回転した映像がはみ出しても画面外に描かない */
+.water-camera__viewport {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    overflow: hidden;
+}
+
+/* 回転がないときの既定の配置。回転時の位置と大きさは ReceiptCameraPreview が上書きする */
+.water-camera__preview {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.water-camera__overlay {
+    flex-grow: 1;
+}
+
+.water-camera__top-bar {
+    flex-direction: row;
+    padding: var(--space-3) var(--space-4) 0 var(--space-4);
+}
+
+.water-camera__guide {
+    margin-top: var(--space-4);
+}
+
+.water-camera__frame {
+    flex-grow: 1;
+    margin: var(--space-6) var(--space-7);
+}
+
+.water-camera__status {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    background-color: var(--color-scrim);
+    white-space: normal;
+}
+
+/* 見積もりの結果。撮影枠の下に出し、次に撮るか閉じると消える */
+.water-camera__result {
+    margin: 0 var(--space-6) var(--space-3) var(--space-6);
+}
+
+.water-camera__comment {
+    white-space: normal;
+}
+
+.water-camera__controls {
+    align-items: center;
+    padding-bottom: var(--space-7);
+}

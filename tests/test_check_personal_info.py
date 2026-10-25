@@ -71,7 +71,9 @@ def test_ordinary_text_passes(text: str) -> None:
     assert kinds(text) == []
 
 
-def test_denylist_reads_env_and_ignores_comments(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_denylist_reads_env_and_ignores_comments(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     monkeypatch.setenv(checker.ENV_DENYLIST, "架空太郎, Fictional\n# コメント\n")
     monkeypatch.setattr(checker, "HOME_DENYLIST", tmp_path / "none")
 
@@ -113,12 +115,20 @@ def run_guard(payload: dict[str, object], env: dict[str, str]) -> str:
 
 @pytest.fixture
 def guard_env(tmp_path: Path) -> dict[str, str]:
-    # 手元の拒否リストに左右されないよう、HOME を空の場所にして、架空の名前だけを渡す。
-    return {"PATH": "/usr/bin:/bin", "HOME": str(tmp_path), checker.ENV_DENYLIST: "架空太郎"}
+    # 手元の拒否リストに左右されないよう、各OSのホームを空の場所にする。
+    return {
+        "PATH": "/usr/bin:/bin",
+        "HOME": str(tmp_path),
+        "USERPROFILE": str(tmp_path),
+        checker.ENV_DENYLIST: "架空太郎",
+    }
 
 
 def test_guard_stops_writing_a_name(guard_env: dict[str, str]) -> None:
-    payload = {"tool_name": "Write", "tool_input": {"file_path": "docs/a.md", "content": "架空太郎が作った"}}
+    payload = {
+        "tool_name": "Write",
+        "tool_input": {"file_path": "docs/a.md", "content": "架空太郎が作った"},
+    }
 
     assert "deny" in run_guard(payload, guard_env)
 
@@ -132,15 +142,27 @@ def test_guard_stops_a_commit_message_with_an_email(guard_env: dict[str, str]) -
 def test_guard_reads_the_pr_body_file(guard_env: dict[str, str], tmp_path: Path) -> None:
     body = tmp_path / "body.md"
     body.write_text("レビュー: 架空太郎", encoding="utf-8")
-    payload = {"tool_name": "Bash", "tool_input": {"command": f"gh pr create --title x --body-file {body}"}}
+    payload = {
+        "tool_name": "Bash",
+        "tool_input": {"command": f"gh pr create --title x --body-file '{body.as_posix()}'"},
+    }
 
     assert "deny" in run_guard(payload, guard_env)
 
 
 def test_guard_lets_ordinary_work_through(guard_env: dict[str, str]) -> None:
     for payload in (
-        {"tool_name": "Write", "tool_input": {"file_path": "docs/a.md", "content": "公開役が上げる"}},
-        {"tool_name": "Bash", "tool_input": {"command": "grep -rn 架空太郎 docs"}},  # 公開しないコマンドは見ない
-        {"tool_name": "Write", "tool_input": {"file_path": ".personal-denylist", "content": "架空太郎"}},
+        {
+            "tool_name": "Write",
+            "tool_input": {"file_path": "docs/a.md", "content": "公開役が上げる"},
+        },
+        {
+            "tool_name": "Bash",
+            "tool_input": {"command": "grep -rn 架空太郎 docs"},
+        },  # 公開しないコマンドは見ない
+        {
+            "tool_name": "Write",
+            "tool_input": {"file_path": ".personal-denylist", "content": "架空太郎"},
+        },
     ):
         assert run_guard(payload, guard_env) == ""

@@ -1,0 +1,51 @@
+/* 記録画面のレイアウトだけを書く。見た目は DesignSystem のコンポーネントに任せる */
+
+.record__safe {
+    flex-grow: 1;
+}
+
+.record__scroll {
+    flex-grow: 1;
+}
+
+.record__content {
+    padding: 0 var(--space-4) var(--space-4) var(--space-4);
+}
+
+.record__chart-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-3);
+}
+
+.record__stats {
+    flex-direction: row;
+    margin-top: var(--space-3);
+}
+
+.record__stat {
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-direction: row;
+    align-items: center;
+    margin-right: var(--space-3);
+}
+
+.record__stat--end {
+    margin-right: 0;
+}
+
+.record__stat-body {
+    margin-left: var(--space-2);
+}
+
+.record__history {
+    padding-top: var(--space-1);
+    padding-bottom: var(--space-1);
+}
+
+.record__note {
+    margin-top: var(--space-2);
+    white-space: normal;
+}

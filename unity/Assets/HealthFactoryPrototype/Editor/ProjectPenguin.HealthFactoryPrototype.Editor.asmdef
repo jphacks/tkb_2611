@@ -1,0 +1,6 @@
+{
+  "name": "ProjectPenguin.HealthFactoryPrototype.Editor",
+  "references": ["ProjectPenguin.HealthFactoryPrototype", "Unity.ugui", "Unity.InputSystem"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": false
+}

@@ -1,0 +1,63 @@
+/* 施設の画面のレイアウトだけを書く。見た目は DesignSystem/Game.uss に任せる */
+
+.facility__scroll {
+    flex-grow: 1;
+}
+
+.facility__stage {
+    align-items: center;
+    padding: var(--space-3) 0 var(--space-4) 0;
+}
+
+.facility__card {
+    width: 520px;
+    height: 520px;
+}
+
+.facility__status {
+    margin-top: var(--space-4);
+    align-items: center;
+}
+
+.facility__panel {
+    margin-bottom: var(--space-3);
+}
+
+.facility__row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.facility__grow {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.facility__recipe {
+    flex-grow: 1;
+    margin-top: 0;
+}
+
+.facility__progress {
+    margin-top: var(--space-3);
+}
+
+.facility__modes {
+    flex-direction: row;
+    margin-top: var(--space-2);
+}
+
+.facility__effect {
+    margin-left: var(--space-2);
+    font-size: var(--font-size-title);
+}
+
+.facility__note {
+    margin-top: var(--space-1);
+}
+
+.facility__tools {
+    flex-direction: row;
+    justify-content: flex-end;
+    margin: 0 var(--space-4);
+}

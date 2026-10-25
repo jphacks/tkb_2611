@@ -1,0 +1,93 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="FacilityScreen.uss" />
+    <!-- 島の施設を押したときの画面。絵・状態・作るもの・働くペンギン・強化を、文字を減らして出す (FacilityScreenPresenter) -->
+    <ui:VisualElement name="root" class="pp-game-page">
+        <ui:VisualElement class="pp-game-page__safe pp-safe-area">
+            <ui:VisualElement class="pp-game-header">
+                <ui:Label name="facilityTitle" text="漁場" class="pp-title-chip" />
+                <ui:VisualElement class="pp-game-header__spacer" />
+                <ui:Button name="closeButton" class="pp-round-close">
+                    <ui:VisualElement class="pp-icon pp-icon--close pp-icon--primary" picking-mode="Ignore" />
+                </ui:Button>
+            </ui:VisualElement>
+            <ui:ScrollView class="facility__scroll">
+                <ui:VisualElement class="facility__stage">
+                    <ui:VisualElement class="pp-photo-card facility__card">
+                        <ui:VisualElement name="facilityImage" class="pp-photo-card__image pp-thumb" picking-mode="Ignore" />
+                        <ui:VisualElement class="pp-level-badge" picking-mode="Ignore">
+                            <ui:Label text="Lv" class="pp-level-badge__caption" />
+                            <ui:Label name="facilityLevel" text="1" class="pp-level-badge__value" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="facilityStatus" class="facility__status" />
+                </ui:VisualElement>
+
+                <!-- 作る施設だけ: 材料 → できるもの、進み具合、速さ -->
+                <ui:VisualElement name="facilityProduce" class="pp-info-panel facility__panel">
+                    <ui:VisualElement class="pp-info-panel__top">
+                        <ui:VisualElement name="facilityRecipe" class="pp-recipe facility__recipe" />
+                        <ui:VisualElement class="pp-chip-time">
+                            <ui:VisualElement class="pp-icon pp-icon--time-forward pp-icon--primary" picking-mode="Ignore" />
+                            <ui:Label name="facilitySpeed" text="4 秒（× 1.0）" class="pp-chip-time__label" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:ProgressBar name="facilityProgress" value="0" high-value="1" class="pp-progress pp-progress--eco facility__progress" />
+                    <ui:VisualElement name="facilityModes" class="facility__modes" />
+                    <ui:Label name="facilityConsumption" text="" class="pp-text-caption pp-text-sub facility__note" />
+                </ui:VisualElement>
+
+                <!-- 作らない施設: 効果を 1 行 -->
+                <ui:VisualElement name="facilityEffectPanel" class="pp-info-panel facility__panel">
+                    <ui:VisualElement class="pp-info-panel__top">
+                        <ui:VisualElement name="facilityEffectIcon" class="pp-icon pp-icon--lg pp-icon--storage-full pp-icon--primary" picking-mode="Ignore" />
+                        <ui:Label name="facilityEffect" text="置き場 50" class="pp-info-panel__name facility__effect" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="facilityWorkersPanel" class="pp-info-panel facility__panel facility__row">
+                    <ui:VisualElement name="facilityWorkers" class="pp-workers facility__grow" />
+                    <ui:Button name="workerMinus" class="pp-mini-button">
+                        <ui:Label text="−" class="pp-mini-button__label" picking-mode="Ignore" />
+                    </ui:Button>
+                    <ui:Button name="workerPlus" class="pp-mini-button">
+                        <ui:Label text="＋" class="pp-mini-button__label" picking-mode="Ignore" />
+                    </ui:Button>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="facilityPearlPanel" class="pp-info-panel facility__panel facility__row">
+                    <ui:VisualElement class="pp-count facility__grow">
+                        <ui:VisualElement class="pp-count__icon pp-icon pp-icon--pearl pp-icon--res-pearl" picking-mode="Ignore" />
+                        <ui:Label name="pearlValue" text="0 / 5" class="pp-count__value" />
+                    </ui:VisualElement>
+                    <ui:Button name="pearlAdd" class="pp-mini-button">
+                        <ui:Label text="＋" class="pp-mini-button__label" picking-mode="Ignore" />
+                    </ui:Button>
+                </ui:VisualElement>
+
+                <!-- 強化 -->
+                <ui:VisualElement name="facilityUpgradePanel" class="pp-info-panel facility__panel facility__row">
+                    <ui:VisualElement class="facility__grow">
+                        <ui:VisualElement name="facilityPips" class="pp-level-pips" />
+                        <ui:VisualElement name="upgradeCosts" class="pp-counts" />
+                        <ui:Label name="upgradeNote" text="島の Lv を上げると強化できる" class="pp-text-caption pp-text-sub facility__note" />
+                    </ui:VisualElement>
+                    <ui:Button name="upgradeButton" class="pp-round-button pp-round-button--small pp-round-button--primary">
+                        <ui:VisualElement class="pp-round-button__icon pp-icon pp-icon--upgrade" picking-mode="Ignore" />
+                        <ui:Label text="強化" class="pp-round-button__label" picking-mode="Ignore" />
+                    </ui:Button>
+                </ui:VisualElement>
+
+                <ui:VisualElement class="facility__tools">
+                    <ui:Button name="moveButton" class="pp-mini-button">
+                        <ui:VisualElement class="pp-icon pp-icon--move pp-icon--primary" picking-mode="Ignore" />
+                    </ui:Button>
+                    <ui:Button name="demolishButton" class="pp-mini-button pp-mini-button--danger">
+                        <ui:VisualElement class="pp-icon pp-icon--demolish" picking-mode="Ignore" />
+                    </ui:Button>
+                </ui:VisualElement>
+                <ui:VisualElement class="pp-bottom-space" />
+            </ui:ScrollView>
+            <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,40 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="RaidScreen.uss" />
+    <ui:VisualElement class="pp-page raid">
+        <ui:VisualElement class="pp-header raid__header">
+            <ui:Label text="みんなの救助レイド" class="pp-header__title" />
+            <ui:Button name="raidClose" text="閉じる" class="pp-btn pp-btn--ghost" />
+        </ui:VisualElement>
+        <ui:Label name="raidTitle" text="吹雪の雪山へ、氷橋を届けよう" class="pp-text-title pp-text-heavy raid__scene-title" />
+        <ui:Image name="raidRescueView" class="raid__rescue-view" />
+        <ui:VisualElement class="raid__shared">
+            <ui:ProgressBar name="raidProgress" low-value="0" high-value="100" class="pp-progress" />
+            <ui:Label name="raidProgressText" text="―" class="pp-text-label pp-text-center" />
+        </ui:VisualElement>
+        <ui:ScrollView class="raid__scroll">
+            <ui:VisualElement class="raid__content">
+                <ui:Label name="raidMode" class="pp-badge" />
+                <ui:Label name="raidStatus" text="レイドを読み込んでいます…" class="pp-text-body raid__wrap" />
+                <ui:Label name="raidRescueSpeech" text="雪山のペンギンへ、みんなで氷橋をつなごう。" class="pp-text-body raid__wrap" />
+                <ui:VisualElement name="raidMilestones" class="raid__milestones" />
+                <ui:Label name="raidPersonal" class="pp-text-title raid__wrap" />
+                <ui:VisualElement name="raidQuestionCard" class="pp-card raid__section">
+                    <ui:Label name="raidQuestionNumber" class="pp-badge" />
+                    <ui:Label name="raidQuestion" class="pp-text-title raid__wrap" />
+                    <ui:VisualElement name="raidOptions" />
+                </ui:VisualElement>
+                <ui:VisualElement name="raidExplanationCard" class="pp-card raid__section">
+                    <ui:Label name="raidCorrect" class="pp-text-title" />
+                    <ui:Label name="raidExplanation" class="pp-text-body raid__wrap" />
+                    <ui:Button name="raidSource" text="解説の出典を見る" class="pp-btn pp-btn--ghost" />
+                </ui:VisualElement>
+                <ui:Label name="raidVenueUrl" class="pp-text-caption raid__wrap" />
+                <ui:Label name="raidError" class="pp-text-body pp-text-danger raid__wrap" />
+                <ui:Button name="raidAction" text="参加する" class="pp-btn pp-btn--block raid__action" />
+                <ui:Button name="raidRetry" text="もう一度つなぐ" class="pp-btn pp-btn--ghost raid__action" />
+                <ui:Button name="raidReducedMotion" text="動きを控えめに" class="pp-btn pp-btn--ghost raid__action" />
+            </ui:VisualElement>
+        </ui:ScrollView>
+        <ui:VisualElement class="pp-safe-area__bottom" />
+    </ui:VisualElement>
+</ui:UXML>

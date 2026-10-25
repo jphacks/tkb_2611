@@ -1,0 +1,44 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="MissionScreen.uss" />
+    <ui:VisualElement name="root" class="pp-page">
+        <ui:VisualElement class="mission__safe pp-safe-area">
+            <ui:VisualElement class="pp-header">
+                <ui:VisualElement class="pp-header__spacer" />
+                <ui:Label text="ミッション" class="pp-header__title" />
+                <ui:VisualElement class="pp-header__spacer" />
+            </ui:VisualElement>
+
+            <ui:ScrollView class="mission__scroll">
+                <ui:VisualElement name="missionContent" class="mission__content">
+                    <ui:VisualElement class="pp-speech mission__speech">
+                        <ui:VisualElement class="pp-speech__bubble pp-elevated">
+                            <ui:Label name="missionSpeech" text="朝にミッションを選んで、夜に振り返ろう！" class="pp-speech__text" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="pp-avatar">
+                            <ui:VisualElement class="pp-avatar__image pp-icon pp-icon--penguin pp-icon--original" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="mission__section-header">
+                        <ui:Label text="今日のミッション" class="pp-section-title mission__section-title" />
+                        <ui:Label name="selectionCount" text="0 / 2 選択" class="pp-badge" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="missionList" />
+
+                    <ui:VisualElement class="pp-card pp-elevated mission__info">
+                        <ui:VisualElement class="pp-icon-badge">
+                            <ui:VisualElement class="pp-icon pp-icon--allmighty pp-icon--res-allmighty" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="mission__info-body">
+                            <ui:Label text="夜の振り返り（18 時から）" class="pp-text-bold" />
+                            <ui:Label text="「できた」ならオールマイティ +5、「できなかった」でも +2。どの答えでも今日の記録になり、氷が溶けないよ。" class="pp-text-caption pp-text-sub mission__info-text" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:ScrollView>
+
+            <ui:VisualElement class="pp-tab-bar-spacer" picking-mode="Ignore" />
+            <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

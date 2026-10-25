@@ -1,0 +1,14 @@
+{
+    "name": "ProjectPenguin.Data",
+    "rootNamespace": "ProjectPenguin.Data",
+    "references": ["ProjectPenguin.Domain","Gilzoide.SqliteNet"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,71 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="MenuScreen.uss" />
+    <ui:VisualElement name="root" class="pp-page">
+        <ui:VisualElement class="menu__safe pp-safe-area">
+            <ui:VisualElement class="menu__header">
+                <ui:VisualElement class="pp-avatar">
+                    <ui:VisualElement class="pp-avatar__image pp-icon pp-icon--penguin pp-icon--original" />
+                </ui:VisualElement>
+                <ui:VisualElement class="menu__title">
+                    <ui:Label name="menuPlayer" text="ペンギンの島" class="pp-text-caption pp-text-sub pp-text-bold" />
+                    <ui:Label text="メインメニュー" class="pp-text-headline pp-text-heavy" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:ScrollView class="menu__scroll">
+                <ui:VisualElement class="menu__content">
+                    <ui:VisualElement class="pp-menu-grid__row">
+                        <ui:Button name="menuPokedex" class="pp-menu-card">
+                            <ui:VisualElement class="pp-icon pp-icon--lg pp-icon--book pp-icon--primary" picking-mode="Ignore" />
+                            <ui:Label text="ペンギン図鑑" class="pp-menu-card__label" picking-mode="Ignore" />
+                        </ui:Button>
+                        <ui:Button name="menuRecord" class="pp-menu-card pp-menu-card--end">
+                            <ui:VisualElement class="pp-icon pp-icon--lg pp-icon--receipt pp-icon--primary" picking-mode="Ignore" />
+                            <ui:Label text="記録" class="pp-menu-card__label" picking-mode="Ignore" />
+                        </ui:Button>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="pp-menu-grid__row">
+                        <ui:Button name="menuMission" class="pp-menu-card">
+                            <ui:VisualElement class="pp-icon pp-icon--lg pp-icon--flag pp-icon--eco" picking-mode="Ignore" />
+                            <ui:Label text="ミッション" class="pp-menu-card__label" picking-mode="Ignore" />
+                        </ui:Button>
+                        <ui:Button name="menuHelp" class="pp-menu-card pp-menu-card--end">
+                            <ui:VisualElement class="pp-icon pp-icon--lg pp-icon--help pp-icon--point" picking-mode="Ignore" />
+                            <ui:Label text="遊び方" class="pp-menu-card__label" picking-mode="Ignore" />
+                        </ui:Button>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="pp-menu-grid__row">
+                        <ui:Button name="menuCamera" class="pp-menu-card">
+                            <ui:VisualElement class="pp-icon pp-icon--lg pp-icon--camera pp-icon--sub" picking-mode="Ignore" />
+                            <ui:Label text="カメラの許可" class="pp-menu-card__label" picking-mode="Ignore" />
+                        </ui:Button>
+                        <ui:Button name="menuReset" class="pp-menu-card pp-menu-card--end">
+                            <ui:VisualElement class="pp-icon pp-icon--lg pp-icon--demolish pp-icon--danger" picking-mode="Ignore" />
+                            <ui:Label text="データを消す" class="pp-menu-card__label" picking-mode="Ignore" />
+                        </ui:Button>
+                    </ui:VisualElement>
+                    <ui:Label text="写真は判定のあとすぐに捨て、端末にも保存しません。島の記録はこの端末の中だけにあります。" class="pp-text-caption pp-text-sub menu__note" />
+                </ui:VisualElement>
+            </ui:ScrollView>
+        </ui:VisualElement>
+
+        <ui:Button name="closeBand" class="pp-close-band">
+            <ui:VisualElement class="pp-close-band__content" picking-mode="Ignore">
+                <ui:VisualElement class="pp-icon pp-icon--xl pp-icon--close pp-icon--inverse" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+        </ui:Button>
+
+        <ui:VisualElement name="menuModal" class="pp-modal pp-hidden">
+            <ui:VisualElement class="pp-modal__card pp-elevated">
+                <ui:VisualElement class="pp-avatar">
+                    <ui:VisualElement class="pp-avatar__image pp-icon pp-icon--penguin pp-icon--original" />
+                </ui:VisualElement>
+                <ui:Label name="menuModalTitle" text="" class="pp-modal__title" />
+                <ui:Label name="menuModalText" text="" class="pp-modal__text" />
+                <ui:Button name="menuModalOk" text="OK" class="pp-btn pp-btn--block" />
+                <ui:Button name="menuModalCancel" text="やめる" class="pp-btn pp-btn--ghost pp-btn--block menu__modal-cancel" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

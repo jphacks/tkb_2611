@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="BuildScreen.uss" />
+    <!-- 建物の一覧。絵と名前だけを棚に並べ、押すと説明の画面へ進む (BuildScreenPresenter) -->
+    <ui:VisualElement name="root" class="pp-game-page">
+        <ui:VisualElement class="pp-game-page__safe pp-safe-area">
+            <ui:VisualElement class="pp-game-header">
+                <ui:Label text="建てる" class="pp-title-chip" />
+                <ui:VisualElement class="pp-game-header__spacer" />
+                <ui:Button name="closeButton" class="pp-round-close">
+                    <ui:VisualElement class="pp-icon pp-icon--close pp-icon--primary" picking-mode="Ignore" />
+                </ui:Button>
+            </ui:VisualElement>
+            <ui:ScrollView name="buildScroll" class="build__scroll">
+                <ui:VisualElement name="buildShelf" class="pp-shelf" />
+                <ui:VisualElement class="pp-bottom-space" />
+            </ui:ScrollView>
+            <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

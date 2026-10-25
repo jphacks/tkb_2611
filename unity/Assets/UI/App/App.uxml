@@ -1,0 +1,37 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="App.uss" />
+    <ui:Template name="HomeScreen" src="../Screens/Home/HomeScreen.uxml" />
+    <ui:Template name="RecordScreen" src="../Screens/Record/RecordScreen.uxml" />
+    <ui:Template name="MissionScreen" src="../Screens/Mission/MissionScreen.uxml" />
+    <ui:Template name="ScanScreen" src="../Screens/Scan/ScanScreen.uxml" />
+    <ui:Template name="AnalyzingScreen" src="../Screens/Analyzing/AnalyzingScreen.uxml" />
+    <ui:Template name="ResultScreen" src="../Screens/Result/ResultScreen.uxml" />
+    <ui:Template name="MenuScreen" src="../Screens/Menu/MenuScreen.uxml" />
+    <ui:Template name="DexScreen" src="../Screens/Dex/DexScreen.uxml" />
+    <ui:Template name="BuildScreen" src="../Screens/Build/BuildScreen.uxml" />
+    <ui:Template name="BuildDetailScreen" src="../Screens/BuildDetail/BuildDetailScreen.uxml" />
+    <ui:Template name="HarborScreen" src="../Screens/Harbor/HarborScreen.uxml" />
+    <ui:Template name="FacilityScreen" src="../Screens/Facility/FacilityScreen.uxml" />
+    <ui:Template name="ProductionScreen" src="../Screens/Production/ProductionScreen.uxml" />
+    <ui:Template name="RaidScreen" src="../Screens/Raid/RaidScreen.uxml" />
+    <ui:Template name="TabBar" src="TabBar.uxml" />
+    <ui:Template name="Onboarding" src="../Screens/Onboarding/Onboarding.uxml" />
+    <ui:VisualElement name="app" class="pp-screen" picking-mode="Ignore">
+        <ui:Instance template="HomeScreen" name="homeScreen" class="pp-screen" picking-mode="Ignore" />
+        <ui:Instance template="RecordScreen" name="recordScreen" class="pp-screen pp-screen--hidden" />
+        <ui:Instance template="MissionScreen" name="missionScreen" class="pp-screen pp-screen--hidden" />
+        <ui:Instance template="ScanScreen" name="scanScreen" class="pp-screen pp-screen--hidden" />
+        <ui:Instance template="AnalyzingScreen" name="analyzingScreen" class="pp-screen pp-screen--hidden" />
+        <ui:Instance template="ResultScreen" name="resultScreen" class="pp-screen pp-screen--hidden" />
+        <ui:Instance template="MenuScreen" name="menuScreen" class="pp-screen pp-screen--hidden" />
+        <ui:Instance template="DexScreen" name="dexScreen" class="pp-screen pp-screen--hidden" />
+        <ui:Instance template="BuildScreen" name="buildScreen" class="pp-screen pp-screen--hidden" />
+        <ui:Instance template="BuildDetailScreen" name="buildDetailScreen" class="pp-screen pp-screen--hidden" />
+        <ui:Instance template="HarborScreen" name="harborScreen" class="pp-screen pp-screen--hidden" />
+        <ui:Instance template="FacilityScreen" name="facilityScreen" class="pp-screen pp-screen--hidden" />
+        <ui:Instance template="ProductionScreen" name="productionScreen" class="pp-screen pp-screen--hidden" />
+        <ui:Instance template="RaidScreen" name="raidScreen" class="pp-screen pp-screen--hidden" />
+        <ui:Instance template="TabBar" name="tabBar" class="app__tab-bar" />
+        <ui:Instance template="Onboarding" name="onboarding" class="app__overlay pp-hidden" />
+    </ui:VisualElement>
+</ui:UXML>

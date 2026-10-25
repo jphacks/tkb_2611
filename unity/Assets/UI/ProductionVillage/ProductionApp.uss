@@ -1,0 +1,487 @@
+/* 村のホームのレイアウトだけを書く。色・角丸・文字は DesignSystem の部品 (pp-*) に任せる */
+
+/* 上の帯 → 島が見える場所 → 下のタブ を縦に並べる。シートは全体に重ねる */
+.village-app {
+    flex-grow: 1;
+}
+
+.village-safe {
+    flex-shrink: 0;
+}
+
+.village-header {
+    flex-direction: row;
+    align-items: flex-start;
+    margin: var(--space-3) var(--space-4) 0 var(--space-4);
+}
+
+.village-header__spacer {
+    flex-grow: 1;
+}
+
+.village-rank-badge {
+    min-width: 108px;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-1) var(--space-2);
+    margin-right: var(--space-2);
+    border-radius: var(--radius-md);
+    background-color: var(--color-accent);
+    border-bottom-width: 8px;
+    border-bottom-color: var(--color-accent-dark);
+    color: var(--color-text);
+}
+
+.village-rank-label {
+    margin-top: 2px;
+    font-size: var(--font-size-micro);
+    -unity-font-definition: var(--font-heavy);
+    color: var(--color-text-rank);
+    -unity-text-align: middle-center;
+}
+
+.village-rank-value {
+    margin-top: -6px;
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-heavy);
+    color: var(--color-text);
+    -unity-text-align: middle-center;
+}
+
+.village-rank-progress {
+    margin-top: var(--space-1);
+    height: 16px;
+}
+
+.village-industrial-switch {
+    margin-left: var(--space-2);
+    padding: 0 var(--space-3);
+    height: var(--control-height-md);
+    border-radius: var(--radius-pill-md);
+    background-color: var(--color-tactical-amber);
+    border-bottom-width: var(--raise-depth);
+    border-bottom-color: var(--color-tactical-amber-lip);
+    color: var(--color-text);
+}
+
+.village-resources {
+    align-self: flex-start;
+    margin: var(--space-2) var(--space-4) 0 var(--space-4);
+}
+
+/* エンドフィールド風: 上部タクティカルバー */
+.village-tactical-bar {
+    margin: var(--space-2) var(--space-4) 0 var(--space-4);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    background-color: var(--color-tactical-bg);
+    border-width: 2px;
+    border-color: var(--color-tactical-cyan);
+    border-bottom-width: 6px;
+    border-bottom-color: var(--color-tactical-lip);
+}
+
+.village-tactical-title {
+    margin-right: var(--space-3);
+    color: var(--color-tactical-cyan);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.village-tactical-gas {
+    flex-shrink: 1;
+    white-space: normal;
+    color: var(--color-tactical-amber);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.village-tactical-btn {
+    flex-direction: row;
+    align-items: center;
+    height: var(--control-height-sm);
+    padding: 0 var(--space-2);
+    margin-left: var(--space-1);
+    border-radius: var(--radius-pill-sm);
+    background-color: var(--color-tactical-surface);
+    border-width: 2px;
+    border-color: var(--color-tactical-cyan);
+    color: var(--color-text-on-primary);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+}
+
+.village-tactical-btn--active {
+    background-color: var(--color-tactical-cyan);
+    color: var(--color-camera-bg);
+}
+
+.village-error {
+    margin: var(--space-2) var(--space-4) 0 var(--space-4);
+}
+
+.village-stage {
+    flex-grow: 1;
+}
+
+/* 3D 施設頭上の空間バッジ層 */
+.village-spatial-layer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.village-spatial-badge {
+    position: absolute;
+    flex-direction: row;
+    align-items: center;
+    padding: 4px var(--space-2);
+    border-radius: var(--radius-pill-sm);
+    background-color: var(--color-surface-solid);
+    border-width: 2px;
+    border-color: var(--color-primary);
+    border-bottom-width: 5px;
+    border-bottom-color: var(--color-primary-dark);
+    color: var(--color-text);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.village-spatial-badge--warn {
+    background-color: var(--color-danger);
+    border-color: var(--color-surface-solid);
+    border-bottom-color: var(--color-camera-bg);
+    color: var(--color-text-on-primary);
+}
+
+.village-spatial-badge--synergy {
+    background-color: var(--color-tactical-amber);
+    border-color: var(--color-surface-solid);
+    border-bottom-color: var(--color-tactical-amber-lip);
+    color: var(--color-text);
+}
+
+/* 左下のボトルネック・連携ライブ診断ピル */
+.village-insight-banner {
+    position: absolute;
+    left: var(--space-4);
+    bottom: var(--space-4);
+    max-width: 66%;
+    flex-direction: row;
+    align-items: center;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface-solid);
+    border-width: 2px;
+    border-color: var(--color-ice-200);
+    border-bottom-width: 6px;
+    border-bottom-color: var(--color-primary-soft);
+    color: var(--color-text);
+}
+
+.village-insight-banner--warn {
+    border-color: var(--color-danger);
+    border-bottom-color: var(--color-danger);
+    background-color: var(--color-danger-soft);
+}
+
+/* 右下の道具は縦に並べ、いちばん下に「建てる」を置く */
+.village-tools {
+    position: absolute;
+    right: var(--space-4);
+    bottom: var(--space-4);
+    align-items: center;
+}
+
+.village-tools .pp-tool {
+    margin-bottom: var(--space-3);
+}
+
+.village-build {
+    margin-top: var(--space-1);
+}
+
+/* エンドフィールド風: 盤面を隠さない下部クイック建設ドック */
+.village-quick-dock {
+    position: absolute;
+    right: var(--space-3);
+    bottom: var(--space-2);
+    left: var(--space-3);
+    padding: var(--space-2);
+    border-radius: var(--radius-md);
+    background-color: var(--color-tactical-bg);
+    border-width: 2px;
+    border-color: var(--color-tactical-cyan);
+    border-bottom-width: 6px;
+    border-bottom-color: var(--color-tactical-lip);
+}
+
+.village-dock-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-2);
+}
+
+.village-dock-tabs {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.village-dock-tab {
+    height: var(--control-height-sm);
+    padding: 0 var(--space-2);
+    margin-right: var(--space-1);
+    border-radius: var(--radius-pill-sm);
+    background-color: var(--color-tactical-surface);
+    color: var(--color-text-on-primary);
+    font-size: var(--font-size-caption);
+    -unity-font-definition: var(--font-bold);
+}
+
+.village-dock-tab--active {
+    background-color: var(--color-tactical-cyan);
+    color: var(--color-camera-bg);
+}
+
+.village-dock-scroll {
+    height: 196px;
+}
+
+.village-dock-slot {
+    width: 172px;
+    height: 184px;
+    margin-right: var(--space-2);
+    padding: var(--space-1);
+    align-items: center;
+    justify-content: space-between;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-tactical-surface);
+    border-width: 2px;
+    border-color: var(--color-tactical-cyan-soft);
+    border-bottom-width: 5px;
+    border-bottom-color: var(--color-tactical-lip);
+}
+
+.village-dock-slot__thumb {
+    width: 88px;
+    height: 88px;
+}
+
+.village-dock-slot__name {
+    color: var(--color-text-on-primary);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-heavy);
+    -unity-text-align: middle-center;
+}
+
+.village-dock-slot .pp-cost__value {
+    color: var(--color-tactical-amber);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-heavy);
+}
+
+.village-dock-slot .pp-cost__item--short .pp-cost__value {
+    color: var(--color-danger);
+}
+
+/* 置き場所を選ぶ間の ✕・絵・✓ は、島が見えるよう下に寄せる。中央のスキャンの丸がタブの上へはみ出す分だけ空ける */
+.village-tray {
+    position: absolute;
+    right: 0;
+    bottom: var(--space-7);
+    left: 0;
+    align-items: center;
+}
+
+/* 置き方の案内。置けないときは赤い札 (village-hint--bad) にする */
+.village-hint {
+    margin-bottom: var(--space-3);
+    max-width: 90%;
+    padding: var(--space-1) var(--space-4);
+    border-radius: var(--radius-pill-md);
+    background-color: var(--color-surface-solid);
+    color: var(--color-text);
+    font-size: var(--font-size-body);
+    -unity-font-definition: var(--font-bold);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+.village-hint--bad {
+    background-color: var(--color-danger);
+    color: var(--color-text-on-primary);
+}
+
+.village-toasts {
+    top: 10%;
+}
+
+.village-navigation {
+    flex-shrink: 0;
+}
+
+.village-sheet__panel {
+    max-height: 78%;
+}
+
+.village-sheet__close {
+    width: 88px;
+    height: 88px;
+    background-color: var(--color-ice-50);
+}
+
+.village-sheet__body {
+    flex-shrink: 1;
+}
+
+/* シートの中: カードの並びと余白 */
+.village-card {
+    margin-bottom: var(--space-3);
+}
+
+.village-card__title {
+    font-size: var(--font-size-label);
+    -unity-font-definition: var(--font-heavy);
+    margin-bottom: var(--space-1);
+}
+
+.village-card__actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: var(--space-2);
+}
+
+.village-card__actions > .pp-btn {
+    margin: 0 var(--space-2) var(--space-1) 0;
+}
+
+.village-subtle {
+    margin-top: var(--space-1);
+    font-size: var(--font-size-caption);
+    color: var(--color-text-sub);
+    white-space: normal;
+}
+
+/* 数字の行: 右端に大きく数を出す */
+.village-stat {
+    font-size: var(--font-size-title);
+    -unity-font-definition: var(--font-heavy);
+    color: var(--color-primary-dark);
+}
+
+/* 空の状態: アイコンと一言を真ん中に */
+.village-empty {
+    align-items: center;
+    padding: var(--space-5) 0;
+}
+
+.village-empty__text {
+    margin-top: var(--space-2);
+    color: var(--color-text-sub);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+/* 建てる棚: 絵・名前・作り方・費用 */
+.village-shelf {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.village-shelf .pp-shelf-card {
+    width: 48.5%;
+}
+
+.village-shelf-card__recipe {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: var(--space-1);
+}
+
+.village-shelf-card__recipe > .pp-icon {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    margin: 0 4px;
+}
+
+.village-shelf-card__recipe .pp-count {
+    margin-right: var(--space-1);
+}
+
+.village-shelf-card__recipe .pp-count__icon {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+}
+
+.village-shelf-card__recipe .pp-count__value {
+    margin-left: 2px;
+    font-size: var(--font-size-caption);
+}
+
+.village-shelf-card__cost {
+    justify-content: center;
+    margin-top: var(--space-1);
+}
+
+.village-shelf-card__soon {
+    align-self: center;
+    margin-top: var(--space-1);
+}
+
+/* 施設の詳細の上部: 絵と状態 */
+.village-facility {
+    flex-direction: row;
+    align-items: center;
+}
+
+.village-facility__thumb {
+    width: 200px;
+    height: 200px;
+    flex-shrink: 0;
+    margin-right: var(--space-3);
+    border-radius: var(--radius-md);
+    background-color: var(--color-ice-50);
+}
+
+.village-facility__body {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.village-facility__progress {
+    margin-top: var(--space-2);
+}
+
+/* 品物のカードの並び (生産量・港・施設の在庫) */
+.village-items {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+.village-tactical-row { flex-direction: row; flex-wrap: wrap; align-items: center; }
+.village-group-state { color: var(--color-tactical-cyan); font-size: var(--font-size-caption); white-space: normal; margin-top: var(--space-1); }
+.village-group-mark { position: absolute; width: 46px; height: 46px; opacity: 0.55; }
+.village-group-mark--waiting { opacity: 0.24; }
+
+.village-production-report {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.village-water-camera {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}

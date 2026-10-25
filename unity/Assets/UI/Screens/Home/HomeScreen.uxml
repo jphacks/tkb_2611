@@ -1,0 +1,175 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="HomeScreen.uss" />
+    <ui:VisualElement name="root" class="home" picking-mode="Ignore">
+        <ui:VisualElement name="safeArea" class="home__safe pp-safe-area" picking-mode="Ignore">
+            <ui:VisualElement name="header" class="home__header" picking-mode="Ignore">
+                <!-- 生産の島のシーンだけで出す (IslandHudPresenter)。レベルと資源を 1 本の帯にまとめる。タップで資源の集め方を開く -->
+                <ui:VisualElement name="islandBar" class="pp-resource-bar home__island-bar pp-hidden">
+                    <ui:VisualElement name="level" class="pp-level">
+                        <ui:Label text="Lv" class="pp-level__caption" />
+                        <ui:Label name="levelValue" text="1" class="pp-level__value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="resFish" class="pp-resource">
+                        <ui:VisualElement class="pp-resource__icon pp-icon pp-icon--fish pp-icon--res-fish" />
+                        <ui:Label name="resFishValue" text="0" class="pp-resource__value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="resElectricity" class="pp-resource">
+                        <ui:VisualElement class="pp-resource__icon pp-icon pp-icon--electricity pp-icon--res-electricity" />
+                        <ui:Label name="resElectricityValue" text="0" class="pp-resource__value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="resWater" class="pp-resource">
+                        <ui:VisualElement class="pp-resource__icon pp-icon pp-icon--water pp-icon--res-water" />
+                        <ui:Label name="resWaterValue" text="0" class="pp-resource__value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="resGas" class="pp-resource">
+                        <ui:VisualElement class="pp-resource__icon pp-icon pp-icon--gas pp-icon--res-gas" />
+                        <ui:Label name="resGasValue" text="0" class="pp-resource__value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="resAllMighty" class="pp-resource pp-resource--last">
+                        <ui:VisualElement class="pp-resource__icon pp-icon pp-icon--allmighty pp-icon--res-allmighty" />
+                        <ui:Label name="resAllMightyValue" text="0" class="pp-resource__value" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Button name="settingsButton" class="pp-icon-button">
+                    <ui:VisualElement class="pp-icon pp-icon--gear pp-icon--sub" picking-mode="Ignore" />
+                </ui:Button>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="stats" class="home__stats" picking-mode="Ignore">
+                <ui:VisualElement name="iceStat" class="pp-card pp-elevated pp-stat-card home__stat">
+                    <ui:VisualElement class="pp-icon-badge">
+                        <ui:VisualElement class="pp-icon pp-icon--snowflake pp-icon--primary" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="pp-stat-card__body">
+                        <ui:Label name="iceLabel" text="氷の量" class="pp-stat-card__label" />
+                        <ui:VisualElement class="pp-stat-card__meter">
+                            <ui:ProgressBar name="iceProgress" value="72" class="pp-progress" />
+                            <ui:Label name="iceValue" text="72" class="pp-stat-card__value pp-text-primary" />
+                        </ui:VisualElement>
+                        <!-- 生産の島のシーンだけで出す。氷が支えられる土地と、沈んでいるときの知らせ -->
+                        <ui:Label name="landValue" text="支えられる土地 0 / 24" class="pp-text-caption pp-text-sub home__stat-note pp-hidden" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="weekStat" class="pp-card pp-elevated pp-stat-card home__stat home__stat--last">
+                    <ui:VisualElement class="pp-icon-badge pp-icon-badge--eco">
+                        <ui:VisualElement name="todayIcon" class="pp-icon pp-icon--camera pp-icon--eco" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="pp-stat-card__body">
+                        <ui:Label name="weekLabel" text="今週の記録" class="pp-stat-card__label" />
+                        <ui:VisualElement class="pp-stat-card__meter">
+                            <ui:ProgressBar name="weekProgress" value="0" high-value="7" class="pp-progress pp-progress--eco" />
+                            <ui:Label name="weekValue" text="0/7" class="pp-stat-card__value pp-text-eco" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- 開発ビルドと Editor だけで出す。ダミーの記録と時計の早送りでゲームの状態を動かす (HomeStatusPresenter) -->
+            <ui:VisualElement name="demoControls" class="home__demo" picking-mode="Ignore">
+                <ui:Label name="demoBadge" text="デモ用の操作" class="pp-badge pp-badge--accent home__demo-badge" />
+                <ui:Button name="demoRecordButton" text="記録する" class="pp-chip home__demo-button" />
+                <ui:Button name="demoAdvanceButton" text="1 日進める" class="pp-chip home__demo-button" />
+                <ui:Button name="demoHourButton" text="島 +1 時間" class="pp-chip home__demo-button home__demo-island pp-hidden" />
+                <ui:Button name="demoGrantButton" text="資源 +100" class="pp-chip home__demo-button home__demo-island pp-hidden" />
+                <ui:Button name="demoStepsButton" text="+1000 歩" class="pp-chip home__demo-button home__demo-island pp-hidden" />
+                <ui:Button name="demoResetButton" text="最初から" class="pp-chip home__demo-button home__demo-island pp-hidden" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="worldViewport" class="home__world" picking-mode="Ignore">
+                <!-- 置き場所を選ぶ間だけ出す。✕・建物の絵・✓ の丸いボタンと、置けないときだけ理由を出す (IslandSheetPresenter) -->
+                <ui:VisualElement name="placementBanner" class="home__banner pp-hidden" picking-mode="Ignore">
+                    <ui:VisualElement name="bannerCosts" class="pp-counts home__banner-costs pp-hidden" picking-mode="Ignore" />
+                    <ui:VisualElement class="pp-place-bar" picking-mode="Ignore">
+                        <ui:Button name="bannerCancel" class="pp-round-button pp-round-button--small pp-round-button--cancel">
+                            <ui:VisualElement class="pp-round-button__icon pp-icon pp-icon--close" picking-mode="Ignore" />
+                        </ui:Button>
+                        <ui:VisualElement name="bannerIcon" class="pp-place-bar__thumb pp-thumb" picking-mode="Ignore" />
+                        <ui:Button name="bannerConfirm" class="pp-round-button pp-round-button--small">
+                            <ui:VisualElement class="pp-round-button__icon pp-icon pp-icon--check" picking-mode="Ignore" />
+                        </ui:Button>
+                    </ui:VisualElement>
+                    <ui:Label name="bannerText" text="そこには置けないよ" class="pp-place-bar__hint pp-hidden" />
+                </ui:VisualElement>
+                <!-- 生産の島のシーンだけで出す。設定ボタンと同じ丸いボタンを右下に縦に並べる -->
+                <ui:VisualElement name="tools" class="home__tools pp-hidden" picking-mode="Ignore">
+                    <ui:Button name="quickEcoButton" class="pp-tool">
+                        <ui:VisualElement class="pp-tool__circle" picking-mode="Ignore">
+                            <ui:VisualElement class="pp-icon pp-icon--leaf pp-icon--eco" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:Label text="ちょこっとエコ" class="pp-tool__label" picking-mode="Ignore" />
+                    </ui:Button>
+                    <ui:Button name="toolBuild" class="pp-tool">
+                        <ui:VisualElement class="pp-tool__circle" picking-mode="Ignore">
+                            <ui:VisualElement class="pp-icon pp-icon--build pp-icon--primary" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:Label text="建てる" class="pp-tool__label" picking-mode="Ignore" />
+                    </ui:Button>
+                    <ui:Button name="toolHarbor" class="pp-tool">
+                        <ui:VisualElement class="pp-tool__circle" picking-mode="Ignore">
+                            <ui:VisualElement class="pp-icon pp-icon--deliver pp-icon--point" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:Label text="港" class="pp-tool__label" picking-mode="Ignore" />
+                        <ui:VisualElement name="harborDot" class="pp-tool__dot pp-hidden" picking-mode="Ignore" />
+                    </ui:Button>
+                    <ui:Button name="toolProduction" class="pp-tool pp-tool--last">
+                        <ui:VisualElement class="pp-tool__circle" picking-mode="Ignore">
+                            <ui:VisualElement class="pp-icon pp-icon--production pp-icon--eco" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:Label text="生産量" class="pp-tool__label" picking-mode="Ignore" />
+                    </ui:Button>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="speech" class="pp-speech home__speech" picking-mode="Ignore">
+                <ui:VisualElement class="pp-speech__bubble pp-elevated" picking-mode="Ignore">
+                    <ui:Label name="speechText" text="今日もいい天気だよ&#10;また来てね！" class="pp-speech__text" />
+                    <!-- 次にやることがあるときだけ、吹き出しの中に出す (IslandHudPresenter) -->
+                    <ui:Button name="nextActionButton" class="pp-chip home__speech-action pp-hidden">
+                        <ui:VisualElement name="nextActionIcon" class="pp-icon pp-icon--camera pp-icon--primary home__speech-action-icon" picking-mode="Ignore" />
+                        <ui:Label name="nextActionLabel" text="今日のエコ写真を撮る" class="home__speech-action-label" picking-mode="Ignore" />
+                    </ui:Button>
+                </ui:VisualElement>
+                <ui:VisualElement class="pp-avatar">
+                    <ui:VisualElement class="pp-avatar__image pp-icon--penguin pp-icon pp-icon--original" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement class="pp-tab-bar-spacer" picking-mode="Ignore" />
+            <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="gainLayer" class="home__gain-layer" picking-mode="Ignore" />
+        <ui:VisualElement name="toastLayer" class="pp-toast-layer" picking-mode="Ignore" />
+
+        <ui:VisualElement name="sheet" class="pp-sheet pp-sheet--closed pp-hidden">
+            <ui:VisualElement name="sheetScrim" class="pp-sheet__scrim" />
+            <ui:VisualElement name="sheetPanel" class="pp-sheet__panel">
+                <ui:VisualElement class="pp-sheet__handle" />
+                <ui:VisualElement class="pp-sheet__header">
+                    <ui:Label name="sheetTitle" text="建てる" class="pp-sheet__title" />
+                    <ui:Button name="sheetClose" class="pp-icon-button">
+                        <ui:VisualElement class="pp-icon pp-icon--close pp-icon--sub" picking-mode="Ignore" />
+                    </ui:Button>
+                </ui:VisualElement>
+                <ui:ScrollView name="sheetBody" class="pp-sheet__body" />
+                <ui:VisualElement name="sheetFooter" class="pp-sheet__footer" />
+                <ui:VisualElement class="pp-tab-bar-spacer" picking-mode="Ignore" />
+                <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="modal" class="pp-modal pp-hidden">
+            <ui:VisualElement class="pp-modal__card pp-elevated">
+                <ui:VisualElement class="pp-avatar">
+                    <ui:VisualElement class="pp-avatar__image pp-icon pp-icon--penguin pp-icon--original" />
+                </ui:VisualElement>
+                <ui:Label name="modalTitle" text="おかえり！" class="pp-modal__title" />
+                <ui:Label name="modalText" text="留守の間にみんなが働いてくれたよ" class="pp-modal__text" />
+                <ui:VisualElement name="modalBody" class="home__modal-body" />
+                <ui:Button name="modalButton" text="受け取る" class="pp-btn pp-btn--block" />
+                <ui:Button name="modalCancel" text="やめる" class="pp-btn pp-btn--ghost pp-btn--block home__modal-cancel pp-hidden" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
