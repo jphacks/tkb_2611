@@ -139,14 +139,16 @@ namespace ProjectPenguin.Editor.Build
                 .Select(scene => scene.path)
                 .ToArray();
 
-        /// <summary>The iOS factory has its own entry scene. Existing Web/Android scene selection is retained.</summary>
+        /// <summary>iOS 版の正規のシーン (村のホーム)。工場ゲームの試作 (FactoryGame.unity) は入れない。</summary>
+        public const string IosScene = "Assets/Scenes/ProductionVillageHome.unity";
+
+        /// <summary>iOS は正規のシーンだけを入れる。Web と Android は Build Settings で有効なシーンのまま。</summary>
         public static string[] ScenesFor(BuildRequest request)
         {
             if (request == null) throw new ArgumentNullException(nameof(request));
             if (!request.IsIos) return EnabledScenes();
-            const string factory = "Assets/Scenes/FactoryGame.unity";
-            if (!File.Exists(factory)) throw new BuildRequestException("新工場のシーンがありません。");
-            return new[] { factory };
+            if (!File.Exists(IosScene)) throw new BuildRequestException("iOS 版のシーン (" + IosScene + ") がありません。");
+            return new[] { IosScene };
         }
 
         /// <summary>成果物の出力先。Android はファイル、iOS は Xcode プロジェクト、Web は公開するディレクトリ。</summary>
