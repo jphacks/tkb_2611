@@ -8,7 +8,7 @@ namespace ProjectPenguin.Tests.EditMode
     {
         /// <summary>2026-10-25 (1970-01-01 起点の端末の日付。歩数・水の台帳と同じ数え方)。</summary>
         private const int Today = 20751;
-        private static readonly string Steps = "歩数 " + '→' + " ガス", Water = "水分補給 " + '→' + " 水", Screen = "スクリーンタイム " + '→' + " 電気";
+        private static readonly string Steps = "歩数 " + '→' + " ガス", Water = "水分補給 " + '→' + " 水", Screen = "スクリーンタイム " + '→' + " 電気", Encounter = "すれ違い " + '→' + " ガス";
 
         private static HealthRecordLedger Ledger(params (string Kind, int Day, double Amount)[] entries)
         {
@@ -72,6 +72,19 @@ namespace ProjectPenguin.Tests.EditMode
             Assert.That(VillageRecordSummary.ResourceOf(Screen), Is.EqualTo(VillageRecordResource.Electricity));
             Assert.That(VillageRecordSummary.ResourceOf(""), Is.Null);
             Assert.That(VillageRecordSummary.TitleOf(Water), Is.EqualTo("水分補給"));
+        }
+
+        [Test] public void DaysCountedFrom2026AreAlignedWithDeviceDays()
+        {
+            // スクリーンタイムとすれ違いは 2026-01-01 起点の日番号で台帳に入る。今日・昨日として数える
+            var appToday = Today - VillageRecordSummary.AppEpochOffset;
+            var l = Ledger((Steps, Today, 2), (Encounter, appToday, 5), (Screen, appToday - 1, 7));
+            var s = VillageRecordSummary.From(l, Today);
+            Assert.That(VillageRecordSummary.AppEpochOffset, Is.EqualTo(20454), "1970-01-01 から 2026-01-01 まで");
+            Assert.That(s.TodayTotals.Gas, Is.EqualTo(7), "歩数 2 とすれ違い 5");
+            Assert.That(s.Week[5].Electricity, Is.EqualTo(7), "スクリーンタイムは昨日の棒");
+            Assert.That(s.History.Select(g => g.Key), Is.EqualTo(new[] { Today, Today - 1 }));
+            Assert.That(VillageRecordSummary.NormalizeDay(Today), Is.EqualTo(Today), "1970 起点の日はそのまま");
         }
     }
 }

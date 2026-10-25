@@ -37,6 +37,14 @@ namespace ProjectPenguin.Domain.Village
         public const int DailyStepGoal = 8000;
         public const int WeekDays = 7, HistoryDays = 30;
 
+        /// <summary>
+        /// 1970-01-01 起点の日番号で 2026-01-01 にあたる数。台帳の日番号は記録の種類で起点が違う
+        /// (歩数・水は 1970-01-01 起点の端末の日付、スクリーンタイムは 2026-01-01 起点の JST の日付、
+        /// すれ違いは 2026-01-01 起点のアプリの日 (03:00 区切り))。これより小さい日番号は 2026-01-01 起点とみなし、
+        /// 足してそろえる。1970-01-01 起点でこれより小さいのは 2026 年より前の日付で、この村の記録には無い。
+        /// </summary>
+        public static readonly int AppEpochOffset = (int)(Clock.JstCalendar.EpochDate - new DateTime(1970, 1, 1)).TotalDays;
+
         public int Today { get; private set; }
         /// <summary>今日の歩数。今日まだ受け取っていなければ 0。</summary>
         public int TodaySteps { get; private set; }
@@ -54,8 +62,9 @@ namespace ProjectPenguin.Domain.Village
         public static VillageRecordSummary From(HealthRecordLedger ledger, int today)
         {
             var entries = (ledger?.Entries ?? new List<HealthRecordEntry>())
-                .Where(e => e != null && e.Day <= today && !double.IsNaN(e.Amount) && !double.IsInfinity(e.Amount) && e.Amount > 0)
-                .Select(e => (Entry: e, Day: e.Day, Resource: ResourceOf(e.Kind)))
+                .Where(e => e != null && !double.IsNaN(e.Amount) && !double.IsInfinity(e.Amount) && e.Amount > 0)
+                .Select(e => (Entry: e, Day: NormalizeDay(e.Day), Resource: ResourceOf(e.Kind)))
+                .Where(x => x.Day <= today)
                 .Where(x => x.Resource.HasValue)
                 .ToList();
 
@@ -82,6 +91,9 @@ namespace ProjectPenguin.Domain.Village
                 History = history,
             };
         }
+
+        /// <summary>台帳の日番号を 1970-01-01 起点にそろえる (<see cref="AppEpochOffset"/>)。</summary>
+        public static int NormalizeDay(int day) => day >= 0 && day < AppEpochOffset ? day + AppEpochOffset : day;
 
         /// <summary>記録の種類 (「歩数 → ガス」) の矢印の後ろから資源を決める。分からなければ null。</summary>
         public static VillageRecordResource? ResourceOf(string kind)
