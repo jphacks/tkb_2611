@@ -29,8 +29,9 @@ PATH = "/api/v1/water/estimate"
 
 
 def reading(
-    container: str = "pet_bottle_500",
+    container: str = "pet_bottle",
     *,
+    label_capacity_ml: int = 500,
     fill_ratio: float = 0.6,
     confidence: float = 0.92,
     is_screen_photo: bool = False,
@@ -38,6 +39,7 @@ def reading(
 ) -> dict[str, Any]:
     return {
         "container": container,
+        "label_capacity_ml": label_capacity_ml,
         "fill_ratio": fill_ratio,
         "confidence": confidence,
         "is_screen_photo": is_screen_photo,
@@ -45,7 +47,7 @@ def reading(
     }
 
 
-def answer(container: str = "pet_bottle_500", **kwargs: Any) -> dict[str, Any]:
+def answer(container: str = "pet_bottle", **kwargs: Any) -> dict[str, Any]:
     return converse_tool_use(reading(container, **kwargs), tool_name="estimate")
 
 
@@ -61,45 +63,83 @@ def post(client: TestClient, data: bytes) -> Any:
 
 
 @pytest.mark.usefixtures("no_disk_writes")
-def test_bottle_photo_is_accepted_with_the_amount_from_the_table(
+def test_bottle_photo_is_accepted_with_the_capacity_read_from_the_label(
     client: TestClient, bedrock: StubbedBedrock, caplog: pytest.LogCaptureFixture
 ) -> None:
-    bedrock.respond(answer("pet_bottle_500", fill_ratio=0.6))
+    bedrock.respond(answer(label_capacity_ml=600, fill_ratio=0.5))
 
     response = post(client, photos.jpeg(marker="leak-water-1"))
 
     assert_matches_contract(response)
     body = response.json()
     assert body["decision"] == "accept"
-    assert body["container"] == "pet_bottle_500"
-    assert body["amount_ml"] == 300
-    assert [check["passed"] for check in body["checks"]] == [True, True]
+    assert (body["container"], body["capacity_ml"], body["amount_ml"]) == ("pet_bottle", 600, 300)
+    assert [check["passed"] for check in body["checks"]] == [True, True, True]
+    assert body["checks"][1]["detail"] == "600ml と書いてある"
     assert_no_leak("leak-water-1", response, caplog)
 
 
 def test_amount_is_rounded_from_the_capacity(client: TestClient, bedrock: StubbedBedrock) -> None:
-    bedrock.respond(answer("pet_bottle_350", fill_ratio=0.333))
+    bedrock.respond(answer(label_capacity_ml=350, fill_ratio=0.333))
 
     assert post(client, photos.jpeg()).json()["amount_ml"] == round(350 * 0.333)
 
 
-def test_unknown_container_asks_for_a_retake_with_no_water(
-    client: TestClient, bedrock: StubbedBedrock
+def test_litre_bottles_are_described_in_litres(client: TestClient, bedrock: StubbedBedrock) -> None:
+    bedrock.respond(answer(label_capacity_ml=2000, fill_ratio=0.0))
+
+    body = post(client, photos.jpeg()).json()
+
+    assert (body["decision"], body["capacity_ml"], body["amount_ml"]) == ("accept", 2000, 0)
+    assert body["checks"][1]["detail"] == "2L と書いてある"
+
+
+@pytest.mark.parametrize("capacity", [0, table.CAPACITY_MIN_ML - 1, table.CAPACITY_MAX_ML + 1, -5])
+def test_unreadable_capacity_asks_to_show_the_label(
+    client: TestClient, bedrock: StubbedBedrock, capacity: int
 ) -> None:
-    bedrock.respond(answer("unknown", fill_ratio=0.8, confidence=0.9))
+    # 容量を表から決めない: ラベルが読めなければ、形が 500ml に見えても量は出さない
+    bedrock.respond(answer(label_capacity_ml=capacity, fill_ratio=0.1, confidence=0.9))
 
     response = post(client, photos.jpeg())
 
     assert_matches_contract(response)
     body = response.json()
-    assert (body["decision"], body["amount_ml"], body["fill_ratio"]) == ("retake", 0, 0)
+    assert (body["decision"], body["capacity_ml"], body["amount_ml"]) == ("retake", 0, 0)
+    assert body["container"] == "pet_bottle"
+    assert body["retake_hint"] == table.RETAKE_HINT_CAPACITY
+    assert body["checks"][1] == {
+        "id": "capacity",
+        "label": "ラベルの容量",
+        "passed": False,
+        "detail": "読めなかった",
+    }
+
+
+def test_unknown_container_asks_for_a_retake_with_no_water(
+    client: TestClient, bedrock: StubbedBedrock
+) -> None:
+    bedrock.respond(answer("unknown", label_capacity_ml=500, fill_ratio=0.8, confidence=0.9))
+
+    response = post(client, photos.jpeg())
+
+    assert_matches_contract(response)
+    body = response.json()
+    assert (body["decision"], body["amount_ml"], body["fill_ratio"], body["capacity_ml"]) == (
+        "retake",
+        0,
+        0,
+        0,
+    )
     assert body["retake_hint"] == table.RETAKE_HINT
 
 
-def test_container_outside_the_table_is_unknown(
-    client: TestClient, bedrock: StubbedBedrock
+@pytest.mark.parametrize("container", ["mug", "pet_bottle_500"])
+def test_container_outside_the_choices_is_unknown(
+    client: TestClient, bedrock: StubbedBedrock, container: str
 ) -> None:
-    bedrock.respond(answer("mug"))
+    # 1.2.0 の容量付きの値を AI が答えても、容量としては使わない
+    bedrock.respond(answer(container))
 
     body = post(client, photos.jpeg()).json()
 
@@ -123,7 +163,7 @@ def test_photo_of_a_screen_is_rejected(client: TestClient, bedrock: StubbedBedro
     assert_matches_contract(response)
     body = response.json()
     assert body["decision"] == "reject"
-    assert body["checks"][1] == {
+    assert body["checks"][2] == {
         "id": "screen",
         "label": "画面を撮った写真ではない",
         "passed": False,
@@ -145,8 +185,8 @@ def test_out_of_range_numbers_are_kept_within_the_contract(
 @pytest.mark.parametrize(
     "broken",
     [
-        converse_text("pet_bottle_500 です"),
-        converse_tool_use({"container": "pet_bottle_500"}, tool_name="estimate"),
+        converse_text("pet_bottle です"),
+        converse_tool_use({"container": "pet_bottle"}, tool_name="estimate"),
         converse_tool_use(reading(), tool_name="judge"),
     ],
     ids=["text", "missing-fields", "other-tool"],

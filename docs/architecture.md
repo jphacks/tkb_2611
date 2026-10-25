@@ -31,7 +31,7 @@ Vercel (1 つのプロジェクト、東京 hnd1)
 | 写真判定 | `POST /v1/eco-photo/judge` | `HttpEcoPhotoJudge` | AI の呼び出し、検証層 (`decision`・`checks`)、CO₂e |
 | みんなの氷山 | `GET /v1/community/goal` | `HttpCommunityGoalSource` | 集計・節目の判定・ずる対策 |
 | お題 | `GET /v1/quests`、`POST /v1/quests/{id}/redeem` | `HttpQuestSource` | お題の配信、QR・合言葉の照合 |
-| 水の写真 (1.2.0) | `POST /v1/water/estimate` | iOS ネイティブ (project-penguin) | Nova 2 Lite で容器と水位を読み、量と decision をサーバーで決める (`water/`) |
+| 水の写真 (1.2.0、ラベルの容量は 1.3.0) | `POST /v1/water/estimate` | iOS 版 (`unity/`) | Nova 2 Lite でペットボトルか・ラベルの容量・水位を読み、量と decision をサーバーで決める (`water/`) |
 | すれ違い (1.2.0) | `POST /v1/encounters` | iOS 版 (`unity/`) | 両方の報告がそろったときだけ成立にする相互確認 (`encounters.py`、DynamoDB) |
 
 クライアントが解釈せずに並べるもの (`checks` の行、`message`、`comment`) は、当日に中身を増やしても画面がそのまま追従する。**画面に「backend が確かめたこと」を見せる口**なので、審査で差分を見せるときに使う。

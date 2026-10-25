@@ -19,7 +19,7 @@ Unity クライアント (`Sh1n1230/project-penguin`) と backend (提出用リ�
 | みんなの氷山 | `GET /v1/community/goal` | `ICommunityGoalSource` → `HttpCommunityGoalSource` |
 | 期間限定のお題 | `GET /v1/quests` | `IQuestSource` → `HttpQuestSource` |
 | QR・合言葉の照合 | `POST /v1/quests/{id}/redeem` | `IQuestSource.RedeemAsync` |
-| 水の写真 (1.2.0) | `POST /v1/water/estimate` | iOS ネイティブの受け口 (project-penguin) |
+| 水の写真 (1.2.0、ラベルの容量は 1.3.0) | `POST /v1/water/estimate` | iOS ネイティブの受け口 (project-penguin) |
 | すれ違いの相互確認 (1.2.0) | `POST /v1/encounters` | iOS ネイティブの受け口 (project-penguin) |
 
 通信はすべて `PenguinApiClient` (`Assets/Scripts/Backend/`) を通る。接続先と使う機能は実行時に `StreamingAssets/penguin-config.json` から読む (`BackendConfig`)。

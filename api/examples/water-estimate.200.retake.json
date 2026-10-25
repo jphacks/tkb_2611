@@ -1,12 +1,14 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "container": "unknown",
+  "capacity_ml": 0,
   "fill_ratio": 0,
   "amount_ml": 0,
   "confidence": 0.2,
   "decision": "retake",
   "checks": [
     { "id": "container", "label": "写っていたもの", "passed": false, "detail": "ペットボトルが見えない" },
+    { "id": "capacity", "label": "ラベルの容量", "passed": false, "detail": "読めなかった" },
     { "id": "screen", "label": "画面を撮った写真ではない", "passed": true }
   ],
   "retake_hint": "ペットボトル全体が入るように撮ってね",

@@ -1,12 +1,14 @@
 {
-  "schema_version": "1.2.0",
-  "container": "pet_bottle_500",
-  "fill_ratio": 0.6,
-  "amount_ml": 300,
+  "schema_version": "1.3.0",
+  "container": "pet_bottle",
+  "capacity_ml": 600,
+  "fill_ratio": 0.05,
+  "amount_ml": 30,
   "confidence": 0.92,
   "decision": "accept",
   "checks": [
-    { "id": "container", "label": "写っていたもの", "passed": true, "detail": "500ml のペットボトル" },
+    { "id": "container", "label": "写っていたもの", "passed": true, "detail": "ペットボトル" },
+    { "id": "capacity", "label": "ラベルの容量", "passed": true, "detail": "600ml と書いてある" },
     { "id": "screen", "label": "画面を撮った写真ではない", "passed": true }
   ],
   "comment": "水分補給、いいね"

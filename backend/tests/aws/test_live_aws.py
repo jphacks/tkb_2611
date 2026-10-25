@@ -91,12 +91,13 @@ def test_nova_answers_with_the_judge_tool(runtime: BedrockRuntimeClient) -> None
     assert response["usage"]["inputTokens"] > 0
 
 
-def test_nova_answers_the_water_tool_within_the_table(runtime: BedrockRuntimeClient) -> None:
+def test_nova_answers_the_water_tool_in_shape(runtime: BedrockRuntimeClient) -> None:
     # 本番と同じプロンプトとツールの定義で、検証を通る答えが返ること
     # (合成の写真なので、中身の正しさは問わない)
     reading = NovaWaterModel(runtime, NOVA_MODEL_ID).read(photos.jpeg())
 
-    assert reading.container in {"pet_bottle_350", "pet_bottle_500", "unknown"}
+    assert reading.container in {"pet_bottle", "unknown"}
+    assert reading.label_capacity_ml >= 0
     assert 0 <= reading.fill_ratio <= 1
 
 
