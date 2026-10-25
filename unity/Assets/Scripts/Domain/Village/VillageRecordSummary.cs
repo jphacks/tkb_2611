@@ -31,17 +31,19 @@ namespace ProjectPenguin.Domain.Village
     /// <summary>記録の画面に出すまとめ。今日・この 7 日・日ごとの履歴。</summary>
     public sealed class VillageRecordSummary
     {
-        /// <summary>この歩数ごとにガスが 1 たまる (VillageGame の AcceptSteps と同じ)。</summary>
-        public const int StepsPerGas = 500;
+        /// <summary>
+        /// 記録の画面の輪に出す、1 日の歩数の目安。ガスの規則ではない (ガスは 1 歩ごとに <see cref="VillageGame.GasPerStep"/>)。
+        /// </summary>
+        public const int DailyStepGoal = 8000;
         public const int WeekDays = 7, HistoryDays = 30;
 
         public int Today { get; private set; }
         /// <summary>今日の歩数。今日まだ受け取っていなければ 0。</summary>
         public int TodaySteps { get; private set; }
-        /// <summary>次のガスまでの残りの歩数 (1〜500)。</summary>
-        public int StepsToNextGas => StepsPerGas - TodaySteps % StepsPerGas;
-        /// <summary>次のガスまでの進み具合 (0〜1)。</summary>
-        public double NextGasProgress => TodaySteps % StepsPerGas / (double)StepsPerGas;
+        /// <summary>目安の歩数までの残り (歩き終えていれば 0)。</summary>
+        public int StepsToGoal => Math.Max(0, DailyStepGoal - TodaySteps);
+        /// <summary>目安の歩数までの進み具合 (0〜1)。</summary>
+        public double GoalProgress => Math.Min(1, TodaySteps / (double)DailyStepGoal);
         public VillageRecordDay TodayTotals { get; private set; }
         /// <summary>古い順の 7 日 (最後が今日)。記録が無い日も 0 で並べる。</summary>
         public IReadOnlyList<VillageRecordDay> Week { get; private set; }
@@ -53,20 +55,20 @@ namespace ProjectPenguin.Domain.Village
         {
             var entries = (ledger?.Entries ?? new List<HealthRecordEntry>())
                 .Where(e => e != null && e.Day <= today && !double.IsNaN(e.Amount) && !double.IsInfinity(e.Amount) && e.Amount > 0)
-                .Select(e => (Entry: e, Resource: ResourceOf(e.Kind)))
+                .Select(e => (Entry: e, Day: e.Day, Resource: ResourceOf(e.Kind)))
                 .Where(x => x.Resource.HasValue)
                 .ToList();
 
             VillageRecordDay DayOf(int day)
             {
-                var items = entries.Where(x => x.Entry.Day == day).ToList();
+                var items = entries.Where(x => x.Day == day).ToList();
                 double Sum(VillageRecordResource r) => items.Where(x => x.Resource == r).Sum(x => x.Entry.Amount);
                 return new VillageRecordDay { Day = day, Gas = Sum(VillageRecordResource.Gas), Electricity = Sum(VillageRecordResource.Electricity), Water = Sum(VillageRecordResource.Water) };
             }
 
             var history = entries
-                .Where(x => x.Entry.Day > today - HistoryDays)
-                .Select(x => new VillageRecordLine { Day = x.Entry.Day, Resource = x.Resource.Value, Title = TitleOf(x.Entry.Kind), Amount = x.Entry.Amount })
+                .Where(x => x.Day > today - HistoryDays)
+                .Select(x => new VillageRecordLine { Day = x.Day, Resource = x.Resource.Value, Title = TitleOf(x.Entry.Kind), Amount = x.Entry.Amount })
                 .GroupBy(l => l.Day)
                 .OrderByDescending(g => g.Key)
                 .ToArray();

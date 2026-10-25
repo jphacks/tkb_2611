@@ -20,7 +20,9 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             VillageProductionReport="villageProductionReport",
             WorkshopPage="villageWorkshopPage",WorkshopMicro="villageWorkshopMicro",WorkshopTitle="villageWorkshopTitle",WorkshopClose="villageWorkshopClose",WorkshopContent="villageWorkshopContent",
             Coach="villageCoach",CoachStep="villageCoachStep",CoachTitle="villageCoachTitle",CoachBody="villageCoachBody",CoachNext="villageCoachNext",CoachSkip="villageCoachSkip",
-            SoftPage="villageSoftPage",SoftBack="villageSoftBack",SoftTitle="villageSoftTitle",SoftSub="villageSoftSub",SoftContent="villageSoftContent";
+            SoftPage="villageSoftPage",SoftBack="villageSoftBack",SoftTitle="villageSoftTitle",SoftSub="villageSoftSub",SoftContent="villageSoftContent",
+            WaterCamera="villageWaterCamera",WaterGuide="waterGuide",WaterCameraClose="waterCameraClose",WaterShutter="waterShutter",
+            WaterResult="waterResult",WaterTitle="waterTitle",WaterAmount="waterAmount",WaterComment="waterComment";
 
         /// <summary>やわらかい全画面ページ (メニュー・記録) の部品 (ProductionApp.uss)。</summary>
         public const string SoftCard="village-soft-card",SoftCardHead="village-soft-card__head",SoftCardTitle="village-soft-card__title",

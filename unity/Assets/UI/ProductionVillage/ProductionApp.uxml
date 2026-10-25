@@ -226,6 +226,10 @@
         <ui:Template name="ProductionReport" src="Report/ProductionReport.uxml" />
         <ui:Instance template="ProductionReport" name="villageProductionReport" class="village-production-report" picking-mode="Ignore" />
 
+        <!-- 水分補給とエコ活動の写真を撮る全画面カメラ。開くまでは隠しておく -->
+        <ui:Template name="VillageWaterCamera" src="VillageWaterCamera.uxml" />
+        <ui:Instance template="VillageWaterCamera" name="villageWaterCamera" class="village-water-camera pp-hidden" />
+
         <!-- チュートリアルの吹き出し (VillageTutorialPresenter)。ページや生産レポートの上にも出す。吹き出しの外は押せる -->
         <ui:VisualElement name="villageCoach" class="village-coach pp-hidden" picking-mode="Ignore">
             <ui:VisualElement class="village-coach__card">

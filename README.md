@@ -43,7 +43,7 @@ iOS 版は App Store などで配っていないので、手元の Mac でビル
 
 1. このリポジトリを clone する。数字用のフォント (Oxanium) の 2 つだけは Git LFS で入っているので、先に [git-lfs](https://git-lfs.com/) を入れておく (`brew install git-lfs && git lfs install`)。ほかの素材はそのまま入っている。GitHub の「Download ZIP」は LFS のファイルを含まないことがあるので、clone を使う。 git 2.45.1 (Homebrew などの古い版) だけは、git-lfs があると clone の途中で `active post-checkout hook found during git clone` と止まる (git の不具合で 2.45.2 で直った)。そのときは clone したフォルダで `git restore --source=HEAD :/` を実行すれば続きが取り出せる。Xcode に付いてくる git (`/usr/bin/git`) では起きない。
 2. Unity Hub で `unity/` をプロジェクトとして開く (初回は取り込みに数分かかる)。
-3. メニューの **Build > iOS Xcode プロジェクト** を選ぶ。`unity/Builds/iOS/` に Xcode のプロジェクトができる (入るのは正規のシーン `Assets/Scenes/ProductionVillageHome.unity` だけ)。
+3. メニューの **Build > iOS Xcode プロジェクト** を選ぶ。`unity/Builds/iOS/` に Xcode のプロジェクトができる (入るのは正規のシーン `Assets/Scenes/ProductionVillageHome.unity` だけ)。初回はビルド先を iOS に切り替えてスクリプトをコンパイルし直してから、自動でビルドを続ける (数分かかる。その間は Unity を前面に出しておく)。
 4. `unity/Builds/iOS/Unity-iPhone.xcodeproj` を Xcode で開き、`Unity-iPhone` のターゲットの **Signing & Capabilities** で次を設定する。
    - **Automatically manage signing** を入れ、**Team** に自分の Apple ID (Personal Team) を選ぶ。
    - **Bundle Identifier** を自分だけのものに変える (例: `com.<自分の名前>.projectpenguin`)。既定の `com.ueco.projectpenguin` は開発チームの個人チームで使っていて、ほかの人の個人チームでは登録できない。
@@ -52,7 +52,16 @@ iOS 版は App Store などで配っていないので、手元の Mac でビル
 
 歩数 (モーション)・カメラ・写真・Bluetooth の許可は、使う操作をしたときにアプリが尋ねる。無料の個人チームで入れたアプリは 7 日で起動できなくなるので、そのときは手順 5 からやり直す。
 
-Unity の Editor の再生 (▶) でも遊べる。歩数・すれ違いなどの端末の入力は、Editor では画面の「開発用」のボタンで合成の値を入れる。
+Unity の Editor の再生 (▶) でも遊べる。`Assets/Scenes/ProductionVillageHome.unity` を開いて ▶ を押す。歩数は Editor では測れないので、下の「デバッグ (審査用)」の「歩数 +1000 (開発用)」で合成の値を入れる。
+
+### 審査のときの遊び方
+
+- **資源無限のモード**: 画面下の **メニュー > デバッグ (審査用) > 資源無限にする** で、建設・生産でガス・電気・水が減らなくなる。材料 (魚・すり身など) と配送はふだんどおり動くので、施設の並べ方と施設群をそのまま試せる。iOS の実機 (Development でないビルド) でも使える。資源無限の村はふだんの村と別に保存するので、**ふだんの村に戻る** を押せばもとの村に戻る。
+- **歩数**: 1 歩でガスが 2 たまる (審査向けの値)。iPhone ではアプリを開いたときと **記録 > 歩数を確かめる** で、今日の歩数を受け取る。
+- **水**: **スキャン > 水を撮る** で飲みきったペットボトルを撮ると、写真を backend (`https://project-penguin-nu.vercel.app/api/v1/water/estimate`) の AI が見て、受け付けられると水が 3 たまる (1 日 1 回)。ラベルの容量の表示が写るように撮る。写真は判定の後に捨て、端末にも backend にも残さない。
+- **スクリーンタイム**: 設定 > スクリーンタイム で上の「日」を選び、きのうの棒を押してスクショを撮っておく。**スキャン > スクショを選ぶ** でそのスクショを選ぶと、端末の中で日付と合計の時間を読み、使わなかった時間に応じて電気がたまる (きのうの分だけ、1 日 1 回)。スクショは端末の外に送らない。Editor では、きのうの分を読んだ見本が入る。
+- **すれ違い**: 村を開いている間、近くでこのアプリを開いている iPhone と Bluetooth で番号を交換し、backend で互いに確かめられたら、ペンギンが来て資源をくれる (1 日 10 回まで)。状態は **スキャン** の「すれ違い」に出る。1 台で試すときは、Editor か Development Build の「合成の相手とすれ違う (開発用)」を使う。
+- 一度遊んだ状態を消して最初からやり直すときは、アプリを消して入れ直す (Editor では `~/Library/Application Support/ueco/Project-Penguin/` の `penguin-production-v2*.db` を消す)。
 
 [![IMAGE ALT TEXT HERE](https://jphacks.com/wp-content/uploads/2026/07/IMG_5316.png)](https://www.youtube.com/watch?v=piaNsc6ilBI)
 

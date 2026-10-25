@@ -47,7 +47,8 @@ namespace ProjectPenguin.Editor.Build
             var projectPath = PBXProject.GetPBXProjectPath(output);
             var project = new PBXProject();
             project.ReadFromFile(projectPath);
-            // Swift のプラグイン (PenguinWaterCamera.swift) をコンパイルする版。
+            // Swift のプラグイン (PenguinWaterCamera.swift・PenguinScreenTime.swift) をコンパイルする版。
+            // スクショは PHPicker で選ばせるので、写真の閲覧の許可 (NSPhotoLibraryUsageDescription) は要らない。
             project.SetBuildProperty(project.GetUnityFrameworkTargetGuid(), "SWIFT_VERSION", SwiftVersion);
             project.AddFrameworkToProject(project.GetUnityFrameworkTargetGuid(), "CoreMotion.framework", false);
             project.AddFrameworkToProject(project.GetUnityFrameworkTargetGuid(), "CoreBluetooth.framework", false);

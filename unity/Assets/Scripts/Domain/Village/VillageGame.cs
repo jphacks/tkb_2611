@@ -60,6 +60,10 @@ namespace ProjectPenguin.Domain.Village
         public double Electricity {get; internal set;} public long Produced {get; internal set;}
         public bool GroupViewActive {get; internal set;}
         public bool Unlimited {get; internal set;} public int BoardSize {get; internal set;}
+        /// <summary>ガス・電気・水を減らさないデバッグのモード。材料と物流は通常どおり。</summary>
+        public bool FreeResources {get; internal set;}
+        /// <summary>ガス・電気・水が足りなくならない (開発用の無制限か、資源無限のモード)。</summary>
+        public bool ResourcesUnlimited=>Unlimited||FreeResources;
         public long AtMs {get; internal set;} public double Gas {get; internal set;} public double Water {get; internal set;}
         public double GasPerMinute {get; internal set;} public double GasSpent {get; internal set;}
         public double TheoreticalGasPerMinute {get; internal set;}
@@ -106,8 +110,12 @@ namespace ProjectPenguin.Domain.Village
         internal void RecordGas(double gas){if(gas>0)GetOrCreateTrendBucket(_at).Gas+=gas;}
         private long _at,_requested,_nextCargo=1,_produced;
         private int _nextId=1,_deliveryMs=1500;private double _speed=1,_gas,_electricity,_water,_spent;
-        private bool _unlimited;
+        private bool _unlimited,_freeResources;
         public const int BoardSize=24;
+        public bool FreeResources=>_freeResources;
+        /// <summary>ガス・電気・水を減らさないデバッグのモード (審査で遊べるようにする)。材料・在庫・物流の規則は変えない。</summary>
+        public void SetFreeResources(bool on){_freeResources=on;}
+        private bool PaysResources=>!_unlimited&&!_freeResources;
         public VillageGame(bool unlimited){_unlimited=unlimited;}
         private static VillageResult Result(bool ok,string reason,int id=0)=>new VillageResult{Success=ok,Reason=reason,Id=id};
         public void Configure(bool unlimited,double speed,int deliveryMs)
@@ -151,8 +159,8 @@ namespace ProjectPenguin.Domain.Village
         {
             var reason=CanPlace(kind,x,y);if(reason.Length>0)return Result(false,reason);
             var d=IslandCatalog.Get(kind);
-            if(!_unlimited&&(_electricity<d.ElectricityCost||_water<d.WaterCost))return Result(false,"建設に使う資源が足りません");
-            if(!_unlimited){_electricity-=d.ElectricityCost;_water-=d.WaterCost;}
+            if(PaysResources&&(_electricity<d.ElectricityCost||_water<d.WaterCost))return Result(false,"建設に使う資源が足りません");
+            if(PaysResources){_electricity-=d.ElectricityCost;_water-=d.WaterCost;}
             var n=new Node{Id=_nextId++,Kind=kind,X=x,Y=y};_nodes.Add(n);return Result(true,d.Name+"を建てました",n.Id);
         }
         public VillageResult Move(int id,int x,int y)
@@ -266,7 +274,13 @@ namespace ProjectPenguin.Domain.Village
             var minMinute=_at/60000-59;var expired=_trend.Keys.Where(m=>m<minMinute).ToArray();foreach(var k in expired)_trend.Remove(k);
         }
         private bool Pay(double gas)
-        {if(!_unlimited&&_gas<gas)return false;if(!_unlimited){_gas-=gas;RecordGas(gas);}_spent+=gas;_history.Add((_at,gas,0));return true;}
+        {
+            if(PaysResources&&_gas<gas)return false;
+            if(PaysResources)_gas-=gas;
+            // 資源無限でも消費の記録は残し、生産レポートの消費量を通常と同じに見せる。
+            if(!_unlimited)RecordGas(gas);
+            _spent+=gas;_history.Add((_at,gas,0));return true;
+        }
         public VillageView CreateView(int today=-1)
         {
             var totals=Enum.GetValues(typeof(Item)).Cast<Item>().ToDictionary(i=>i,i=>_nodes.Sum(n=>n.Held(i))+_cargo.Count(c=>c.Item==i));
@@ -330,7 +344,7 @@ namespace ProjectPenguin.Domain.Village
                 :matWait>0?$"材料待ちの施設が {matWait} 棟あります（上流施設または仕分け機を近くに配置）"
                 :fullWait>0?$"出力満杯の施設が {fullWait} 棟あります（倉庫または氷室を近くに配置）"
                 :"すべての生産・物流ラインが順調に稼働しています";
-            return new VillageView{GroupViewActive=_groupViewActive,Unlimited=_unlimited,BoardSize=BoardSize,AtMs=_at,Gas=_gas,Electricity=_electricity,Water=_water,
+            return new VillageView{GroupViewActive=_groupViewActive,Unlimited=_unlimited,FreeResources=_freeResources,BoardSize=BoardSize,AtMs=_at,Gas=_gas,Electricity=_electricity,Water=_water,
                 Produced=_produced,GasSpent=_spent,GasPerMinute=_history.Sum(e=>e.Gas),TheoreticalGasPerMinute=theoGasPerMin,
                 GasReceivedToday=gasReceivedToday,
                 ProducedLastMinute=_history.Sum(e=>(long)e.Made),

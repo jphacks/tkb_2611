@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ProjectPenguin.Domain.Encounter;
 using ProjectPenguin.Domain.Island;
 
 namespace ProjectPenguin.Domain.Village
@@ -11,12 +12,16 @@ namespace ProjectPenguin.Domain.Village
         public int NextId = 1, DeliveryMs = 1500;
         public double Speed = 1, Gas, Electricity, Water, Spent;
         public bool Unlimited;
+        /// <summary>資源無限のモード。製品用の保存には入れない (ProductionVillageSave.Validate)。</summary>
+        public bool FreeResources;
         public VillageGroupProgressState GroupProgress = new VillageGroupProgressState();
         public List<VillageNodeState> Nodes = new List<VillageNodeState>();
         public List<VillageCargoState> Cargo = new List<VillageCargoState>();
         public List<VillageHistoryState> History = new List<VillageHistoryState>();
         public List<VillageTrendState> Trend = new List<VillageTrendState>();
         public HealthRecordLedger Ledger = new HealthRecordLedger();
+        /// <summary>すれ違いの台帳。この項目が無い古い保存は空の台帳として読む。</summary>
+        public EncounterLedgerState Encounters = new EncounterLedgerState();
     }
     [Serializable] public sealed class VillageTrendState
     {

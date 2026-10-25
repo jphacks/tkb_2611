@@ -6,7 +6,8 @@ namespace ProjectPenguin.Tests.EditMode
 {
     public sealed class VillageRecordSummaryTests
     {
-        private const int Today = 20000;
+        /// <summary>2026-10-25 (1970-01-01 起点の端末の日付。歩数・水の台帳と同じ数え方)。</summary>
+        private const int Today = 20751;
         private static readonly string Steps = "歩数 " + '→' + " ガス", Water = "水分補給 " + '→' + " 水", Screen = "スクリーンタイム " + '→' + " 電気";
 
         private static HealthRecordLedger Ledger(params (string Kind, int Day, double Amount)[] entries)
@@ -21,7 +22,8 @@ namespace ProjectPenguin.Tests.EditMode
             var s = VillageRecordSummary.From(new HealthRecordLedger(), Today);
             Assert.That(s.Empty, Is.True);
             Assert.That(s.TodaySteps, Is.Zero);
-            Assert.That(s.StepsToNextGas, Is.EqualTo(VillageRecordSummary.StepsPerGas));
+            Assert.That(s.StepsToGoal, Is.EqualTo(VillageRecordSummary.DailyStepGoal));
+            Assert.That(s.GoalProgress, Is.Zero);
             Assert.That(s.Week.Count, Is.EqualTo(7));
             Assert.That(s.Week.Last().Day, Is.EqualTo(Today), "最後が今日");
             Assert.That(s.Week.All(d => d.Total == 0), Is.True);
@@ -33,8 +35,12 @@ namespace ProjectPenguin.Tests.EditMode
             var l = new HealthRecordLedger { LastStepDay = Today, MaxSteps = 1234 };
             var s = VillageRecordSummary.From(l, Today);
             Assert.That(s.TodaySteps, Is.EqualTo(1234));
-            Assert.That(s.StepsToNextGas, Is.EqualTo(266), "1234 歩なら次のガスまで 266 歩");
-            Assert.That(s.NextGasProgress, Is.EqualTo(234 / 500.0).Within(1e-9));
+            Assert.That(s.StepsToGoal, Is.EqualTo(VillageRecordSummary.DailyStepGoal - 1234));
+            Assert.That(s.GoalProgress, Is.EqualTo(1234.0 / VillageRecordSummary.DailyStepGoal).Within(1e-9));
+
+            l.MaxSteps = VillageRecordSummary.DailyStepGoal + 500;
+            Assert.That(VillageRecordSummary.From(l, Today).StepsToGoal, Is.Zero, "目安を超えたら残りは 0");
+            Assert.That(VillageRecordSummary.From(l, Today).GoalProgress, Is.EqualTo(1), "輪は満タンで止める");
 
             l.LastStepDay = Today - 1;
             Assert.That(VillageRecordSummary.From(l, Today).TodaySteps, Is.Zero, "昨日の歩数は今日に数えない");

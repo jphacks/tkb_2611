@@ -85,14 +85,14 @@ namespace ProjectPenguin.Tests.EditMode
         public void CreateView_GasReceivedToday_ReturnsCorrectAmount()
         {
             var game = new VillageGame(unlimited: false);
-            game.AcceptSteps(1, 1000, 1); // day 1: 1000 steps = 2 gas
-            game.AcceptSteps(2, 1500, 2); // day 2: 1500 steps = 3 gas
+            game.AcceptSteps(1, 1000, 1); // day 1: 1000 steps
+            game.AcceptSteps(2, 1500, 2); // day 2: 1500 steps
 
             var viewDay2 = game.CreateView(today: 2);
-            Assert.That(viewDay2.GasReceivedToday, Is.EqualTo(3.0));
+            Assert.That(viewDay2.GasReceivedToday, Is.EqualTo(1500.0 * VillageGame.GasPerStep));
 
             var viewDay1 = game.CreateView(today: 1);
-            Assert.That(viewDay1.GasReceivedToday, Is.EqualTo(2.0));
+            Assert.That(viewDay1.GasReceivedToday, Is.EqualTo(1000.0 * VillageGame.GasPerStep));
         }
     }
 }

@@ -13,6 +13,16 @@ namespace ProjectPenguin.Systems
         public string Status {get;private set;}="歩数を確認しています";
         private void Start(){_session=GetComponent<ProductionVillageSession>();_source=StepSources.Create();Request();}
         public static int Day(DateTimeOffset date)=>(int)(date.Date-new DateTime(1970,1,1)).TotalDays;
+        /// <summary>歩数を測れない環境 (Editor など、<see cref="FakeStepSource"/>) で、開発用の操作から歩数を入れられる。</summary>
+        public bool CanAddDevelopmentSteps=>_source is FakeStepSource;
+        /// <summary>今日の歩数に足して、実機と同じ受け取りの道 (<see cref="Update"/>) で村に渡す。</summary>
+        public void AddDevelopmentSteps(int steps)
+        {
+            if(!(_source is FakeStepSource fake)||steps<=0)return;
+            fake.Steps=Math.Min(172800,fake.Steps+steps);
+            var now=DateTimeOffset.Now;fake.Request(new DateTimeOffset(now.Date,now.Offset).ToUniversalTime());
+            _pending=true;_nextRequest=Time.unscaledTime+30;
+        }
         public void Request()
         {
             if(_source==null)return;
