@@ -472,6 +472,9 @@
     justify-content: space-between;
 }
 .village-tactical-row { flex-direction: row; flex-wrap: wrap; align-items: center; }
+/* 次にやること (VillageInsight.NextStep)。困っているときは赤い帯で目立たせる */
+.village-next-step { color: var(--color-accent); font-size: var(--font-size-body); -unity-font-style: bold; white-space: normal; margin-top: var(--space-2); padding: var(--space-1) var(--space-2); border-left-width: 6px; border-left-color: var(--color-accent); background-color: var(--color-tactical-cyan-soft); }
+.village-next-step--warn { color: var(--color-danger-soft); border-left-color: var(--color-danger); }
 .village-group-state { color: var(--color-tactical-cyan); font-size: var(--font-size-caption); white-space: normal; margin-top: var(--space-1); }
 .village-group-mark { position: absolute; width: 46px; height: 46px; opacity: 0.55; }
 .village-group-mark--waiting { opacity: 0.24; }

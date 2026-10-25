@@ -282,13 +282,21 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 _tacticalGas.text = $"🔥 消費 {view.GasPerMinute:0.#}/分 (理論 {view.TheoreticalGasPerMinute:0.#}/分)";
             }
 
-            // 左下ボトルネック・連携診断バナー
+            // 次にやること。ホームの左下と工房モードの操作バーに同じ文を出す (VillageInsight.NextStep)
+            var step = VillageInsight.NextStep(view, _world != null ? _world.Hints : null);
+            var stepText = step.Hint.Length > 0 ? $"{step.Text} — {step.Hint}" : step.Text;
+            var trouble = step.Tone == VillageNextStepTone.Warn || step.Tone == VillageNextStepTone.Bad;
             if (_insightText != null && _insightBanner != null)
             {
-                var synCount = view.Synergies?.Count ?? 0;
-                var prefix = synCount > 0 ? $"✨連携{synCount}件・" : "";
-                _insightText.text = prefix + (view.BottleneckSummary ?? "稼働順調");
-                _insightBanner.EnableInClassList(ProductionUiNames.InsightBannerWarnClass, view.HasBottleneck);
+                _insightText.text = stepText;
+                _insightBanner.EnableInClassList(ProductionUiNames.InsightBannerWarnClass, trouble);
+            }
+
+            var next = _root.Q<Label>(ProductionUiNames.NextStep);
+            if (next != null)
+            {
+                next.text = "▶ " + stepText;
+                next.EnableInClassList(ProductionUiNames.NextStepWarnClass, trouble);
             }
 
             Resource(_gas, view.Gas, ref _lastGas);
@@ -328,7 +336,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 }
 
                 IslandUi.SetVisible(badge, true);
-                var panelPos = RuntimePanelUtils.ScreenToPanel(_root.panel, new Vector2(screenPos.x, Screen.height - screenPos.y));
+                // 札は spatial layer の中に置くので、パネルの座標をこの層の座標に直す (セーフエリアの余白でずれないように)
+                var panelPos = _spatialLayer.WorldToLocal(RuntimePanelUtils.ScreenToPanel(_root.panel, new Vector2(screenPos.x, Screen.height - screenPos.y)));
                 badge.style.left = panelPos.x - 44f;
                 badge.style.top = panelPos.y - 28f;
 

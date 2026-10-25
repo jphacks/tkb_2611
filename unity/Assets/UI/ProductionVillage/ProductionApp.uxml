@@ -61,6 +61,7 @@
                     <ui:Button name="villageZoomOverview" text="全体" class="village-tactical-btn village-tactical-btn--active" />
                     <ui:Button name="villageZoomDetail" text="詳細" class="village-tactical-btn" />
                 </ui:VisualElement>
+                <ui:Label name="villageNextStep" text="▶ 村を読み込んでいるよ" class="village-next-step" picking-mode="Ignore" />
                 <ui:Label name="villageGroupState" text="全体表示・2本指で詳細へ" class="village-group-state" picking-mode="Ignore" />
             </ui:VisualElement>
 
