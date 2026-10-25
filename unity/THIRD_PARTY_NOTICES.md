@@ -9,6 +9,7 @@
 | 対象 | 場所 | ライセンス |
 |---|---|---|
 | M PLUS Rounded 1c | `Assets/UI/Fonts/` | SIL Open Font License 1.1 (`OFL.txt` 同梱) |
+| Oxanium (数字用。Bold と ExtraBold の静的版) | `Assets/UI/Fonts/` | SIL Open Font License 1.1 (`Oxanium-OFL.txt` 同梱。Copyright 2019 The Oxanium Project Authors) |
 | TextMesh Pro の素材 | `Assets/TextMesh Pro/` | Unity Companion License |
 | Liberation Sans (TextMesh Pro に同梱) | `Assets/TextMesh Pro/Fonts/` | SIL Open Font License 1.1 (`LiberationSans - OFL.txt` 同梱) |
 | Unity のパッケージ | `Packages/manifest.json` で参照 (リポジトリには含まない) | 各パッケージのライセンス (多くは Unity Companion License) |
