@@ -5,9 +5,11 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 # 守っている契約の版 (api/openapi.yaml の info.version)。
-SCHEMA_VERSION = "1.2.0"
+SCHEMA_VERSION = "1.3.0"
 
-WaterContainer = Literal["pet_bottle_350", "pet_bottle_500", "unknown"]
+# pet_bottle_350・pet_bottle_500 は 1.2.0 のサーバーが返していた値。
+# 1.3.0 からは返さない (容量は capacity_ml)
+WaterContainer = Literal["pet_bottle", "pet_bottle_350", "pet_bottle_500", "unknown"]
 WaterDecision = Literal["accept", "retake", "reject"]
 
 
@@ -21,6 +23,7 @@ class Check(BaseModel):
 class WaterEstimate(BaseModel):
     schema_version: str = SCHEMA_VERSION
     container: WaterContainer
+    capacity_ml: int = Field(default=0, ge=0, le=2000)
     fill_ratio: float = Field(ge=0, le=1)
     amount_ml: int = Field(ge=0, le=2000)
     confidence: float = Field(ge=0, le=1)

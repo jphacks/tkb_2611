@@ -5,7 +5,7 @@ info:
   title: Project Penguin API
   # 契約の版。項目を足したら上げる。正本は jphacks/tkb_2611 の api/openapi.yaml で、
   # project-penguin の api/ はその写し (scripts/check_api_contract.py --against で一致を確かめる)。
-  version: 1.2.0
+  version: 1.3.0
   summary: Unity クライアント (Sh1n1230/project-penguin) と backend (jphacks/tkb_2611) の契約
   description: |
     ## 前方互換の規則
@@ -18,6 +18,7 @@ info:
     3. **後から足す項目はすべて省略可にする。必須の項目は増やさない・消さない・意味を変えない。**
        (1.1.0 で、どのサーバーも返していなかった省略可の `co2e` を外した。CO₂ ではなくインフラの素材で見せると決めたため)
        (1.2.0 で、iOS ネイティブのクライアント向けに水の写真 (`/v1/water/estimate`) とすれ違い (`/v1/encounters`) の口を足した。既存の口は変えていない)
+       (1.3.0 で、水の写真の容量を 350ml・500ml の表から決めるのをやめ、ラベルに書いてある容量を読む `capacity_ml` を足した。`container` に `pet_bottle` を足した)
     4. 壊す変更が要るときはパスの版を上げる (`/v2/`)。`/v1/` は審査が終わるまで残す。
 
     ## 共通
@@ -235,8 +236,10 @@ paths:
       operationId: estimateWater
       summary: ペットボトルの写真 1 枚から、写っている水の量を見積もる
       description: |
-        手入力した水の量の裏付けに使う。扱うのはペットボトルだけ。AI には容器の種類と水位の割合だけを答えさせ、
-        `amount_ml` はサーバーが容量の表 (ラベルの容量) × `fill_ratio` で計算する。`decision` もサーバーが決める。
+        飲んだ水の量を決めるのに使う。扱うのはペットボトルだけ。AI には容器の種類・ラベルに書いてある容量・水位の割合を答えさせ、
+        `amount_ml` はサーバーが `capacity_ml` (ラベルの容量) × `fill_ratio` で計算する。`decision` もサーバーが決める。
+        **容量はラベルの表示 (「500ml」「2L」など) からだけ決め、ボトルの形や大きさから推し量らない。**
+        表示が読めなければ `retake` にし、表示が写るように撮り直してもらう。
         写っている量をどう資源にするか (飲んだ量との比べ方) はクライアントが決める。
       parameters:
         - name: Idempotency-Key
@@ -271,6 +274,7 @@ paths:
               examples:
                 accept: { externalValue: examples/water-estimate.200.accept.json }
                 retake: { externalValue: examples/water-estimate.200.retake.json }
+                retakeCapacity: { externalValue: examples/water-estimate.200.retake_capacity.json }
                 reject: { externalValue: examples/water-estimate.200.reject.json }
         "400": { $ref: "#/components/responses/BadRequest" }
         "413": { $ref: "#/components/responses/TooLarge" }
@@ -634,16 +638,18 @@ components:
     WaterContainer:
       type: string
       description: |
-        写っていた容器。扱うのはペットボトルだけで、数字はラベルの容量 (ml)。表のどれでもなければ `unknown`。
-        クライアントは知らない値を `unknown` として扱う (容量は後から足す)。
-      enum: [pet_bottle_350, pet_bottle_500, unknown]
+        写っていた容器。扱うのはペットボトルだけで、ペットボトルでなければ `unknown`。
+        容量は `WaterEstimate.capacity_ml` で伝える (1.3.0 から。サーバーは `pet_bottle` を返す)。
+        `pet_bottle_350`・`pet_bottle_500` は 1.2.0 のサーバーが返していた値で、1.3.0 のサーバーは返さない。
+        クライアントは容器の値から容量を決めない。知らない値は `unknown` として扱う。
+      enum: [pet_bottle, pet_bottle_350, pet_bottle_500, unknown]
 
     WaterDecision:
       type: string
       description: |
         サーバーの結論 (AI の出力をそのまま使わない)。
         - `accept`: `amount_ml` を使ってよい
-        - `retake`: ペットボトルが見分けられない・確かさが低い。`retake_hint` を出して撮り直してもらう
+        - `retake`: ペットボトルが見分けられない・ラベルの容量が読めない・確かさが低い。`retake_hint` を出して撮り直してもらう
         - `reject`: 使わない (画面を撮った写真など)。理由は `checks` で伝える
 
         クライアントは知らない値を `retake` として扱う。
@@ -660,11 +666,18 @@ components:
           minimum: 0
           maximum: 1
           description: 容器の容量に対する、写っている水の割合
+        capacity_ml:
+          type: integer
+          minimum: 0
+          maximum: 2000
+          description: |
+            ラベルに書いてある容量 (ml。「2L」は 2000)。表示が読めない・100ml より小さい・2000ml より大きいときは 0 で、
+            `decision` は `retake` になる (1.3.0 で追加。1.2.0 のサーバーは返さないので、無ければ 0 として扱う)
         amount_ml:
           type: integer
           minimum: 0
           maximum: 2000
-          description: 写っている水の量。容量 × `fill_ratio` を四捨五入したもの。`container` が `unknown` なら 0
+          description: 写っている水の量。`capacity_ml` × `fill_ratio` を四捨五入したもの。容量が分からなければ 0
         confidence: { type: number, minimum: 0, maximum: 1 }
         decision: { $ref: "#/components/schemas/WaterDecision" }
         checks:

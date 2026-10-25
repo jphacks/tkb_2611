@@ -12,6 +12,7 @@ from mypy_boto3_dynamodb import DynamoDBClient
 from penguin_backend.app import create_app
 from penguin_backend.aws import Clients, fixed
 from penguin_backend.encounters import JST, app_day, pair_id
+from penguin_backend.schemas import SCHEMA_VERSION
 from penguin_backend.settings import Settings
 from tests.support import bedrock as bedrock_support
 from tests.support.contract import assert_error, assert_matches_contract
@@ -81,7 +82,7 @@ def test_first_report_waits_for_the_peer(client: TestClient) -> None:
 
     assert_matches_contract(response)
     assert response.json() == {
-        "schema_version": "1.2.0",
+        "schema_version": SCHEMA_VERSION,
         "matched": False,
         "pair_id": "e5ecc329c8fcc058",
     }
