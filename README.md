@@ -26,7 +26,7 @@ iOS 版は App Store などで配っていないので、手元の Mac でビル
 
 **要るもの**: macOS・git-lfs・Xcode (26.5 で確かめた)・Unity 6000.6.0f1 (Unity Hub で iOS Build Support のモジュールも入れる)・iPhone (iOS 15 以上)・Apple ID。
 
-1. このリポジトリを clone する。数字用のフォント (Oxanium) の 2 つだけは Git LFS で入っているので、先に [git-lfs](https://git-lfs.com/) を入れておく (`brew install git-lfs && git lfs install`)。ほかの素材はそのまま入っている。GitHub の「Download ZIP」は LFS のファイルを含まないことがあるので、clone を使う。
+1. このリポジトリを clone する。数字用のフォント (Oxanium) の 2 つだけは Git LFS で入っているので、先に [git-lfs](https://git-lfs.com/) を入れておく (`brew install git-lfs && git lfs install`)。ほかの素材はそのまま入っている。GitHub の「Download ZIP」は LFS のファイルを含まないことがあるので、clone を使う。 git 2.45.1 (Homebrew などの古い版) だけは、git-lfs があると clone の途中で `active post-checkout hook found during git clone` と止まる (git の不具合で 2.45.2 で直った)。そのときは clone したフォルダで `git restore --source=HEAD :/` を実行すれば続きが取り出せる。Xcode に付いてくる git (`/usr/bin/git`) では起きない。
 2. Unity Hub で `unity/` をプロジェクトとして開く (初回は取り込みに数分かかる)。
 3. メニューの **Build > iOS Xcode プロジェクト** を選ぶ。`unity/Builds/iOS/` に Xcode のプロジェクトができる (入るのは正規のシーン `Assets/Scenes/ProductionVillageHome.unity` だけ)。
 4. `unity/Builds/iOS/Unity-iPhone.xcodeproj` を Xcode で開き、`Unity-iPhone` のターゲットの **Signing & Capabilities** で次を設定する。
