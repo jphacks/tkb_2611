@@ -11,6 +11,8 @@ namespace ProjectPenguin.Systems
     {
         public ProductionVillageSessionCore Core {get;private set;}
         public static long UtcNow=>DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        /// <summary>資源無限のモードを次の起動でも続けるための印 (村の中身は開発用の保存にある)。</summary>
+        public const string FreeResourcesKey="village.freeResources";
         private double _fraction;
         private float _nextSave;
         private long _suspendedUtc;
@@ -45,6 +47,7 @@ namespace ProjectPenguin.Systems
             }
             else Core=new ProductionVillageSessionCore(new ProductionVillageStore(Application.persistentDataPath),new ProductionVillageStore(Application.persistentDataPath,true),settings.CreateInitial,DevelopmentAllowed);
             Core.Open(UtcNow);_nextSave=Time.unscaledTime+20;
+            if(!UsingInspectorDebugLayout&&PlayerPrefs.GetInt(FreeResourcesKey,0)==1)Core.SetFreeResources(true,UtcNow);
             if(UsingInspectorDebugLayout&&Core.View!=null)
             {
                 if(!Core.BeginDevelopment(UtcNow)||!ConfigureInspector(settings))InspectorDebugError="メモリ村の開発設定を開始できませんでした";
@@ -77,6 +80,13 @@ namespace ProjectPenguin.Systems
             else if(!Core.ResetDevelopment(UtcNow))return false;
             if(!ConfigureInspector(settings))return false;
             _fraction=0;LayoutApplied?.Invoke();return true;
+        }
+        /// <summary>ガス・電気・水を減らさないモードを切り替える。全ビルドで使える (<see cref="ProductionVillageSessionCore.SetFreeResources"/>)。</summary>
+        public bool SetFreeResources(bool on)
+        {
+            if(Core==null||!Core.SetFreeResources(on,UtcNow))return false;
+            if(!UsingInspectorDebugLayout){PlayerPrefs.SetInt(FreeResourcesKey,on?1:0);PlayerPrefs.Save();}
+            return true;
         }
         public void RetryLoad(){if(Core.View==null)Core.Open(UtcNow);else if(_suspendedUtc>0)Resume();else Core.Save(UtcNow);}
         private void Update()

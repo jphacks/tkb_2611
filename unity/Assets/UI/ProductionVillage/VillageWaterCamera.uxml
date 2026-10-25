@@ -1,0 +1,40 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="VillageWaterCamera.uss" />
+    <ui:VisualElement name="root" class="water-camera">
+        <ui:VisualElement name="previewViewport" class="water-camera__viewport" picking-mode="Ignore">
+            <ui:Image name="cameraPreview" class="water-camera__preview" picking-mode="Ignore" />
+        </ui:VisualElement>
+
+        <ui:VisualElement class="water-camera__overlay pp-safe-area" picking-mode="Ignore">
+            <ui:VisualElement class="water-camera__top-bar" picking-mode="Ignore">
+                <ui:Button name="waterCameraClose" class="pp-icon-button pp-icon-button--dark">
+                    <ui:VisualElement class="pp-icon pp-icon--close pp-icon--inverse" picking-mode="Ignore" />
+                </ui:Button>
+            </ui:VisualElement>
+
+            <ui:Label name="waterGuide" text="ペットボトルを全体が入るように撮ってね&#10;入っている水の量を見積もるよ" class="water-camera__guide pp-text-label pp-text-bold pp-text-inverse pp-text-center" />
+
+            <ui:VisualElement class="pp-scan-frame water-camera__frame" picking-mode="Ignore">
+                <ui:VisualElement class="pp-scan-frame__corner pp-scan-frame__corner--top-left" picking-mode="Ignore" />
+                <ui:VisualElement class="pp-scan-frame__corner pp-scan-frame__corner--top-right" picking-mode="Ignore" />
+                <ui:VisualElement class="pp-scan-frame__corner pp-scan-frame__corner--bottom-left" picking-mode="Ignore" />
+                <ui:VisualElement class="pp-scan-frame__corner pp-scan-frame__corner--bottom-right" picking-mode="Ignore" />
+                <ui:Label name="cameraStatus" class="water-camera__status pp-text-bold pp-text-inverse pp-text-center pp-hidden" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="waterResult" class="pp-card pp-elevated water-camera__result pp-hidden">
+                <ui:Label name="waterTitle" class="pp-text-title pp-text-heavy" />
+                <ui:Label name="waterAmount" class="pp-text-label pp-text-bold" />
+                <ui:Label name="waterComment" class="pp-text-caption pp-text-sub water-camera__comment" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="water-camera__controls" picking-mode="Ignore">
+                <ui:Button name="waterShutter" class="pp-shutter">
+                    <ui:VisualElement class="pp-shutter__core" picking-mode="Ignore" />
+                </ui:Button>
+            </ui:VisualElement>
+
+            <ui:VisualElement class="pp-safe-area__bottom" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

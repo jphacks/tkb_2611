@@ -99,7 +99,7 @@ namespace ProjectPenguin.Domain.Village
                 return Step("まだ施設がないよ", "まずは漁場を建てて、お魚をとろう", FacilityKind.Fishery, VillageNextStepTone.Info);
 
             var gasWait = nodes.Where(n => n.Status == GasWait).ToArray();
-            if (gasWait.Length > 0 && !view.Unlimited)
+            if (gasWait.Length > 0 && !view.ResourcesUnlimited)
                 return Step($"ガスが切れて {gasWait.Length} 棟が止まっている", "歩くとガスがたまるよ", null, VillageNextStepTone.Bad, gasWait);
 
             var routes = view.Routes ?? Array.Empty<VillageRouteView>();

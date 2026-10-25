@@ -53,7 +53,7 @@ namespace ProjectPenguin.Editor.ProductionIsland
             }
             // 寄りと角度は VillageCameraController が画面の縦横比から決める
             var cameraController=camera.gameObject.AddComponent<VillageCameraController>();
-            var runtime=new GameObject("VillageRuntime");runtime.AddComponent<ProductionVillageControl>();var session=runtime.AddComponent<ProductionVillageSession>();runtime.AddComponent<VillageHealthInput>();
+            var runtime=new GameObject("VillageRuntime");runtime.AddComponent<ProductionVillageControl>();var session=runtime.AddComponent<ProductionVillageSession>();runtime.AddComponent<VillageHealthInput>();runtime.AddComponent<VillageEncounters>();
             var world=runtime.AddComponent<VillageWorldPresenter>();
             var w=new SerializedObject(world);Set(w,"_session",session);Set(w,"_camera",camera);Set(w,"_harbor",Load<GameObject>("Assets/3Dmodel/Harbor_Stage4_v002/Harbor_Stage4_v002.prefab"));
             var ids=new[]{"Fishery_2x2","Preparation_2x2","Saltworks_2x2","KelpFarm_2x2","Kamaboko_2x2","Chikuwa_2x2","Drying_2x2","Oden_2x2","Warehouse_1x1","Dormitory_1x1","Research_2x2","Sorter_1x1","ElectricAmplifier_2x2","WaterAmplifier_2x2","GasAmplifier_2x2","IceHouse_1x1"};
@@ -74,6 +74,7 @@ namespace ProjectPenguin.Editor.ProductionIsland
             doc.panelSettings=Load<PanelSettings>(panel);doc.visualTreeAsset=Load<VisualTreeAsset>("Assets/UI/ProductionVillage/ProductionApp.uxml");app.AddComponent<SafeAreaApplier>();
             var nav=app.AddComponent<ProductionNavigator>();var n=new SerializedObject(nav);Set(n,"_session",session);Set(n,"_world",world);
             n.ApplyModifiedPropertiesWithoutUndo();
+            var screenTime=app.AddComponent<VillageScreenTimePresenter>();var st=new SerializedObject(screenTime);Set(st,"_session",session);st.ApplyModifiedPropertiesWithoutUndo();
             var input=runtime.AddComponent<VillagePointerInput>();var p=new SerializedObject(input);Set(p,"_session",session);Set(p,"_navigator",nav);Set(p,"_camera",cameraController);p.ApplyModifiedPropertiesWithoutUndo();
             EditorSceneManager.MarkSceneDirty(scene);if(!EditorSceneManager.SaveScene(scene))throw new InvalidOperationException("統合シーンを保存できませんでした");
             // All prior scenes were checked clean. Close them without saving; only the copy runs.
