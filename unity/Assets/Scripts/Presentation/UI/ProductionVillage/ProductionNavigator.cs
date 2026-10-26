@@ -135,6 +135,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             Bind(ProductionUiNames.IndustrialSwitch, () => SetIndustrialMode(!_industrialMode));
             Bind(ProductionUiNames.TopDownToggle, ToggleTopDownCamera);
             Bind(ProductionUiNames.RotateCamera, RotateCamera90);
+            _world.ZoomChanged += OnZoomChanged;
+            Bind(ProductionUiNames.ZoomDistrict, () => _world?.CameraController?.SetLevel(VillageZoomLevel.District));
             Bind(ProductionUiNames.ZoomOverview, () => _world?.CameraController?.SetLevel(VillageZoomLevel.Overview));
             Bind(ProductionUiNames.ZoomDetail, () => _world?.CameraController?.SetLevel(VillageZoomLevel.Detail));
             Bind(ProductionUiNames.InsightBanner, ShowReport);
@@ -282,30 +284,22 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             _topDownToggle?.EnableInClassList(ProductionUiNames.TacticalBtnActiveClass, topDown);
         }
 
-        /// <summary>全体 | 詳細 の切り替えと、今の段階の説明。施設群の追加生産は全体表示の間だけ動く。</summary>
+        private void OnZoomChanged(){Close();_nextRefresh=0;}
         private void ShowZoomLevel()
         {
-            var level = _world?.CameraController != null ? _world.CameraController.Level : VillageZoomLevel.Overview;
-            _root.Q<Button>(ProductionUiNames.ZoomOverview)?.EnableInClassList(ProductionUiNames.TacticalBtnActiveClass, level == VillageZoomLevel.Overview);
-            _root.Q<Button>(ProductionUiNames.ZoomDetail)?.EnableInClassList(ProductionUiNames.TacticalBtnActiveClass, level == VillageZoomLevel.Detail);
-            var groupState = _root.Q<Label>(ProductionUiNames.GroupState);
-            if (groupState != null)
-            {
-                groupState.text = level == VillageZoomLevel.Overview ? "施設群が\n追加生産中" : "1棟ずつ\n編集できる";
-            }
+            var view=_session.Core.View;
+            var camera=_world?.CameraController;
+            if(view==null)return;
+            camera?.SetMaximumZoom(view.MaximumZoom);
+            var level=camera!=null?camera.Level:VillageZoomLevel.Overview;
+            foreach(var pair in new[]{(ProductionUiNames.ZoomDetail,VillageZoomLevel.Detail),(ProductionUiNames.ZoomOverview,VillageZoomLevel.Overview),(ProductionUiNames.ZoomDistrict,VillageZoomLevel.District)})
+                _root.Q<Button>(pair.Item1)?.EnableInClassList(ProductionUiNames.TacticalBtnActiveClass,level==pair.Item2);
+            var third=_root.Q<Button>(ProductionUiNames.ZoomDistrict);
+            if(third!=null){third.SetEnabled(view.MaximumZoom>=3);third.text=view.MaximumZoom>=3?"3ズーム":"3 未解放";third.tooltip="すり身・干物を合計5個納品して解放";}
+            var state=_root.Q<Label>(ProductionUiNames.GroupState);
+            if(state!=null)state.text=level==VillageZoomLevel.Detail?"1ズーム\n施設を編集":$"{(int)level}ズーム\n同種2×2で成立";
         }
-
-        // ------------------------------------------------------------------
-        // ホーム & 空間ステータスバッジ
-        // ------------------------------------------------------------------
-
-        /// <summary>島ランク (1〜9) と次のランクまでの進み具合。作った数と施設の数から決める (ホームの見出しとメニューで共通)。</summary>
-        private static (int Rank, float Progress) IslandRank(VillageView view)
-        {
-            var score = view.Produced + view.Nodes.Count * 15L;
-            var rank = Math.Min(9, 1 + (int)(score / 60));
-            return (rank, rank >= 9 ? 1f : (score % 60) / 60f);
-        }
+        private static (int Rank, float Progress) IslandRank(VillageView view) => (view.Rank,view.RankProgress);
 
         private void ShowResources(VillageView view)
         {
@@ -398,7 +392,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             var covers = new[] { _tacticalBar, _quickDock, _root.Q(ProductionUiNames.CameraRail) }
                 .Where(e => e != null && !e.ClassListContains(UiClasses.Hidden)).Select(e => e.worldBound).ToArray();
             var placed = new List<Rect>();
-            foreach (var n in view.Nodes.OrderBy(a => a.Y).ThenBy(a => a.X))
+            foreach (var n in (_world.VisibleView?.Nodes ?? view.Nodes).OrderBy(a => a.Y).ThenBy(a => a.X))
             {
                 activeIds.Add(n.Id);
                 if (!_spatialBadges.TryGetValue(n.Id, out var badge))
@@ -494,7 +488,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         {
             var keys = new HashSet<string>();
             if (_spatialLayer != null && _root.panel != null && _world?.ViewCamera != null &&
-                !_sheetOpen && !_session.IsSuspended && view?.GroupViewActive == true)
+                !_sheetOpen && !_session.IsSuspended && _world.CameraController?.Level == VillageZoomLevel.Detail && view?.GroupViewActive == true)
             {
                 foreach (var group in view.Synergies)
                 {
@@ -1101,14 +1095,17 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         public void ShowFacility(int id)
         {
-            var node = _session.Core.View?.Nodes.FirstOrDefault(a => a.Id == id);
+            var fullView = _session.Core.View;
+            var node = fullView?.Nodes.Concat(fullView.UpperNodes).FirstOrDefault(a => a.Id == id);
             if (node == null)
             {
                 return;
             }
 
+            _world.CameraController?.SetMaximumZoom(fullView.MaximumZoom);
+            _world.CameraController?.SetLevel((VillageZoomLevel)node.Zoom);
             var def = IslandCatalog.Get(node.Kind);
-            Open(def.Name, null, FacilityPage);
+            Open(node.Zoom>1?$"{node.Zoom}ズーム · {def.Name}":def.Name, null, FacilityPage);
             _world.SelectedId = id;
             var top = Card();
             var header = new VisualElement();
@@ -1147,24 +1144,20 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 top.Add(IslandUi.Text(node.Status, ProductionUiNames.Subtle));
             }
 
-            Action(top, "動かす", () =>
+            if(node.Zoom==1)
             {
-                Close();
-                Placement.MoveSelect();
-                Placement.Select(id);
-            }, UiClasses.Icon.Move);
-            Action(top, "片付ける", () =>
+                Action(top, "動かす", () => { Close(); Placement.MoveSelect(); Placement.Select(id); }, UiClasses.Icon.Move);
+                Action(top, "片付ける", () =>
+                {
+                    if(_session.Core.Remove(id,ProductionVillageSession.UtcNow)){ShowToast($"{def.Name}を片付けたよ");Close();}
+                    else ShowToast("品物や配達が残っていると片付けられないよ");
+                }, UiClasses.Icon.Demolish, primary:false);
+            }
+            else
             {
-                if (_session.Core.Remove(id, ProductionVillageSession.UtcNow))
-                {
-                    ShowToast($"{def.Name}を片付けたよ");
-                    Close();
-                }
-                else
-                {
-                    ShowToast("品物や配達が残っていると片付けられないよ");
-                }
-            }, UiClasses.Icon.Demolish, primary: false);
+                top.Add(IslandUi.Text("下位の同種施設2×2から成立。材料は内部4施設の在庫から受け取り、各階層の生産は表示段階にかかわらず続きます。",ProductionUiNames.Subtle));
+                Action(top,"内部を見る",()=>{Close();_world.CameraController?.SetLevel((VillageZoomLevel)(node.Zoom-1));},UiClasses.Icon.Move);
+            }
 
             VillageWarehousePanel warehousePanel = null;
             VillageEffortPanel effortPanel = null;
@@ -1207,7 +1200,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             Live(() =>
             {
                 var view = _session.Core.View;
-                var n = view?.Nodes.FirstOrDefault(a => a.Id == id);
+                var n = view?.Nodes.Concat(view.UpperNodes).FirstOrDefault(a => a.Id == id);
                 if (n == null)
                 {
                     Close();
@@ -1234,7 +1227,9 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 {
                     foreach (var p in stock)
                     {
-                        items.Add(ItemCard(p.Key, p.Value, null));
+                        var row=ItemCard(p.Key,p.Value,null);
+                        AddDelivery(row,n.Id,p.Key,p.Value,()=>ShowFacility(id));
+                        items.Add(row);
                     }
                 }
             });
@@ -1302,6 +1297,9 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
             OpenPage("HARBOR", "出荷港と島の倉庫", null);
             var stats = Card();
+            var delivery = Card("ランクと納品");
+            var goal = IslandUi.Text("",ProductionUiNames.Subtle);goal.name="villageDeliveryGoal";delivery.Add(goal);
+            var deliveryItems=new VisualElement();delivery.Add(deliveryItems);
             var rateSection = Card("村にある品物 (倉庫・施設在庫)");
             var items = new VisualElement();
             items.AddToClassList(ProductionUiNames.Items);
@@ -1315,6 +1313,16 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                     return;
                 }
 
+                goal.text=$"ランク {view.Rank} · すり身・干物の納品 {view.SecondTierDelivered}個\n"+
+                    (view.MaximumZoom>=3?"3ズーム解放済み":$"あと{VillageHierarchyRules.SecondTierPerRank-view.SecondTierDelivered}個でランク2・3ズーム解放");
+                deliveryItems.Clear();
+                foreach(var facility in view.Nodes.Concat(view.UpperNodes))
+                    foreach(var stock in facility.Stock.Where(s=>s.Value>0))
+                    {
+                        var row=ItemCard(stock.Key,stock.Value,$"{facility.Zoom}ズーム · {IslandCatalog.Get(facility.Kind).Name}");
+                        AddDelivery(row,facility.Id,stock.Key,stock.Value,()=>ShowSummary(true));deliveryItems.Add(row);
+                    }
+                if(!deliveryItems.Children().Any())deliveryItems.Add(IslandUi.Text("在庫ができると納品できます。配送中の品物は到着を待ちます。",ProductionUiNames.Subtle));
                 stats.Clear();
                 var warehouses = view.Nodes.Count(n => n.Kind == FacilityKind.Warehouse);
                 stats.Add(IslandUi.Row(
@@ -1331,6 +1339,19 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 }
             });
         }
+
+        private void AddDelivery(VisualElement parent,int id,Item item,int count,Action refresh)
+        {
+            var request=Guid.NewGuid().ToString("N");
+            var button=new Button(()=>
+            {
+                var ok=_session.Core.Deliver(id,item,count,request,ProductionVillageSession.UtcNow);
+                ShowToast(ok?_session.Core.Notice:string.IsNullOrEmpty(_session.Core.Error)?_session.Core.Notice:_session.Core.Error);
+                if(ok)refresh();
+            }){text=$"{count}個納品",name=DeliveryButtonName(id,item)};
+            button.AddToClassList(UiClasses.Button);button.AddToClassList(UiClasses.Btn.Raised);parent.Add(button);
+        }
+        public static string DeliveryButtonName(int id,Item item)=>"villageDeliver-"+id+"-"+item;
 
         // ---- 記録 ----
 
@@ -1514,6 +1535,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         private void OnDestroy()
         {
+            if(_world!=null)_world.ZoomChanged-=OnZoomChanged;
             if (_encounters != null)
             {
                 _encounters.Granted -= ShowToast;

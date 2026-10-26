@@ -10,6 +10,9 @@ namespace ProjectPenguin.Domain.Village
     {
         public long At, Requested, NextCargo = 1, Produced;
         public int NextId = 1, DeliveryMs = 1500;
+        public long DeliveryPoints, SecondTierDelivered;
+        public List<string> Deliveries = new List<string>();
+        public List<VillageNodeState> UpperNodes = new List<VillageNodeState>();
         public int EffortSchema;
         public int ComboSchema;
         public int[] BuildCounts;
@@ -41,6 +44,7 @@ namespace ProjectPenguin.Domain.Village
     [Serializable] public sealed class VillageNodeState
     {
         public int Id, X, Y;
+        public int Zoom;
         public int Level = 1; // Legacy saves only; effort saves use EffortSchema.
         public int Effort;
         public int ProcessYield, ComboRemainder;

@@ -28,7 +28,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
                 if(_gesture.AllowPinch)
                 {
                     var a=touches[0].position.ReadValue();var b=touches[1].position.ReadValue();
-                    if(_pinch.Observe(Vector2.Distance(a,b),_camera.Level,out var next))_camera.SetLevel(next,(a+b)*.5f);
+                    if(_pinch.Observe(Vector2.Distance(a,b),_camera.Level,out var next,_camera.MaximumZoom))_camera.SetLevel(next,(a+b)*.5f);
                 }
                 else _pinch.Reset();
                 return;
@@ -55,19 +55,20 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
                 if(placement.Mode==VillagePlacementMode.Build||placement.Mode==VillagePlacementMode.MovePreview){Preview(point);return;}
                 if(_panning||!_camera.Ground(point,out var ground))return;
                 var x=Mathf.FloorToInt(ground.x/VillageWorldRenderer.Cell+12);var y=Mathf.FloorToInt(ground.z/VillageWorldRenderer.Cell+12);
-                var n=_session.Core.View.Nodes.LastOrDefault(a=>x>=a.X&&x<a.X+a.Size&&y>=a.Y&&y<a.Y+a.Size);
+                var n=_navigator.World.VisibleView?.Hit(x,y);
                 if(placement.Mode==VillagePlacementMode.MoveSelect){if(n!=null)placement.Select(n.Id);}
                 else if(n!=null)_navigator.ShowFacility(n.Id);
                 else if(Vector3.Distance(ground,_navigator.World.Renderer.HarborPosition)<1.7f)_navigator.ShowSummary(true);
             }
             if(!useTouch&&Mouse.current!=null&&!_navigator.Blocks(point))
-            {var next=VillageZoomPolicy.AfterWheel(_camera.Level,Mouse.current.scroll.ReadValue().y);if(next!=_camera.Level&&!_camera.Switching)_camera.SetLevel(next,point);}
+            {var next=VillageZoomPolicy.AfterWheel(_camera.Level,Mouse.current.scroll.ReadValue().y,_camera.MaximumZoom);if(next!=_camera.Level&&!_camera.Switching)_camera.SetLevel(next,point);}
         }
         private void Preview(Vector2 point)
         {
             if(!_camera.Ground(point,out var ground))return;
             var size=ProjectPenguin.Domain.Island.IslandCatalog.Get(_navigator.Placement.Kind).Size;
-            _navigator.Placement.Preview(Mathf.FloorToInt(ground.x/VillageWorldRenderer.Cell+12-size*.5f),Mathf.FloorToInt(ground.z/VillageWorldRenderer.Cell+12-size*.5f));
+            var step=size==2?2:1;
+            _navigator.Placement.Preview(Mathf.FloorToInt((ground.x/VillageWorldRenderer.Cell+12-size*.5f)/step)*step,Mathf.FloorToInt((ground.z/VillageWorldRenderer.Cell+12-size*.5f)/step)*step);
         }
         private void ResetGesture(){_pressed=_panning=false;_pinch.Reset();_gesture.Interrupt();}
         private void OnDisable()=>ResetGesture();

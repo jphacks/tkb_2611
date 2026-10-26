@@ -7,7 +7,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             Profile="villageProfile",IndustrialSwitch="villageIndustrialSwitch",IndustrialSwitchLabel="villageIndustrialSwitchLabel",
             Fish="villageFish",FishRate="villageFishRate",RankProgress="villageRankProgress",
             Resources="villageResources",Gas="villageGas",Electricity="villageElectricity",Water="villageWater",GasBox="villageGasBox",ElectricityBox="villageElectricityBox",WaterBox="villageWaterBox",
-            ZoomOverview="villageZoomOverview",ZoomDetail="villageZoomDetail",NextStep="villageNextStep",TacticalStatus="villageTacticalStatus",CameraRail="villageCameraRail",GroupState="villageGroupState",TacticalBar="villageTacticalBar",TacticalGas="villageTacticalGas",TopDownToggle="villageTopDownToggle",TopDownLabel="villageTopDownLabel",RotateCamera="villageRotateCamera",
+            ZoomDistrict="villageZoomDistrict",ZoomOverview="villageZoomOverview",ZoomDetail="villageZoomDetail",NextStep="villageNextStep",TacticalStatus="villageTacticalStatus",CameraRail="villageCameraRail",GroupState="villageGroupState",TacticalBar="villageTacticalBar",TacticalGas="villageTacticalGas",TopDownToggle="villageTopDownToggle",TopDownLabel="villageTopDownLabel",RotateCamera="villageRotateCamera",
             Error="villageError",ErrorText="villageErrorText",Retry="villageRetry",
             SpatialLayer="villageSpatialLayer",
             InsightBanner="villageInsightBanner",InsightText="villageInsightText",

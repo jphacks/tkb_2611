@@ -17,9 +17,10 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
         public bool HasCandidate {get;private set;}
         public string Reason {get;private set;}="";
         public event Action Changed;
+        public event Action Editing;
         public VillagePlacementController(ProductionVillageSessionCore session){_session=session;}
-        public void Build(FacilityKind kind){Cancel();Kind=kind;Mode=VillagePlacementMode.Build;Changed?.Invoke();}
-        public void MoveSelect(){Cancel();Mode=VillagePlacementMode.MoveSelect;Reason="動かす施設を選んでください";Changed?.Invoke();}
+        public void Build(FacilityKind kind){Editing?.Invoke();Cancel();Kind=kind;Mode=VillagePlacementMode.Build;Changed?.Invoke();}
+        public void MoveSelect(){Editing?.Invoke();Cancel();Mode=VillagePlacementMode.MoveSelect;Reason="動かす施設を選んでください";Changed?.Invoke();}
         public void Select(int id)
         {
             if(Mode!=VillagePlacementMode.MoveSelect)return;var n=_session.View.Nodes.FirstOrDefault(a=>a.Id==id);if(n==null)return;

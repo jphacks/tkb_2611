@@ -60,8 +60,9 @@
 
             <!-- 工房モードのカメラ操作。右端に縦に並べ、盤面を隠さない -->
             <ui:VisualElement name="villageCameraRail" class="village-camera-rail pp-hidden">
-                <ui:Button name="villageZoomOverview" text="全体" class="village-tactical-btn village-tactical-btn--active" />
-                <ui:Button name="villageZoomDetail" text="詳細" class="village-tactical-btn" />
+                <ui:Button name="villageZoomOverview" text="2ズーム" class="village-tactical-btn village-tactical-btn--active" />
+                <ui:Button name="villageZoomDetail" text="1ズーム" class="village-tactical-btn" />
+                <ui:Button name="villageZoomDistrict" text="3 未解放" class="village-tactical-btn" />
                 <ui:Label name="villageGroupState" text="全体表示" class="village-group-state" picking-mode="Ignore" />
                 <ui:Button name="villageTopDownToggle" class="village-tactical-btn">
                     <ui:Label name="villageTopDownLabel" text="斜め" picking-mode="Ignore" />

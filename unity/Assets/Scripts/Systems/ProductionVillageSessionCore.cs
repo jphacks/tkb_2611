@@ -33,7 +33,7 @@ namespace ProjectPenguin.Systems
             {
                 var s=_store.Load();
                 if(s==null){_tutorial=VillageTutorial.NotStarted;var candidate=_initial();_store.Save(Snapshot(candidate,utc));_game=candidate;_utc=utc;}
-                else{s.Validate("production");_tutorial=new VillageTutorial(s.Tutorial).Step;var g=VillageGame.Restore(s.State);g.AdvanceTo(checked(g.RequestedMs+Math.Max(0,utc-s.UtcMs)));_utc=Math.Max(utc,s.UtcMs);_store.Save(Snapshot(g,_utc));_game=g;}
+                else{s.Validate(Development?"development":"production");_tutorial=new VillageTutorial(s.Tutorial).Step;var g=VillageGame.Restore(s.State);g.AdvanceTo(checked(g.RequestedMs+Math.Max(0,utc-s.UtcMs)));_utc=Math.Max(utc,s.UtcMs);_store.Save(Snapshot(g,_utc));_game=g;}
                 Error="";
             }
             catch(Exception){Error="村を読み込めませんでした。保存データを保護しています。メニューから再試行してください";_game=null;}
@@ -73,6 +73,7 @@ namespace ProjectPenguin.Systems
         public bool Move(int id,int x,int y,long utc)=>Command(g=>g.Move(id,x,y),utc);
         public bool Remove(int id,long utc)=>Command(g=>g.Remove(id),utc);
         public bool SetWarehouseCapacity(int id,int capacity,long utc)=>Command(g=>g.SetWarehouseCapacity(id,capacity),utc);
+        public bool Deliver(int id,Item item,int count,string requestId,long utc)=>Command(g=>g.Deliver(id,item,count,requestId),utc);
         public bool SetEffort(int id,int effort,long utc)=>Command(g=>g.SetEffort(id,effort),utc);
         public string CanPlace(FacilityKind kind,int x,int y)=>_game?.CanPlace(kind,x,y)??"村を読み込めません";
         public string CanMove(int id,int x,int y)=>_game?.CanMove(id,x,y)??"村を読み込めません";
