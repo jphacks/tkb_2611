@@ -26,6 +26,8 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
         private readonly Dictionary<int,Image> _statusBars=new Dictionary<int,Image>();
         private readonly Dictionary<int,Image> _zones=new Dictionary<int,Image>();
         private readonly Dictionary<string,Image> _synergies=new Dictionary<string,Image>();
+        private readonly Dictionary<string,Image> _incomplete=new Dictionary<string,Image>();
+        private int _gridStep;
         private GameObject _ghost;
         private FacilityKind _ghostKind;
         public bool IndustrialMode {get;set;}
@@ -140,6 +142,35 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
             _combos.Render(comboPreview?.Nodes??view.Nodes,comboPreview?.Candidate.Id??selected,comboPreview!=null);
             var selection=view.Nodes.FirstOrDefault(n=>n.Id==selected);_selection.gameObject.SetActive(selection!=null);
             if(selection!=null){_selection.rectTransform.anchoredPosition=Flat(Position(selection.X,selection.Y,selection.Size));_selection.rectTransform.sizeDelta=Vector2.one*selection.Size*Cell;_selection.transform.SetAsLastSibling();}
+        }
+        public void RenderLayerGrid(VillageView full,int zoom)
+        {
+            var step=VillageHierarchyRules.GridSize(zoom);
+            if(step!=_gridStep)
+            {
+                _gridStep=step;
+                for(var i=0;i<=24;i++)
+                    foreach(var axis in new[]{"X","Y"})
+                    {
+                        var fine=_grid.transform.Find(ProductionWorldNames.Grid+axis+i);
+                        if(fine!=null)fine.gameObject.SetActive(i%step==0);
+                        var subtle=_subtleGrid.transform.Find(ProductionWorldNames.SubtleGrid+axis+i);
+                        if(subtle!=null)subtle.gameObject.SetActive(i%step==0);
+                    }
+            }
+            var keys=new HashSet<string>();
+            if(zoom>1)
+            {
+                var formed=full.UpperNodes.Where(n=>n.Zoom==zoom&&n.Formed).ToArray();
+                foreach(var cell in full.Nodes.Select(n=>(X:n.X/step*step,Y:n.Y/step*step)).Distinct())
+                {
+                    if(formed.Any(n=>n.X==cell.X&&n.Y==cell.Y))continue;
+                    var key=cell.X+":"+cell.Y;keys.Add(key);
+                    if(!_incomplete.TryGetValue(key,out var box))_incomplete[key]=box=Rect("IncompleteBlock"+key,_canvas,Vector2.zero,Vector2.zero,new Color(.4f,.6f,.7f,.18f));
+                    box.rectTransform.anchoredPosition=Flat(Position(cell.X,cell.Y,step));box.rectTransform.sizeDelta=Vector2.one*(step*Cell*.92f);
+                }
+            }
+            foreach(var key in _incomplete.Keys.Where(k=>!keys.Contains(k)).ToArray()){DestroyView(_incomplete[key].gameObject);_incomplete.Remove(key);}
         }
         public void Preview(FacilityKind kind,int x,int y,bool valid,bool enabled)
         {

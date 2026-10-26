@@ -1,8 +1,8 @@
 using System;
 namespace ProjectPenguin.Presentation.World.ProductionVillage
 {
-    /// <summary>村のカメラの寄り。島全体 (施設群が追加生産する) と、施設を 1 棟ずつ見る詳細の 2 段階だけ。</summary>
-    public enum VillageZoomLevel { Overview, Detail }
+    /// <summary>施設を扱う階層。値はズーム段階の番号。</summary>
+    public enum VillageZoomLevel { Detail = 1, Overview = 2, District = 3 }
 
     /// <summary>
     /// 2 本指・ホイールの入力から次の段階を決める。連続では寄らず、しきい値を越えた瞬間に 1 段階だけ切り替える。
@@ -17,27 +17,21 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
         /// <summary>指の間隔がつまみ始めの何倍以下に狭まったら全体へ引くか。</summary>
         public const float SpreadToOverview=.85f;
 
-        public static VillageZoomLevel AfterPinch(VillageZoomLevel current,float spread)
+        public static VillageZoomLevel AfterPinch(VillageZoomLevel current,float spread,int maximum=2)
         {
             if(float.IsNaN(spread)||float.IsInfinity(spread)||spread<=0)return current;
-            if(current==VillageZoomLevel.Overview&&spread>=SpreadToDetail)return VillageZoomLevel.Detail;
-            if(current==VillageZoomLevel.Detail&&spread<=SpreadToOverview)return VillageZoomLevel.Overview;
+            if(spread>=SpreadToDetail)return (VillageZoomLevel)Math.Max(1,(int)current-1);
+            if(spread<=SpreadToOverview)return (VillageZoomLevel)Math.Min(maximum,(int)current+1);
             return current;
         }
-
-        /// <summary>ホイールを上 (奥) へ回すと寄る。</summary>
-        public static VillageZoomLevel AfterWheel(VillageZoomLevel current,float wheel)
+        public static VillageZoomLevel AfterWheel(VillageZoomLevel current,float wheel,int maximum=2)
         {
             if(float.IsNaN(wheel)||float.IsInfinity(wheel)||Math.Abs(wheel)<.1f)return current;
-            return wheel>0?VillageZoomLevel.Detail:VillageZoomLevel.Overview;
+            return (VillageZoomLevel)(wheel>0?Math.Max(1,(int)current-1):Math.Min(maximum,(int)current+1));
         }
-
-        public static VillageZoomLevel Toggle(VillageZoomLevel current)=>current==VillageZoomLevel.Overview?VillageZoomLevel.Detail:VillageZoomLevel.Overview;
-
-        /// <summary>施設群の追加生産は全体表示の間だけ動く (村の規則)。</summary>
-        public static bool GroupView(VillageZoomLevel level)=>level==VillageZoomLevel.Overview;
-
-        public static float SizeFor(VillageZoomLevel level,float fitSize)=>level==VillageZoomLevel.Detail?fitSize*DetailRatio:fitSize;
+        public static VillageZoomLevel Toggle(VillageZoomLevel current)=>current==VillageZoomLevel.Detail?VillageZoomLevel.Overview:VillageZoomLevel.Detail;
+        public static bool GroupView(VillageZoomLevel level)=>level!=VillageZoomLevel.Detail;
+        public static float SizeFor(VillageZoomLevel level,float fitSize)=>level==VillageZoomLevel.Detail?fitSize*DetailRatio:level==VillageZoomLevel.District?fitSize*1.25f:fitSize;
 
         /// <summary>切り替えの補間。0〜1 の経過から、すばやく動いて静かに止まる割合を返す。</summary>
         public static float Ease(float t)
@@ -56,13 +50,13 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
         public bool Active=>_start>0;
 
         /// <summary>指の間隔を渡す。段階を切り替えるべきときだけ true と次の段階を返す。</summary>
-        public bool Observe(float distance,VillageZoomLevel current,out VillageZoomLevel next)
+        public bool Observe(float distance,VillageZoomLevel current,out VillageZoomLevel next,int maximum=2)
         {
             next=current;
             if(float.IsNaN(distance)||float.IsInfinity(distance)||distance<=0)return false;
             if(_start<=0){_start=distance;_switched=false;return false;}
             if(_switched)return false;
-            next=VillageZoomPolicy.AfterPinch(current,distance/_start);
+            next=VillageZoomPolicy.AfterPinch(current,distance/_start,maximum);
             if(next==current)return false;
             _switched=true;
             return true;

@@ -56,7 +56,9 @@ namespace ProjectPenguin.Domain.Village
         private int GroupProgressOf(Item item)=>_groupProgress.TryGetValue(item,out var progress)?progress:0;
         public VillageState Export()
         {
-            return new VillageState{EffortSchema=1,ComboSchema=1,BuildCounts=(int[])_buildCounts.Clone(),At=_at,Requested=_requested,NextId=_nextId,NextCargo=_nextCargo,Produced=_produced,
+            return new VillageState{DeliveryPoints=_deliveryPoints,SecondTierDelivered=_secondTierDelivered,Deliveries=_deliveries.OrderBy(id=>id,StringComparer.Ordinal).ToList(),
+                UpperNodes=_upperNodes.Select(n=>new VillageNodeState{Id=n.Id,Zoom=n.Zoom,Kind=n.Kind,X=n.X,Y=n.Y,Effort=n.Effort,Started=n.Started,Finish=n.Finish,ProcessYield=n.ProcessYield,ComboRemainder=n.ComboRemainder,
+                    Stock=Enum.GetValues(typeof(Item)).Cast<Item>().Select(i=>n.Held(i)).ToArray()}).ToList(),EffortSchema=1,ComboSchema=1,BuildCounts=(int[])_buildCounts.Clone(),At=_at,Requested=_requested,NextId=_nextId,NextCargo=_nextCargo,Produced=_produced,
                 GroupProgress=new VillageGroupProgressState{ElapsedMs=_groupElapsed,Tick=_groupTick,Chikuwa=GroupProgressOf(Item.Chikuwa),Kamaboko=GroupProgressOf(Item.Kamaboko),DriedFish=GroupProgressOf(Item.DriedFish)},
                 DeliveryMs=_deliveryMs,Speed=_speed,Gas=_gas,Electricity=_electricity,Water=_water,Spent=_spent,Unlimited=_unlimited,FreeResources=_freeResources,Ledger=_ledger.Copy(),Encounters=_encounters.Export(),
                 Nodes=_nodes.Select(n=>new VillageNodeState{Id=n.Id,Kind=n.Kind,Effort=n.Effort,WarehouseCapacity=n.WarehouseCapacity,X=n.X,Y=n.Y,Started=n.Started,Finish=n.Finish,ProcessYield=n.ProcessYield,ComboRemainder=n.ComboRemainder,
@@ -123,7 +125,7 @@ namespace ProjectPenguin.Domain.Village
             }
             if(s.Ledger.LastStepDay< -1||s.Ledger.MaxSteps<0||s.Ledger.MaxSteps>172800||s.Ledger.Entries.Any(e=>e==null||string.IsNullOrWhiteSpace(e.Id)||e.Id.Length>128||string.IsNullOrWhiteSpace(e.Kind)||e.Day<0||!Finite(e.Amount)||e.Amount<0)||s.Ledger.Entries.GroupBy(e=>e.Id).Any(a=>a.Count()>1))throw new ArgumentException("受領台帳が不正です");
             g._encounters=EncounterLedger.Restore(s.Encounters);
-            g._nextId=s.NextId;g._nextCargo=s.NextCargo;g._ledger=s.Ledger.Copy();g._freeResources=s.FreeResources;return g;
+            g._nextId=s.NextId;g._nextCargo=s.NextCargo;g._ledger=s.Ledger.Copy();g._freeResources=s.FreeResources;g.RestoreHierarchy(s);return g;
         }
     }
 }

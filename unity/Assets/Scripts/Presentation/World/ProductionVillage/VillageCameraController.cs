@@ -4,7 +4,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
 {
     /// <summary>
     /// 村を斜め上から見下ろす正投影カメラ。起動時と画面の縦横比が変わったときに、島の幅が画面に収まる寄りを計算する。
-    /// 寄りは「全体」と「詳細」の 2 段階 (<see cref="VillageZoomLevel"/>) だけで、切り替えは短い補間でパッと動かす。
+    /// 寄りはランクで解放する 3 段階 (<see cref="VillageZoomLevel"/>) だけで、切り替えは短い補間でパッと動かす。
     /// パンは詳細のときだけ、見ている点 (地面の上) を盤面の中で動かす。
     /// </summary>
     [RequireComponent(typeof(Camera))]
@@ -42,6 +42,13 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
 
         /// <summary>今の寄りの段階。切り替え中は行き先の段階。</summary>
         public VillageZoomLevel Level { get; private set; } = VillageZoomLevel.Overview;
+        public int MaximumZoom { get; private set; } = 2;
+        public event System.Action LevelChanged;
+        public void SetMaximumZoom(int maximum)
+        {
+            MaximumZoom = Mathf.Clamp(maximum, 2, 3);
+            if ((int)Level > MaximumZoom) SetLevel((VillageZoomLevel)MaximumZoom);
+        }
 
         /// <summary>全体表示の間は施設群の追加生産が動く (村の規則)。</summary>
         public bool GroupViewActive => VillageZoomPolicy.GroupView(Level);
@@ -103,7 +110,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
         /// </summary>
         public void SetLevel(VillageZoomLevel level, Vector2? screenPoint = null)
         {
-            if (_camera == null) return;
+            if (_camera == null || (int)level < 1 || (int)level > MaximumZoom || level == Level) return;
             var focus = Vector3.zero;
             if (level == VillageZoomLevel.Detail)
             {
@@ -117,6 +124,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
             _toSize = size;
             _toFocus = Clamp(focus, size);
             _switchT = 0f;
+            LevelChanged?.Invoke();
         }
 
         public void ToggleLevel(Vector2? screenPoint = null) => SetLevel(VillageZoomPolicy.Toggle(Level), screenPoint);

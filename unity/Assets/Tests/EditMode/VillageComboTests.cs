@@ -100,7 +100,10 @@ namespace ProjectPenguin.Tests.EditMode
         {
             var game = Pair(); game.Place(FacilityKind.Fishery, 0, 2); game.Place(FacilityKind.Fishery, 2, 2);
             game.AdvanceTo(8200);
-            Assert.That(game.CreateView().Nodes.Select(n => n.Stock[Item.Fish]), Is.EqualTo(new[] { 3, 3, 3, 3 }));
+            var square = game.CreateView();
+            Assert.That(square.ItemRates[Item.Fish].ActualMakePerMinute, Is.EqualTo(12));
+            Assert.That(square.Nodes.Sum(n => n.Stock[Item.Fish]), Is.EqualTo(9), "上位さばき場が魚3個を材料に使う");
+            Assert.That(square.ItemRates[Item.Fish].ActualUsePerMinute, Is.EqualTo(3));
             game = Pair(); game.SetEffort(1, 1); var view = game.CreateView();
             Assert.That(view.ItemRates[Item.Fish].TheoreticalMakePerMinute, Is.EqualTo(15 * 1.25 * 3));
             Assert.That(view.TheoreticalGasPerMinute, Is.EqualTo(15 * 5));

@@ -33,7 +33,7 @@ namespace ProjectPenguin.Domain.Village
         };
         public VillageResult SetEffort(int id, int effort)
         {
-            var node = _nodes.FirstOrDefault(n => n.Id == id);
+            var node = _nodes.Concat(_upperNodes).FirstOrDefault(n => n.Id == id);
             if (node == null) return Result(false, "施設がありません");
             if (!VillageEffortRules.Supports(node.Kind)) return Result(false, "この施設にはエフォートを設定できません");
             if (effort < 0 || effort > VillageEffortRules.MaxEffort) return Result(false, "エフォートは0〜3で指定してください");

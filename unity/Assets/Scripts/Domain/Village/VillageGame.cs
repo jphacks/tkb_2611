@@ -21,7 +21,10 @@ namespace ProjectPenguin.Domain.Village
         public double ComboMultiplier {get; internal set;}
         public VillageEffortView EffortSettings {get; internal set;}
         public int X {get; internal set;} public int Y {get; internal set;} public int Total {get; internal set;}
-        public int Size=>IslandCatalog.Get(Kind).Size;
+        public int Zoom {get; internal set;} = 1;
+        public int FootprintSize {get; internal set;}
+        public bool Formed {get; internal set;} = true;
+        public int Size=>FootprintSize > 0 ? FootprintSize : IslandCatalog.Get(Kind).Size;
         public double Progress {get; internal set;} public string Status {get; internal set;}
         public bool Amplified {get; internal set;} public bool InSynergy {get; internal set;}
         public int CoverageRadius {get; internal set;}
@@ -63,6 +66,21 @@ namespace ProjectPenguin.Domain.Village
     public sealed class VillageView
     {
         public IReadOnlyList<VillageNodeView> Nodes {get; internal set;}
+        public IReadOnlyList<VillageNodeView> UpperNodes {get; internal set;} = Array.Empty<VillageNodeView>();
+        public long DeliveryPoints {get; internal set;}
+        public long SecondTierDelivered {get; internal set;}
+        public int Rank => VillageHierarchyRules.Rank(SecondTierDelivered);
+        public int MaximumZoom => VillageHierarchyRules.MaxZoom(SecondTierDelivered);
+        public float RankProgress => Rank >= VillageHierarchyRules.MaxRank ? 1 : (SecondTierDelivered % VillageHierarchyRules.SecondTierPerRank) / (float)VillageHierarchyRules.SecondTierPerRank;
+        public VillageNodeView Hit(int x,int y) => Nodes.LastOrDefault(n=>x>=n.X&&x<n.X+n.Size&&y>=n.Y&&y<n.Y+n.Size);
+        public VillageView AtZoom(int zoom)
+        {
+            VillageHierarchyRules.GridSize(zoom);
+            var view = (VillageView)MemberwiseClone();
+            view.Nodes = zoom == 1 ? Nodes : Array.AsReadOnly(UpperNodes.Where(n => n.Zoom == zoom && n.Formed).ToArray());
+            if (zoom > 1) { view.Cargo = Array.Empty<VillageCargoView>(); view.Routes = Array.Empty<VillageRouteView>(); view.Synergies = Array.Empty<VillageSynergyView>(); }
+            return view;
+        }
         public IReadOnlyDictionary<FacilityKind,double> BuildElectricityCosts {get; internal set;}
         public double BuildElectricityCost(FacilityKind kind) => BuildElectricityCosts != null && BuildElectricityCosts.TryGetValue(kind,out var cost)
             ? cost : IslandCatalog.Get(kind).ElectricityCost;
@@ -91,11 +109,12 @@ namespace ProjectPenguin.Domain.Village
     {
         private sealed class Node
         {
-            internal int Id,X,Y,Effort,WarehouseCapacity,ProcessYield,ComboRemainder;internal FacilityKind Kind;
+            internal int Id,X,Y,Effort,WarehouseCapacity,ProcessYield,ComboRemainder;
+            internal int Zoom=1; internal bool Formed; internal int[] Children=Array.Empty<int>();internal FacilityKind Kind;
             internal readonly Dictionary<Item,int> Stock=new Dictionary<Item,int>();
             internal long Started,Finish;internal string Status="待機";
             internal int Held(Item item)=>Stock.TryGetValue(item,out var n)?n:0;
-            internal int Size=>IslandCatalog.Get(Kind).Size;
+            internal int Size=>Zoom == 1 ? IslandCatalog.Get(Kind).Size : VillageHierarchyRules.GridSize(Zoom);
         }
         private readonly List<Node> _nodes=new List<Node>();
         private readonly List<VillageCargoView> _cargo=new List<VillageCargoView>();
@@ -169,19 +188,19 @@ namespace ProjectPenguin.Domain.Village
             if(PaysResources&&(_electricity<cost||_water<d.WaterCost))return Result(false,"建設に使う資源が足りません");
             if(PaysResources){_electricity-=cost;_water-=d.WaterCost;}
             _buildCounts[(int)kind]++;
-            var n=new Node{Id=_nextId++,Kind=kind,X=x,Y=y};_nodes.Add(n);return Result(true,d.Name+"を建てました",n.Id);
+            var n=new Node{Id=_nextId++,Kind=kind,X=x,Y=y};_nodes.Add(n);ReconcileHierarchy();return Result(true,d.Name+"を建てました",n.Id);
         }
         public VillageResult Move(int id,int x,int y)
         {
             var reason=CanMove(id,x,y);if(reason.Length>0)return Result(false,reason);
-            var n=_nodes.First(a=>a.Id==id);n.X=x;n.Y=y;return Result(true,"施設を移動しました",id);
+            var n=_nodes.First(a=>a.Id==id);n.X=x;n.Y=y;ReconcileHierarchy();return Result(true,"施設を移動しました",id);
         }
         public VillageResult Remove(int id)
         {
             var n=_nodes.FirstOrDefault(a=>a.Id==id);if(n==null)return Result(false,"施設がありません");
             if(_cargo.Any(c=>c.To==id||c.From==id)||n.Finish>0)return Result(false,"配送・加工の完了を待ってください");
             if(!_unlimited&&n.Stock.Values.Sum()>0)return Result(false,"在庫を先に出荷してください");
-            _nodes.Remove(n);return Result(true,"施設を撤去しました");
+            _nodes.Remove(n);ReconcileHierarchy();return Result(true,"施設を撤去しました");
         }
         public void SetResources(double gas,double electricity,double water)
         {
@@ -199,7 +218,7 @@ namespace ProjectPenguin.Domain.Village
                 // If nothing started, completed or departed, no state can change until the next paid job.
                 if(before==_produced&&spent==_spent&&cargo==_nextCargo&&arriving==_cargo.Count)
                 {
-                    var next=_nodes.Where(n=>n.Finish>_at).Select(n=>n.Finish).Concat(_cargo.Select(c=>c.End)).DefaultIfEmpty(milliseconds+100).Min();
+                    var next=_nodes.Where(n=>n.Finish>_at).Select(n=>n.Finish).Concat(_upperNodes.Where(n=>n.Finish>_at).Select(n=>n.Finish)).Concat(_cargo.Select(c=>c.End)).DefaultIfEmpty(milliseconds+100).Min();
                     if(_groupViewActive)next=Math.Min(next,_at+VillageGroupRules.IntervalMs-_groupElapsed);
                     var jump=Math.Min(milliseconds/100*100,((next+99)/100-1)*100);
                     if(jump>_at){AdvanceGroupClock(jump-_at);_at=jump;}
@@ -276,6 +295,7 @@ namespace ProjectPenguin.Domain.Village
                 _cargo.Add(new VillageCargoView{Id=_nextCargo++,From=d.From.Id,To=d.To.Id,Item=d.Item,FromX=d.From.X,FromY=d.From.Y,
                     ToX=d.To.X,ToY=d.To.Y,Start=_at,End=_at+_deliveryMs});
             }
+            StepHierarchy();
             AdvanceGroupClock(100);
             _history.RemoveAll(e=>e.At<=_at-60000);
             var minMinute=_at/60000-59;var expired=_trend.Keys.Where(m=>m<minMinute).ToArray();foreach(var k in expired)_trend.Remove(k);
@@ -290,7 +310,7 @@ namespace ProjectPenguin.Domain.Village
         }
         public VillageView CreateView(int today=-1)
         {
-            var totals=Enum.GetValues(typeof(Item)).Cast<Item>().ToDictionary(i=>i,i=>_nodes.Sum(n=>n.Held(i))+_cargo.Count(c=>c.Item==i));
+            var totals=Enum.GetValues(typeof(Item)).Cast<Item>().ToDictionary(i=>i,i=>_nodes.Concat(_upperNodes).Sum(n=>n.Held(i))+_cargo.Count(c=>c.Item==i));
             var synergies=FindSynergies();
             var synergyNodeIds=new HashSet<int>(synergies.SelectMany(s=>s.NodeIds));
             var rates=new Dictionary<Item,VillageItemRateView>();
@@ -313,6 +333,13 @@ namespace ProjectPenguin.Domain.Village
                 theoGasPerMin+=cyclesPerMin*VillageEffortRules.Gas(n.Effort);
                 foreach(var inp in r.Inputs)
                     rates[inp.Item].TheoreticalUsePerMinute+=inp.Count*cyclesPerMin;
+            }
+            foreach(var n in _upperNodes.Where(n=>n.Formed))
+            {
+                var recipe=RecipeOf(n);var cycles=60/recipe.Seconds*UpperSpeed(n);
+                rates[recipe.Output.Item].TheoreticalMakePerMinute+=recipe.Output.Count*VillageComboRules.Multiplier(VillageComboRules.Count(UpperComboDirections(n)))*cycles;
+                foreach(var input in recipe.Inputs)rates[input.Item].TheoreticalUsePerMinute+=input.Count*cycles;
+                theoGasPerMin+=cycles*VillageEffortRules.Gas(n.Effort);
             }
             foreach(var syn in synergies)
             {
@@ -340,9 +367,10 @@ namespace ProjectPenguin.Domain.Village
             }
             var targetDay=today<0?_ledger.LastStepDay:today;
             var gasReceivedToday=_ledger.Entries.Where(e=>e.Day==targetDay&&e.Kind=="歩数 → ガス").Sum(e=>e.Amount);
-            var gasWait=_nodes.Count(n=>n.Status=="ガスを待っています");
-            var matWait=_nodes.Count(n=>n.Status=="材料を待っています");
-            var fullWait=_nodes.Count(n=>n.Status=="出力の置き場が満杯");
+            var activeNodes=_nodes.Concat(_upperNodes.Where(n=>n.Formed)).ToArray();
+            var gasWait=activeNodes.Count(n=>n.Status=="ガスを待っています");
+            var matWait=activeNodes.Count(n=>n.Status=="材料を待っています");
+            var fullWait=activeNodes.Count(n=>n.Status=="出力の置き場が満杯");
             var deficitItem=rates.Values.FirstOrDefault(v=>v.IsDeficit);
             var hasBottleneck=gasWait>0||matWait>0||fullWait>0||deficitItem!=null;
             var bottleneckSummary=!_nodes.Any()?"施設を配置して生産ラインを作りましょう"
@@ -351,7 +379,7 @@ namespace ProjectPenguin.Domain.Village
                 :matWait>0?$"材料待ちの施設が {matWait} 棟あります（上流施設または仕分け機を近くに配置）"
                 :fullWait>0?$"出力満杯の施設が {fullWait} 棟あります（倉庫または氷室を近くに配置）"
                 :"すべての生産・物流ラインが順調に稼働しています";
-            return new VillageView{GroupViewActive=_groupViewActive,Unlimited=_unlimited,FreeResources=_freeResources,BoardSize=BoardSize,AtMs=_at,Gas=_gas,Electricity=_electricity,Water=_water,
+            return new VillageView{DeliveryPoints=_deliveryPoints,SecondTierDelivered=_secondTierDelivered,UpperNodes=Array.AsReadOnly(_upperNodes.Select(UpperView).ToArray()),GroupViewActive=_groupViewActive,Unlimited=_unlimited,FreeResources=_freeResources,BoardSize=BoardSize,AtMs=_at,Gas=_gas,Electricity=_electricity,Water=_water,
                 BuildElectricityCosts=new ReadOnlyDictionary<FacilityKind,double>(IslandCatalog.Facilities.ToDictionary(d=>d.Kind,d=>NextBuildElectricityCost(d.Kind))),
                 Produced=_produced,GasSpent=_spent,GasPerMinute=_history.Sum(e=>e.Gas),TheoreticalGasPerMinute=theoGasPerMin,
                 GasReceivedToday=gasReceivedToday,

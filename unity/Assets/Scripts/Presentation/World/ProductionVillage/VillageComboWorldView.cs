@@ -28,7 +28,8 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
                 for (var j = i + 1; j < nodes.Count; j++)
                 {
                     var b = nodes[j];
-                    if (VillageComboRules.Direction(a.Kind, a.X, a.Y, b.Kind, b.X, b.Y) == VillageComboDirection.None) continue;
+                    if (a.Kind != b.Kind || a.Zoom != b.Zoom || a.X != b.X && a.Y != b.Y
+                        || System.Math.Abs(a.X-b.X)+System.Math.Abs(a.Y-b.Y)!=a.Size) continue;
                     var highlighted = a.Id == selected || b.Id == selected;
                     if (highlighted) { related.Add(a.Id); related.Add(b.Id); }
                     var line = Get(_links, _usedLinks++, ProductionWorldNames.ComboLink);
