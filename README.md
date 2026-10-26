@@ -123,7 +123,7 @@ Project Penguin は向きが逆である。目的は、工場ゲームで共通�
 
 ## 審査のときの遊び方
 
-<p align="center"><img src="docs/images/scan.png" alt="スキャン画面" width="320"> <img src="docs/images/water-scan.gif" alt="ペットボトルを撮って水を受け取るまで" width="320"></p>
+<p align="center"><img src="docs/images/scan.png" alt="スキャン画面" width="240"> <img src="docs/images/water-scan.gif" alt="ペットボトルを撮って水を受け取るまで" width="240"> <img src="docs/images/screentime-scan.gif" alt="スクリーンタイムのスクショを選んで電気を受け取るまで" width="240"></p>
 
 - **資源無限のモード**: 画面下の **メニュー > デバッグ (審査用) > 資源無限にする** で、建設・生産でガス・電気・水が減らなくなる。材料 (魚・すり身など) と配送はふだんどおり動くので、施設の並べ方・コンボ・施設群・ズームアウトをそのまま試せる。iOS の実機 (Development でないビルド) でも使える。資源無限の村はふだんの村と別に保存するので、**ふだんの村に戻る** を押せばもとの村に戻る。
 - **チュートリアル**: 初めて開いたときに自動で始まる。**メニュー > チュートリアル** でもう一度見られる。
