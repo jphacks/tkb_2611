@@ -19,7 +19,7 @@ namespace ProjectPenguin.Domain.Village
             var n=_nodes.FirstOrDefault(a=>a.Id==id);
             if(n==null||!Enum.IsDefined(typeof(Item),item)||count<=0)return Result(false,"施設・品目・個数が不正です");
             var capacity=NodeCapacity(n);
-            var pending=n.Finish>0&&RecipeOf(n)!=null?RecipeOf(n).Output.Count:0;
+            var pending=PendingOutput(n);
             if((long)n.Stock.Values.Sum()+_cargo.Count(c=>c.To==id)+pending+count>capacity)return Result(false,"容量または入庫・加工の予約を超えます");
             n.Stock[item]=n.Held(item)+count;return Result(true,"品物を投入しました");
         }
@@ -56,10 +56,10 @@ namespace ProjectPenguin.Domain.Village
         private int GroupProgressOf(Item item)=>_groupProgress.TryGetValue(item,out var progress)?progress:0;
         public VillageState Export()
         {
-            return new VillageState{EffortSchema=1,At=_at,Requested=_requested,NextId=_nextId,NextCargo=_nextCargo,Produced=_produced,
+            return new VillageState{EffortSchema=1,ComboSchema=1,BuildCounts=(int[])_buildCounts.Clone(),At=_at,Requested=_requested,NextId=_nextId,NextCargo=_nextCargo,Produced=_produced,
                 GroupProgress=new VillageGroupProgressState{ElapsedMs=_groupElapsed,Tick=_groupTick,Chikuwa=GroupProgressOf(Item.Chikuwa),Kamaboko=GroupProgressOf(Item.Kamaboko),DriedFish=GroupProgressOf(Item.DriedFish)},
                 DeliveryMs=_deliveryMs,Speed=_speed,Gas=_gas,Electricity=_electricity,Water=_water,Spent=_spent,Unlimited=_unlimited,FreeResources=_freeResources,Ledger=_ledger.Copy(),Encounters=_encounters.Export(),
-                Nodes=_nodes.Select(n=>new VillageNodeState{Id=n.Id,Kind=n.Kind,Effort=n.Effort,WarehouseCapacity=n.WarehouseCapacity,X=n.X,Y=n.Y,Started=n.Started,Finish=n.Finish,
+                Nodes=_nodes.Select(n=>new VillageNodeState{Id=n.Id,Kind=n.Kind,Effort=n.Effort,WarehouseCapacity=n.WarehouseCapacity,X=n.X,Y=n.Y,Started=n.Started,Finish=n.Finish,ProcessYield=n.ProcessYield,ComboRemainder=n.ComboRemainder,
                     Stock=Enum.GetValues(typeof(Item)).Cast<Item>().Select(i=>n.Held(i)).ToArray()}).ToList(),
                 Cargo=_cargo.Select(c=>new VillageCargoState{Id=c.Id,From=c.From,To=c.To,Item=c.Item,FromX=c.FromX,FromY=c.FromY,ToX=c.ToX,ToY=c.ToY,Start=c.Start,End=c.End}).ToList(),
                 History=_history.Select(e=>new VillageHistoryState{At=e.At,Gas=e.Gas,Made=e.Made}).ToList(),
@@ -67,7 +67,7 @@ namespace ProjectPenguin.Domain.Village
         }
         public static VillageGame Restore(VillageState s)
         {
-            if(s==null||s.EffortSchema<0||s.EffortSchema>1||s.Nodes==null||s.Cargo==null||s.History==null||s.Ledger?.Entries==null||s.Nodes.Count>576||s.Cargo.Count>6912||s.History.Count>100000||s.Ledger.Entries.Count>100000)throw new ArgumentException("保存の構造が不正です");
+            if(s==null||s.EffortSchema<0||s.EffortSchema>1||s.ComboSchema<0||s.ComboSchema>1||s.Nodes==null||s.Cargo==null||s.History==null||s.Ledger?.Entries==null||s.Nodes.Count>576||s.Cargo.Count>6912||s.History.Count>100000||s.Ledger.Entries.Count>100000)throw new ArgumentException("保存の構造が不正です");
             var g=new VillageGame(s.Unlimited);g.Configure(s.Unlimited,s.Speed,s.DeliveryMs);g.SetResources(s.Gas,s.Electricity,s.Water);
             if(s.At<0||s.At%100!=0||s.Requested<s.At||s.Requested-s.At>=100||s.Requested>315360000000L||!Finite(s.Spent)||s.Spent<0||s.Produced<0)throw new ArgumentException("保存の時計・集計が不正です");
             var groups=s.GroupProgress??new VillageGroupProgressState();
@@ -78,7 +78,24 @@ namespace ProjectPenguin.Domain.Village
             {
                 if(n==null||n.Id<=0||g._nodes.Any(a=>a.Id==n.Id)||!Supported(n.Kind)||n.WarehouseCapacity<0||n.WarehouseCapacity>MaxWarehouseCapacity||n.Kind!=FacilityKind.Warehouse&&n.WarehouseCapacity!=0||(s.EffortSchema==0?(n.Level<0||n.Level>5):(n.Effort<0||n.Effort>VillageEffortRules.MaxEffort||!VillageEffortRules.Supports(n.Kind)&&n.Effort!=0))||g.Placement(n.Kind,n.X,n.Y,0)!=""||n.Stock==null||n.Stock.Length!=8||n.Stock.Any(i=>i<0||i>SavedCapacityLimit(n.Kind))||n.Started<0||n.Finish<0||n.Finish>0&&(n.Started>s.At||n.Finish<=s.At||n.Finish<=n.Started)||RecipeOf(new Node{Kind=n.Kind})==null&&n.Finish!=0)throw new ArgumentException("保存の施設が不正です");
                 var node=new Node{Id=n.Id,Kind=n.Kind,Effort=s.EffortSchema==0?(VillageEffortRules.Supports(n.Kind)?Math.Min(VillageEffortRules.MaxEffort,Math.Max(0,n.Level-1)):0):n.Effort,WarehouseCapacity=n.WarehouseCapacity,X=n.X,Y=n.Y,Started=n.Started,Finish=n.Finish,Status=n.Finish>0?"生産中":"待機"};
+                var baseOutput=RecipeOf(node)?.Output.Count??0;
+                if(s.ComboSchema==1&&(n.ComboRemainder<0||n.ComboRemainder>3||!VillageComboRules.Supports(n.Kind)&&n.ComboRemainder!=0
+                    ||n.ProcessYield<0||n.Finish==0&&n.ProcessYield!=0||n.Finish>0&&(n.ProcessYield<baseOutput||n.ProcessYield>baseOutput*2)))
+                    throw new ArgumentException("保存のコンボ・加工予約が不正です");
+                node.ProcessYield=n.Finish==0?0:s.ComboSchema==0?baseOutput:n.ProcessYield;
+                node.ComboRemainder=s.ComboSchema==0?0:n.ComboRemainder;
                 for(var i=0;i<8;i++)node.Stock[(Item)i]=n.Stock[i];g._nodes.Add(node);
+            }
+            if(s.ComboSchema==0)
+            {
+                foreach(var node in g._nodes)g._buildCounts[(int)node.Kind]++;
+            }
+            else
+            {
+                if(s.BuildCounts==null||s.BuildCounts.Length!=g._buildCounts.Length||s.BuildCounts.Any(c=>c<0)
+                    ||g._nodes.GroupBy(n=>n.Kind).Any(nodes=>s.BuildCounts[(int)nodes.Key]<nodes.Count()))
+                    throw new ArgumentException("保存の建設数が不正です");
+                Array.Copy(s.BuildCounts,g._buildCounts,s.BuildCounts.Length);
             }
             foreach(var c in s.Cargo)
             {
@@ -87,7 +104,7 @@ namespace ProjectPenguin.Domain.Village
                 g._cargo.Add(new VillageCargoView{Id=c.Id,From=c.From,To=c.To,Item=c.Item,FromX=c.FromX,FromY=c.FromY,ToX=c.ToX,ToY=c.ToY,Start=c.Start,End=c.End});
             }
             foreach(var n in g._nodes)
-                if(n.Stock.Values.Sum()+g._cargo.Count(c=>c.To==n.Id)+(n.Finish>0&&RecipeOf(n)!=null?RecipeOf(n).Output.Count:0)>SavedCapacityLimit(n.Kind))throw new ArgumentException("在庫予約が容量を超えています");
+                if(n.Stock.Values.Sum()+g._cargo.Count(c=>c.To==n.Id)+PendingOutput(n)>SavedCapacityLimit(n.Kind))throw new ArgumentException("在庫予約が容量を超えています");
             if(s.NextId<=g._nodes.Select(n=>n.Id).DefaultIfEmpty(0).Max()||s.NextCargo<=g._cargo.Select(c=>c.Id).DefaultIfEmpty(0).Max())throw new ArgumentException("保存のIDが不正です");
             foreach(var h in s.History){if(h==null||h.At<0||h.At>s.At||h.Made<0||!Finite(h.Gas)||h.Gas<0)throw new ArgumentException("実績が不正です");g._history.Add((h.At,h.Gas,h.Made));}
             if(s.Trend!=null)

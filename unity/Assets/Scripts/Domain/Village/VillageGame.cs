@@ -16,6 +16,9 @@ namespace ProjectPenguin.Domain.Village
         public int Id {get; internal set;} public FacilityKind Kind {get; internal set;}
         public int Effort {get; internal set;} public int WarehouseBaseCapacity {get; internal set;} public int Capacity {get; internal set;}
         public double ProductionSeconds {get; internal set;}
+        public int ComboCount {get; internal set;}
+        public VillageComboDirection ComboDirections {get; internal set;}
+        public double ComboMultiplier {get; internal set;}
         public VillageEffortView EffortSettings {get; internal set;}
         public int X {get; internal set;} public int Y {get; internal set;} public int Total {get; internal set;}
         public int Size=>IslandCatalog.Get(Kind).Size;
@@ -60,6 +63,9 @@ namespace ProjectPenguin.Domain.Village
     public sealed class VillageView
     {
         public IReadOnlyList<VillageNodeView> Nodes {get; internal set;}
+        public IReadOnlyDictionary<FacilityKind,double> BuildElectricityCosts {get; internal set;}
+        public double BuildElectricityCost(FacilityKind kind) => BuildElectricityCosts != null && BuildElectricityCosts.TryGetValue(kind,out var cost)
+            ? cost : IslandCatalog.Get(kind).ElectricityCost;
         public double Electricity {get; internal set;} public long Produced {get; internal set;}
         public bool GroupViewActive {get; internal set;}
         public bool Unlimited {get; internal set;} public int BoardSize {get; internal set;}
@@ -85,7 +91,7 @@ namespace ProjectPenguin.Domain.Village
     {
         private sealed class Node
         {
-            internal int Id,X,Y,Effort,WarehouseCapacity;internal FacilityKind Kind;
+            internal int Id,X,Y,Effort,WarehouseCapacity,ProcessYield,ComboRemainder;internal FacilityKind Kind;
             internal readonly Dictionary<Item,int> Stock=new Dictionary<Item,int>();
             internal long Started,Finish;internal string Status="待機";
             internal int Held(Item item)=>Stock.TryGetValue(item,out var n)?n:0;
@@ -158,8 +164,11 @@ namespace ProjectPenguin.Domain.Village
         {
             var reason=CanPlace(kind,x,y);if(reason.Length>0)return Result(false,reason);
             var d=IslandCatalog.Get(kind);
-            if(PaysResources&&(_electricity<d.ElectricityCost||_water<d.WaterCost))return Result(false,"建設に使う資源が足りません");
-            if(PaysResources){_electricity-=d.ElectricityCost;_water-=d.WaterCost;}
+            var cost=NextBuildElectricityCost(kind);
+            if(_buildCounts[(int)kind]==int.MaxValue)return Result(false,"建設数の上限です");
+            if(PaysResources&&(_electricity<cost||_water<d.WaterCost))return Result(false,"建設に使う資源が足りません");
+            if(PaysResources){_electricity-=cost;_water-=d.WaterCost;}
+            _buildCounts[(int)kind]++;
             var n=new Node{Id=_nextId++,Kind=kind,X=x,Y=y};_nodes.Add(n);return Result(true,d.Name+"を建てました",n.Id);
         }
         public VillageResult Move(int id,int x,int y)
@@ -230,7 +239,7 @@ namespace ProjectPenguin.Domain.Village
                 {
                     if(_cargo.Any(c=>c.From==a.Id&&c.To==b.Id)||candidates.Any(c=>c.From.Id==a.Id&&c.To.Id==b.Id)||!available[a.Id].TryGetValue(item,out var count)||count<=0)continue;
                     var capacity=NodeCapacity(b);
-                    if(b.Stock.Values.Sum()+reserved[b.Id]+(b.Finish>0&&RecipeOf(b)!=null?RecipeOf(b).Output.Count:0)>=capacity)continue;
+                    if(b.Stock.Values.Sum()+reserved[b.Id]+PendingOutput(b)>=capacity)continue;
                     available[a.Id][item]--;reserved[b.Id]++;candidates.Add((a,b,item));
                 }
             }
@@ -238,7 +247,7 @@ namespace ProjectPenguin.Domain.Village
             foreach(var c in _cargo.Where(c=>c.End<=_at).ToArray())
             {var n=_nodes.First(a=>a.Id==c.To);n.Stock[c.Item]=n.Held(c.Item)+1;_cargo.Remove(c);}
             foreach(var n in _nodes.Where(n=>n.Finish>0&&n.Finish<=_at))
-            {var r=RecipeOf(n);n.Stock[r.Output.Item]=n.Held(r.Output.Item)+r.Output.Count;n.Finish=0;_produced+=r.Output.Count;_history.Add((_at,0,r.Output.Count));RecordMade(r.Output.Item,r.Output.Count);}
+            {var r=RecipeOf(n);var output=n.ProcessYield;n.Stock[r.Output.Item]=n.Held(r.Output.Item)+output;n.Finish=0;n.ProcessYield=0;_produced+=output;_history.Add((_at,0,output));RecordMade(r.Output.Item,output);}
             foreach(var n in starting)
             {
                 var r=RecipeOf(n);
@@ -250,10 +259,12 @@ namespace ProjectPenguin.Domain.Village
                 }
                 var arrivals=reserved[n.Id];
                 var consumed=_unlimited?0:r.Inputs.Sum(i=>i.Count);
-                if(n.Held(r.Output.Item)+r.Output.Count>OutputCap(n)||n.Stock.Values.Sum()-consumed+arrivals+r.Output.Count>NodeCapacity(n)){n.Status="出力の置き場が満杯";continue;}
+                var quarters=OutputQuarters(n);var output=quarters/4;
+                if(n.Held(r.Output.Item)+output>OutputCap(n)||n.Stock.Values.Sum()-consumed+arrivals+output>NodeCapacity(n)){n.Status="出力の置き場が満杯";continue;}
                 if(!_unlimited&&r.Inputs.Any(i=>n.Held(i.Item)<i.Count)){n.Status="材料を待っています";continue;}
                 if(!Pay(VillageEffortRules.Gas(n.Effort))){n.Status="ガスを待っています";continue;}
                 if(!_unlimited)foreach(var input in r.Inputs){n.Stock[input.Item]=n.Held(input.Item)-input.Count;RecordUsed(input.Item,input.Count);}
+                n.ProcessYield=output;n.ComboRemainder=quarters%4;
                 var effectiveSpeed=_speed*NodeSpeedMultiplier(n);
                 n.Started=_at;n.Finish=_at+(long)Math.Max(100,r.Seconds*1000/effectiveSpeed);n.Status="生産中";
             }
@@ -298,7 +309,7 @@ namespace ProjectPenguin.Domain.Village
             {
                 var r=RecipeOf(n);if(r==null)continue;
                 var cyclesPerMin=60.0/Math.Max(0.1,r.Seconds)*_speed*NodeSpeedMultiplier(n);
-                rates[r.Output.Item].TheoreticalMakePerMinute+=r.Output.Count*cyclesPerMin;
+                rates[r.Output.Item].TheoreticalMakePerMinute+=r.Output.Count*VillageComboRules.Multiplier(ComboCount(n))*cyclesPerMin;
                 theoGasPerMin+=cyclesPerMin*VillageEffortRules.Gas(n.Effort);
                 foreach(var inp in r.Inputs)
                     rates[inp.Item].TheoreticalUsePerMinute+=inp.Count*cyclesPerMin;
@@ -341,6 +352,7 @@ namespace ProjectPenguin.Domain.Village
                 :fullWait>0?$"出力満杯の施設が {fullWait} 棟あります（倉庫または氷室を近くに配置）"
                 :"すべての生産・物流ラインが順調に稼働しています";
             return new VillageView{GroupViewActive=_groupViewActive,Unlimited=_unlimited,FreeResources=_freeResources,BoardSize=BoardSize,AtMs=_at,Gas=_gas,Electricity=_electricity,Water=_water,
+                BuildElectricityCosts=new ReadOnlyDictionary<FacilityKind,double>(IslandCatalog.Facilities.ToDictionary(d=>d.Kind,d=>NextBuildElectricityCost(d.Kind))),
                 Produced=_produced,GasSpent=_spent,GasPerMinute=_history.Sum(e=>e.Gas),TheoreticalGasPerMinute=theoGasPerMin,
                 GasReceivedToday=gasReceivedToday,
                 ProducedLastMinute=_history.Sum(e=>(long)e.Made),
@@ -348,6 +360,7 @@ namespace ProjectPenguin.Domain.Village
                 Nodes=Array.AsReadOnly(_nodes.Select(n=>new VillageNodeView{Id=n.Id,Kind=n.Kind,X=n.X,Y=n.Y,Total=n.Stock.Values.Sum(),
                     Effort=n.Effort,WarehouseBaseCapacity=n.Kind==FacilityKind.Warehouse?WarehouseBaseCapacity(n):0,Capacity=NodeCapacity(n),EffortSettings=EffortView(n),
                     ProductionSeconds=RecipeOf(n)==null?0:Math.Max(.1,RecipeOf(n).Seconds/(_speed*NodeSpeedMultiplier(n))),
+                    ComboCount=ComboCount(n),ComboDirections=ComboDirections(n),ComboMultiplier=VillageComboRules.Multiplier(ComboCount(n)),
                     Status=n.Status,Amplified=IsAmplified(n),InSynergy=synergyNodeIds.Contains(n.Id),CoverageRadius=CoverageRadiusOf(n.Kind),
                     Progress=n.Finish>0?Math.Min(1,(_at-n.Started)/(double)(n.Finish-n.Started)):0,
                     Stock=new ReadOnlyDictionary<Item,int>(new Dictionary<Item,int>(n.Stock))}).ToArray()),

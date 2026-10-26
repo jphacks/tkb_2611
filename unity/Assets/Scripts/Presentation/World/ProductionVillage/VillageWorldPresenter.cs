@@ -28,6 +28,8 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
         public IReadOnlyList<VillageGroupHint> Hints {get;private set;}=Array.Empty<VillageGroupHint>();
         /// <summary>配置中の候補が、どこにつながるか。候補が無ければ null。</summary>
         public VillageLinkPreview PlacementLinks {get;private set;}
+        public VillageComboPreview PlacementCombo {get;private set;}
+        private (FacilityKind Kind,int X,int Y,int Moving,int Layout) _comboKey;
         private bool _focused=true, _paused;
         private float _nextHints;
         private (FacilityKind Kind,int X,int Y,int Moving,int Layout) _previewKey;
@@ -49,8 +51,18 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
             var level=camera!=null?camera.Level:VillageZoomLevel.Overview;
             var placing=Placement.Mode==VillagePlacementMode.Build||Placement.Mode==VillagePlacementMode.MovePreview;
             var selected=Placement.MovingId>0?Placement.MovingId:SelectedId;
+            var comboCandidate=placing&&Placement.HasCandidate&&Placement.Reason.Length==0;
+            if(comboCandidate)
+            {
+                var layout=17;
+                foreach(var node in v.Nodes)unchecked { layout=layout*31+node.Id;layout=layout*31+node.X;layout=layout*31+node.Y;layout=layout*31+(int)node.Kind; }
+                var comboKey=(Placement.Kind,Placement.X,Placement.Y,Placement.MovingId,layout);
+                if(PlacementCombo==null||_comboKey!=comboKey)
+                { _comboKey=comboKey;PlacementCombo=VillageComboRules.Preview(v.Nodes,Placement.Kind,Placement.X,Placement.Y,Placement.MovingId); }
+            }
+            else PlacementCombo=null;
             Renderer.IndustrialMode=IndustrialMode;
-            Renderer.Render(v,selected,_session.Core.Running);
+            Renderer.Render(v,selected,_session.Core.Running,PlacementCombo);
             Links.Render(v,level,selected,placing,_session.Core.Running);
             Renderer.Preview(Placement.Kind,Placement.X,Placement.Y,Placement.Reason.Length==0,Placement.HasCandidate);
 

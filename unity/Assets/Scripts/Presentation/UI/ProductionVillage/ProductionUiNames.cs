@@ -57,6 +57,10 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         /// <summary>主役の数字が増えたときに一瞬ふくらませる (Components.uss)。</summary>
         public const string HeroBump="pp-hero--bump";
+        public const string FacilitySheetClass="village-sheet--facility";
+        public const string ComboDiagram="village-combo-diagram",ComboRow="village-combo-row",ComboCell="village-combo-cell",
+            ComboCenter="village-combo-center",ComboDirection="village-combo-direction",ComboDirectionActive="village-combo-direction--active",
+            ComboMaximum="village-combo--maximum",ComboHint="village-combo-hint",ComboBadge="village-combo-badge",SpatialBadgeCombo="village-spatial-badge--combo";
         public const string Effort="village-effort",EffortHeader="village-effort__header",EffortValue="village-effort__value",
             EffortFlame="village-effort__flame",EffortEffect="village-effort__effect",EffortHint="village-effort__hint",EffortActions="village-effort__actions",
             FacilityEffort="village-facility__effort";

@@ -32,6 +32,9 @@
     --color-point: #F5A623;
     --color-danger: #E5534B;
     --color-danger-soft: #FCE3E1;
+    --color-combo: #9470D6;
+    --color-combo-soft: #F0E9FC;
+    --color-combo-text: #61418D;
 
     /* ---- Color: 島の資源 (アイコンの tint と数値) ---- */
     --color-res-electricity: #F2B705;
