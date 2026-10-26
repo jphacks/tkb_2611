@@ -416,6 +416,17 @@
     flex-shrink: 1;
 }
 
+.village-sheet--facility .village-sheet__panel {
+    height: 50%;
+    max-height: 50%;
+    flex-shrink: 0;
+}
+
+.village-sheet--facility .village-sheet__body {
+    flex-grow: 1;
+    min-height: 0;
+}
+
 /* シートの中: カードの並びと余白 */
 .village-card {
     margin-bottom: var(--space-3);
@@ -1218,3 +1229,15 @@
 .village-effort__actions > .pp-btn { margin-right: var(--space-2); margin-bottom: var(--space-2); }
 
 .village-effort__flame { width: 36px; height: 42px; margin-right: var(--space-1); background-image: url("project://database/Assets/UI/ProductionVillage/EffortFlame.svg"); -unity-background-scale-mode: scale-to-fit; }
+
+.village-combo-diagram { width: 100%; max-width: 720px; align-self: center; margin-top: var(--space-3); margin-bottom: var(--space-3); }
+.village-combo-row { flex-direction: row; }
+.village-combo-cell { width: 33.333%; min-width: 0; min-height: 112px; flex-shrink: 1; margin: 2px; padding: var(--space-1); -unity-text-align: middle-center; white-space: normal; }
+.village-combo-direction { background-color: var(--color-ice-50); color: var(--color-text-sub); border-radius: var(--radius-sm); font-size: var(--font-size-caption); }
+.village-combo-direction--active { background-color: var(--color-combo-soft); color: var(--color-combo-text); border-width: 2px; border-color: var(--color-combo); }
+.village-combo-center { background-color: var(--color-combo); color: var(--color-text-on-primary); border-radius: var(--radius-sm); -unity-font-style: bold; font-size: var(--font-size-body); }
+.village-combo--maximum { border-width: 3px; border-color: var(--color-combo-text); }
+.village-combo-hint { color: var(--color-combo-text); white-space: normal; margin-bottom: var(--space-2); }
+.village-workshop-page .village-combo-hint { color: var(--color-combo-soft); }
+.village-combo-badge { color: var(--color-combo-text); background-color: var(--color-combo-soft); border-radius: var(--radius-pill-sm); padding: 2px var(--space-1); margin-left: var(--space-1); -unity-font-style: bold; }
+.village-spatial-badge--combo { background-color: var(--color-surface-solid); color: var(--color-combo-text); border-color: var(--color-combo); border-bottom-color: var(--color-combo-text); }

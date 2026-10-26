@@ -43,6 +43,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
     }
     public static class ProductionWorldNames
     {
+        public const string ComboLink="VillageComboLink",ComboOutline="VillageComboOutline";
         public const string WorldCanvas="VillageWorldCanvas",Grid="VillageGrid",SubtleGrid="VillageSubtleGrid",TacticalFrame="VillageTacticalFrame",Selection="VillageSelection",Preview="VillagePreview",Port="VillagePort",Facility="VillageFacility",Footprint="VillageFootprint",Zone="VillageZone",Synergy="VillageSynergy",Route="VillageRoute",Cargo="VillageCargo",Ghost="VillageGhost",
             Links="VillageLinks",LinkArrow="VillageLinkArrow",LinkPort="VillageLinkPort",CargoModel="VillageCargoModel",Pop="VillagePop",
             Guide="VillageGuide",Reach="VillageReach",GuideLink="VillageGuideLink",HintGhost="VillageHintGhost",HintPad="VillageHintPad";

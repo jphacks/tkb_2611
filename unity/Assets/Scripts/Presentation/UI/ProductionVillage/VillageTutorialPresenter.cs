@@ -218,9 +218,9 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         {
             var view = _session.Core.View;
             var kind = VillageInsight.NextStep(view, _navigator.World?.Hints).Build ?? FacilityKind.Fishery;
-            if (view == null || view.Unlimited) return (kind, "");
+            if (view == null || view.ResourcesUnlimited) return (kind, "");
             var def = IslandCatalog.Get(kind);
-            if (view.Electricity < def.ElectricityCost) return (kind, "電気が足りないよ。スマホを休めると電気がたまる");
+            if (view.Electricity < view.BuildElectricityCost(kind)) return (kind, "電気が足りないよ。スマホを休めると電気がたまる");
             if (view.Water < def.WaterCost) return (kind, "水が足りないよ。水を飲むと水がたまる");
             return (kind, "");
         }

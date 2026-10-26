@@ -20,7 +20,7 @@ namespace ProjectPenguin.Tests.EditMode
             var g=new VillageGame(true);g.Place(FacilityKind.Fishery,0,0);g.Place(FacilityKind.Fishery,spacing,0);g.Place(FacilityKind.Fishery,2*spacing,0);
             var s=g.Export();s.Unlimited=false;s.Gas=1000000;s.Electricity=1000000;s.Water=1000000;s.Speed=.01;
             // Paid jobs stay busy so sampling is independent of the ordinary output clock.
-            foreach(var n in s.Nodes){n.Started=0;n.Finish=100000000;}
+            foreach(var n in s.Nodes){n.Started=0;n.Finish=100000000;n.ProcessYield=1;}
             return VillageGame.Restore(s);
         }
         static int Bonus(VillageGame g)=>g.CreateView().Totals[Item.Chikuwa];
@@ -85,7 +85,7 @@ namespace ProjectPenguin.Tests.EditMode
         }
         [Test] public void RemovingMemberAndOldNullProgressAreSafe()
         {
-            var s=Line().Export();foreach(var n in s.Nodes)n.Finish=0;s.GroupProgress=null;var g=VillageGame.Restore(s);
+            var s=Line().Export();foreach(var n in s.Nodes){n.Finish=0;n.ProcessYield=0;}s.GroupProgress=null;var g=VillageGame.Restore(s);
             Assert.That(g.Remove(3).Success,Is.True);Active(g,true);g.AdvanceTo(1200000);Assert.That(Bonus(g),Is.Zero);Assert.That(g.CreateView().Synergies,Is.Empty);
         }
         [Test] public void SavedProgressIsDetachedAndInvalidProgressIsRejected()
@@ -102,7 +102,7 @@ namespace ProjectPenguin.Tests.EditMode
         {
             var g=new VillageGame(true);g.Place(FacilityKind.Fishery,0,2);g.Place(FacilityKind.Saltworks,2,2);g.Place(FacilityKind.Fishery,4,2);g.Place(FacilityKind.Fishery,2,4);
             var s=g.Export();s.Unlimited=false;s.Gas=1000000;s.Nodes[1].Stock[(int)Item.Fish]=10;
-            foreach(var n in s.Nodes){n.Started=0;n.Finish=100000000;}s.GroupProgress.Kamaboko=1;s.GroupProgress.DriedFish=1;
+            foreach(var n in s.Nodes){n.Started=0;n.Finish=100000000;n.ProcessYield=1;}s.GroupProgress.Kamaboko=1;s.GroupProgress.DriedFish=1;
             g=VillageGame.Restore(s);Active(g,true);g.AdvanceTo(600000);
             Assert.That(g.CreateView().Totals[Item.Kamaboko],Is.EqualTo(1));Assert.That(g.CreateView().Totals[Item.DriedFish],Is.Zero);
             Assert.That(g.Export().GroupProgress.DriedFish,Is.EqualTo(1));Assert.DoesNotThrow(()=>VillageGame.Restore(g.Export()));
@@ -110,7 +110,7 @@ namespace ProjectPenguin.Tests.EditMode
         [Test] public void MultipleGroupsPoolProgressAndStopAtProductCap()
         {
             var g=Line();g.Configure(true,1,1500);for(var x=0;x<6;x+=2)g.Place(FacilityKind.Fishery,x,6);
-            var s=g.Export();foreach(var n in s.Nodes){n.Started=0;n.Finish=100000000;}g=VillageGame.Restore(s);Active(g,true);g.AdvanceTo(600000);
+            var s=g.Export();foreach(var n in s.Nodes){n.Started=0;n.Finish=100000000;n.ProcessYield=1;}g=VillageGame.Restore(s);Active(g,true);g.AdvanceTo(600000);
             Assert.That(Bonus(g),Is.EqualTo(1));g=Line();Active(g,true);g.AdvanceTo(8400000);Assert.That(Bonus(g),Is.EqualTo(6));
         }
         [Test] public void BonusDeliveryIsNotStarvedByNormalOutputOnTheSameRoute()

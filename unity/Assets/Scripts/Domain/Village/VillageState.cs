@@ -11,6 +11,8 @@ namespace ProjectPenguin.Domain.Village
         public long At, Requested, NextCargo = 1, Produced;
         public int NextId = 1, DeliveryMs = 1500;
         public int EffortSchema;
+        public int ComboSchema;
+        public int[] BuildCounts;
         public double Speed = 1, Gas, Electricity, Water, Spent;
         public bool Unlimited;
         /// <summary>資源無限のモード。製品用の保存には入れない (ProductionVillageSave.Validate)。</summary>
@@ -41,6 +43,7 @@ namespace ProjectPenguin.Domain.Village
         public int Id, X, Y;
         public int Level = 1; // Legacy saves only; effort saves use EffortSchema.
         public int Effort;
+        public int ProcessYield, ComboRemainder;
         public int WarehouseCapacity; // Zero keeps the legacy default.
         public FacilityKind Kind;
         public long Started, Finish;

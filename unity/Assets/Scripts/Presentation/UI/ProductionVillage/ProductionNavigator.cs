@@ -48,6 +48,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         private ScrollView _sheetContent, _pageContent, _softContent;
         private VisualElement _page, _softPage;
         private Label _pageTitle, _pageMicro, _softTitle, _softSub;
+        private string _sheetPageName;
         private bool _industrialMode;
         private string _dockCategory = "all";
         private float _nextRefresh, _nextSheetRefresh;
@@ -66,8 +67,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         /// <summary>施設の詳細ページの英字の小見出し。チュートリアルが「施設のページが開いた」を見分けるのに使う。</summary>
         public const string FacilityPage = "FACILITY";
         public bool IndustrialMode => _industrialMode;
-        /// <summary>開いている工房のページ (英字の小見出し)。開いていなければ null。</summary>
-        public string OpenPageName => _pageOpen ? _pageMicro?.text : null;
+        /// <summary>開いている工房や施設詳細の識別子。開いていなければ null。</summary>
+        public string OpenPageName => _pageOpen ? _pageMicro?.text : _sheetOpen ? _sheetPageName : null;
         public bool ReportOpen => _report != null && _report.IsOpen;
         private VillageTutorialPresenter _tutorial;
 
@@ -410,6 +411,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                     badgeIcon.AddToClassList(ProductionUiNames.SpatialBadgeIconClass);
                     badge.Add(badgeIcon);
                     badge.Add(new Label { pickingMode = PickingMode.Ignore });
+                    var comboBadge = new Label { name = "villageComboBadge" + n.Id, pickingMode = PickingMode.Ignore };
+                    comboBadge.AddToClassList(ProductionUiNames.ComboBadge); badge.Add(comboBadge);
                     badge.AddToClassList(ProductionUiNames.SpatialBadgeClass);
                     _spatialLayer.Add(badge);
                     _spatialBadges[n.Id] = badge;
@@ -428,6 +431,10 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                 var panelPos = _spatialLayer.WorldToLocal(onPanel);
 
                 var warn = VillageInsight.IsStopped(n.Status);
+                var comboChange = _world.PlacementCombo?.Changes.FirstOrDefault(c => c.Id == n.Id);
+                var comboCount = comboChange?.After ?? n.ComboCount;
+                var showCombo = comboCount > 0 || comboChange != null;
+                badge.EnableInClassList(ProductionUiNames.SpatialBadgeCombo, !warn && showCombo);
                 badge.EnableInClassList(ProductionUiNames.SpatialBadgeWarnClass, warn);
                 badge.EnableInClassList(ProductionUiNames.SpatialBadgeSynergyClass, !warn && (n.InSynergy || n.Amplified));
 
@@ -441,7 +448,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
                     : recipe != null && n.Total > 0 ? $"{IslandCatalog.NameOf(recipe.Output.Item)} ×{n.Total}"
                     : _industrialMode ? def.Name : "";
 
-                if (string.IsNullOrEmpty(label) || covers.Any(r => r.Contains(onPanel)))
+                if (string.IsNullOrEmpty(label) && !showCombo || covers.Any(r => r.Contains(onPanel)))
                 {
                     IslandUi.SetVisible(badge, false);
                     continue;
@@ -462,6 +469,10 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
                 IslandUi.SetVisible(icon, iconClass != null);
                 badge.Q<Label>().text = label;
+                var comboLabel = badge.Q<Label>("villageComboBadge" + n.Id);
+                IslandUi.SetVisible(comboLabel, showCombo);
+                comboLabel.text = (comboChange != null ? "予定 " : "") + $"×{VillageComboRules.Multiplier(comboCount):0.##}";
+                comboLabel.tooltip = $"コンボ {comboCount} / 4方向、最大2倍";
                 // 隣の札と重なるときは上へずらす (前のフレームの大きさで判定する)
                 var width = float.IsNaN(badge.layout.width) || badge.layout.width <= 0 ? 120f : badge.layout.width;
                 var height = float.IsNaN(badge.layout.height) || badge.layout.height <= 0 ? 44f : badge.layout.height;
@@ -637,7 +648,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
         private VisualElement BuildDockSlot(FacilityDef def, VillageView view)
         {
-            var shortE = view != null && !view.ResourcesUnlimited && view.Electricity < def.ElectricityCost;
+            var electricityCost = view?.BuildElectricityCost(def.Kind) ?? def.ElectricityCost;
+            var shortE = view != null && !view.ResourcesUnlimited && view.Electricity < electricityCost;
             var shortW = view != null && !view.ResourcesUnlimited && view.Water < def.WaterCost;
             var slot = new Button(() =>
             {
@@ -660,6 +672,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             });
             slot.AddToClassList(ProductionUiNames.DockSlotClass);
             slot.userData = def.Kind;
+            slot.tooltip = "同種施設を建てるたびに、次の建設費が電気1ずつ増えます";
 
             var thumb = new VisualElement { pickingMode = PickingMode.Ignore };
             thumb.AddToClassList(UiClasses.Thumb.Root);
@@ -670,7 +683,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             slot.Add(IslandUi.Text(def.Name, ProductionUiNames.DockSlotNameClass));
 
             var cost = IslandUi.Cost();
-            IslandUi.AddCost(cost, UiClasses.Icon.Electricity, UiClasses.Tint.Electricity, def.ElectricityCost, shortE);
+            IslandUi.AddCost(cost, UiClasses.Icon.Electricity, UiClasses.Tint.Electricity, electricityCost, shortE);
             IslandUi.AddCost(cost, UiClasses.Icon.Water, UiClasses.Tint.Water, def.WaterCost, shortW);
             slot.Add(cost);
             return slot;
@@ -698,6 +711,13 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             _reason.text = placement.Reason.Length > 0 ? placement.Reason
                 : placement.Mode == VillagePlacementMode.Build && !placement.HasCandidate ? "置きたい場所をタップしてね"
                 : placement.HasCandidate ? "ここでよければ決定を押してね" : "";
+            var combo = _world.PlacementCombo;
+            if (placement.HasCandidate && placement.Reason.Length == 0 && combo != null)
+            {
+                _reason.text += $"\n配置後のコンボ {combo.Candidate.ComboCount} / 4方向・生産量 ×{combo.Candidate.ComboMultiplier:0.##}";
+                foreach (var change in combo.Changes.Take(3))
+                    _reason.text += $"\n周囲の施設：×{VillageComboRules.Multiplier(change.Before):0.##} から ×{VillageComboRules.Multiplier(change.After):0.##}";
+            }
             _reason.EnableInClassList(ProductionUiNames.HintBad, bad);
             IslandUi.SetVisible(_reason, _reason.text.Length > 0);
             IslandUi.SetVisible(_confirm, choosingSpot);
@@ -763,10 +783,13 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         // シート
         // ------------------------------------------------------------------
 
-        private void Open(string title, string tab)
+        private void Open(string title, string tab, string pageName = null)
         {
             Placement?.Cancel();
             HidePage();
+            _report?.Close();
+            _sheetPageName = pageName;
+            _sheet.EnableInClassList(ProductionUiNames.FacilitySheetClass, pageName == FacilityPage);
             _content = _sheetContent;
             _content.Clear();
             _title.text = title;
@@ -812,6 +835,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         private void BeginPage(ScrollView content, string tab)
         {
             Placement?.Cancel();
+            _sheetPageName = null;
             if (_sheetOpen && !_pageOpen && !_softOpen)
             {
                 _sheet.AddToClassList(UiClasses.Sheet.Closed);
@@ -853,6 +877,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
             if (!_sheetOpen) return;
             _sheetOpen = false;
+            _sheetPageName = null;
             _sheet.AddToClassList(UiClasses.Sheet.Closed);
             _sheet.schedule.Execute(() =>
             {
@@ -980,6 +1005,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
             var shelf = new VisualElement();
             shelf.AddToClassList(ProductionUiNames.Shelf);
+            _content.Add(IslandUi.Text("同種施設を建てるたびに、次の建設費が電気1ずつ増えます。撤去しても費用は戻りません。", ProductionUiNames.Subtle));
             _content.Add(shelf);
             foreach (var def in IslandCatalog.Facilities.OrderBy(d => VillageGame.Supported(d.Kind) ? 0 : 1).ThenBy(d => (int)d.Kind))
             {
@@ -990,7 +1016,8 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
         private VisualElement ShelfCard(FacilityDef def, VillageView view)
         {
             var supported = VillageGame.Supported(def.Kind);
-            var shortElectricity = view != null && !view.ResourcesUnlimited && view.Electricity < def.ElectricityCost;
+            var electricityCost = view?.BuildElectricityCost(def.Kind) ?? def.ElectricityCost;
+            var shortElectricity = view != null && !view.ResourcesUnlimited && view.Electricity < electricityCost;
             var shortWater = view != null && !view.ResourcesUnlimited && view.Water < def.WaterCost;
 
             var card = new VisualElement();
@@ -1031,7 +1058,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             {
                 var cost = IslandUi.Cost();
                 cost.AddToClassList(ProductionUiNames.ShelfCost);
-                IslandUi.AddCost(cost, UiClasses.Icon.Electricity, UiClasses.Tint.Electricity, def.ElectricityCost, shortElectricity);
+                IslandUi.AddCost(cost, UiClasses.Icon.Electricity, UiClasses.Tint.Electricity, electricityCost, shortElectricity);
                 IslandUi.AddCost(cost, UiClasses.Icon.Water, UiClasses.Tint.Water, def.WaterCost, shortWater);
                 card.Add(cost);
             }
@@ -1081,7 +1108,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
             }
 
             var def = IslandCatalog.Get(node.Kind);
-            OpenPage(FacilityPage, def.Name, null);
+            Open(def.Name, null, FacilityPage);
             _world.SelectedId = id;
             var top = Card();
             var header = new VisualElement();
@@ -1141,6 +1168,11 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
             VillageWarehousePanel warehousePanel = null;
             VillageEffortPanel effortPanel = null;
+            VillageComboPanel comboPanel = null;
+            if (VillageComboRules.Supports(node.Kind))
+            {
+                comboPanel = new VillageComboPanel(Card());
+            }
             if (node.Kind == FacilityKind.Warehouse)
             {
                 warehousePanel = new VillageWarehousePanel(Card(), (nodeId, value) =>
@@ -1184,6 +1216,7 @@ namespace ProjectPenguin.Presentation.UI.ProductionVillage
 
                 status.Clear();
                 effortLabel.text = $"エフォート {n.Effort}" + (n.ProductionSeconds > 0 ? $"  ·  次回 {n.ProductionSeconds:0.##}秒" : "");
+                comboPanel?.Render(n);
                 status.Add(StatusPill(n.Status));
                 progress.value = (float)n.Progress;
                 IslandUi.SetVisible(progress, n.Progress > 0);

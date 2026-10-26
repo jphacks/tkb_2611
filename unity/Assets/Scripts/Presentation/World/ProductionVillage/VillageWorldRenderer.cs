@@ -16,6 +16,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
         private readonly Dictionary<int,VillageEffortFlame> _flames=new Dictionary<int,VillageEffortFlame>();
         private readonly VillagePrefabCatalog _prefabs;
         private readonly RectTransform _canvas;
+        private readonly VillageComboWorldView _combos;
         private readonly GameObject _grid,_subtleGrid,_tacticalFrame;
         private readonly Image _selection,_preview;
         private readonly Dictionary<int,GameObject> _models=new Dictionary<int,GameObject>();
@@ -37,6 +38,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
             var root=new GameObject(ProductionWorldNames.WorldCanvas,typeof(RectTransform),typeof(Canvas));root.transform.SetParent(parent,false);
             root.GetComponent<Canvas>().renderMode=RenderMode.WorldSpace;root.GetComponent<Canvas>().worldCamera=camera;
             _canvas=(RectTransform)root.transform;_canvas.sizeDelta=Vector2.one*24*Cell;_canvas.position=new Vector3(0,.035f,0);_canvas.rotation=Quaternion.Euler(90,0,0);
+            _combos=new VillageComboWorldView(_canvas);
             // 常時うっすら見える氷タイル目地 (のっぺりした白板に見せない)
             _subtleGrid=new GameObject(ProductionWorldNames.SubtleGrid,typeof(RectTransform));_subtleGrid.transform.SetParent(_canvas,false);
             for(var i=0;i<=24;i+=2)
@@ -68,14 +70,14 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
         }
         public static Vector3 Position(int x,int y,int size)=>new Vector3((x+size*.5f-12)*Cell,.08f,(y+size*.5f-12)*Cell);
         public static Vector2 Flat(Vector3 p)=>new Vector2(p.x,p.z);
-        public void Render(VillageView view,int selected,bool running=true)
+        public void Render(VillageView view,int selected,bool running=true,VillageComboPreview comboPreview=null)
         {
             foreach(var id in _models.Keys.Where(id=>!view.Nodes.Any(n=>n.Id==id&&n.Kind==_kinds[id])).ToArray())
             {
-                if(_flames.TryGetValue(id,out var flame)){Object.Destroy(flame.Root);_flames.Remove(id);}
-                Object.Destroy(_models[id]);_models.Remove(id);_kinds.Remove(id);_working.Remove(id);
-                if(_footprints.TryGetValue(id,out var fp)){Object.Destroy(fp.gameObject);_footprints.Remove(id);_statusBars.Remove(id);}
-                if(_zones.TryGetValue(id,out var zn)){Object.Destroy(zn.gameObject);_zones.Remove(id);}
+                if(_flames.TryGetValue(id,out var flame)){DestroyView(flame.Root);_flames.Remove(id);}
+                DestroyView(_models[id]);_models.Remove(id);_kinds.Remove(id);_working.Remove(id);
+                if(_footprints.TryGetValue(id,out var fp)){DestroyView(fp.gameObject);_footprints.Remove(id);_statusBars.Remove(id);}
+                if(_zones.TryGetValue(id,out var zn)){DestroyView(zn.gameObject);_zones.Remove(id);}
             }
             // 1. 増幅器・氷室・仕分け機の稼働エリア (Cyan Coverage Zone)
             foreach(var n in view.Nodes)
@@ -106,7 +108,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
                     sbox.rectTransform.sizeDelta=new Vector2((s.Width+.35f)*Cell,(s.Height+.35f)*Cell);
                 }
             }
-            foreach(var k in _synergies.Keys.Where(k=>!synKeys.Contains(k)).ToArray()){Object.Destroy(_synergies[k].gameObject);_synergies.Remove(k);}
+            foreach(var k in _synergies.Keys.Where(k=>!synKeys.Contains(k)).ToArray()){DestroyView(_synergies[k].gameObject);_synergies.Remove(k);}
             // 3. エフォートは屋根上の炎の数と大きさ。足元は共通色、細い帯は稼働状態。
             foreach(var n in view.Nodes)
             {
@@ -135,6 +137,7 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
                     foreach(var animator in model.GetComponentsInChildren<Animator>(true))animator.enabled=working;
                 }
             }
+            _combos.Render(comboPreview?.Nodes??view.Nodes,comboPreview?.Candidate.Id??selected,comboPreview!=null);
             var selection=view.Nodes.FirstOrDefault(n=>n.Id==selected);_selection.gameObject.SetActive(selection!=null);
             if(selection!=null){_selection.rectTransform.anchoredPosition=Flat(Position(selection.X,selection.Y,selection.Size));_selection.rectTransform.sizeDelta=Vector2.one*selection.Size*Cell;_selection.transform.SetAsLastSibling();}
         }
@@ -152,6 +155,8 @@ namespace ProjectPenguin.Presentation.World.ProductionVillage
             _preview.rectTransform.anchoredPosition=Flat(Position(x,y,size));_preview.rectTransform.sizeDelta=Vector2.one*size*Cell;
         }
         private static Image Rect(string name,Transform parent,Vector2 position,Vector2 size,Color color)=>VillageModels.Rect(name,parent,position,size,color);
+        private static void DestroyView(Object target)
+        { if(Application.isPlaying)Object.Destroy(target);else Object.DestroyImmediate(target); }
         private GameObject Model(GameObject prefab,float width,string name)=>VillageModels.Spawn(prefab,width,_parent,name);
         private static void SelectionBorder(RectTransform parent)
         {
